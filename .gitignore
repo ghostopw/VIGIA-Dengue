@@ -1,7 +1,10 @@
 __pycache__/
 *.pyc
 .venv/
-dados/bruto/
-dados/processado/*.csv
-saidas/figuras/*.png
 .streamlit/secrets.toml
+
+# Intermediarios reproduziveis pelos scripts (o pacote final e versionado).
+dados/bruto/
+dados/processado/
+dados/vigia_dengue_dados.zip
+saidas/figuras/*.png
