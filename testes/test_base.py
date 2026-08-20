@@ -126,3 +126,23 @@ def test_niveis_de_risco_sao_os_quatro_previstos():
         "baixo", "moderado", "alto", "muito alto"
     }
     assert classificado["risco_codigo"].between(0, 3).all()
+
+
+def test_razoes_de_crescimento_nao_geram_faltantes(base: pd.DataFrame):
+    """Municipio sem casos na semana anterior nao pode sumir da modelagem.
+
+    Estas duas razoes dividem por um denominador que pode ser zero. Se o
+    resultado ficasse NaN, os municipios pequenos e calmos seriam descartados
+    pelo dropna do pipeline e desapareceriam do mapa.
+    """
+    assert base["variacao_semanal"].isna().sum() == 0
+    assert base["razao_mm3_mm8"].isna().sum() == 0
+
+
+def test_semana_sem_casos_tem_variacao_zero(base: pd.DataFrame):
+    """Sem casos antes e sem casos agora significa estabilidade, nao crescimento."""
+    municipio = base[base["cod_ibge"] == 5300108].sort_values("data_ini_se").reset_index(drop=True)
+    anterior = municipio["casos_est"].shift(1)
+    paradas = municipio[(anterior == 0) & (municipio["casos_est"] == 0)]
+    if not paradas.empty:
+        assert (paradas["variacao_semanal"] == 0).all()

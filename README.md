@@ -1,7 +1,8 @@
 # VIGIA-Dengue
 
 Ferramenta digital de alerta precoce para estratificação espaço-temporal do risco de
-dengue em municípios do Distrito Federal e da RIDE-DF.
+dengue, com **foco em Brasília (Distrito Federal)** e a RIDE-DF como território de
+comparação.
 
 Projeto PIBITI 2026 — Iniciação em Desenvolvimento Tecnológico e Inovação
 **Aluno:** João Gabriel Alves Guimarães (2512082047)
@@ -23,9 +24,13 @@ Projeto PIBITI 2026 — Iniciação em Desenvolvimento Tecnológico e Inovação
 
 ## Território piloto
 
-**33 municípios**: Distrito Federal, 29 municípios goianos do Entorno e 3 municípios
-mineiros, conforme a RIDE-DF (LC 94/1998, ampliada pela LC 163/2018). Todos os códigos
-IBGE são conferidos contra a API do IBGE por `validar_territorio()`.
+**Foco: Brasília.** O DF concentra **69% da população** e **63,5% dos casos** do
+território — por isso o painel abre em Brasília, com bloco de indicadores próprio, e
+o Entorno entra como contexto recolhido.
+
+**33 municípios na base**: Distrito Federal, 29 municípios goianos do Entorno e 3
+municípios mineiros, conforme a RIDE-DF (LC 94/1998, ampliada pela LC 163/2018). Todos
+os códigos IBGE são conferidos contra a API do IBGE por `validar_territorio()`.
 
 > O DF é um único município na malha do IBGE e o InfoDengue não o desagrega por Região
 > Administrativa. A RIDE foi adotada para que a análise espacial, os mapas e a
@@ -65,10 +70,15 @@ python -m pytest testes -q                   # roda os testes
 
 Quatro abas:
 
+No topo, um bloco fixo com a situação de **Brasília**: casos estimados (com variação
+frente à semana anterior), incidência, nível de risco e probabilidade de alerta. O
+Entorno fica num painel recolhível logo abaixo.
+
 - **Mapa de risco** — coroplético dos 33 municípios na semana escolhida, com os quatro
   níveis de risco, distribuição dos níveis e ranking das maiores probabilidades.
 - **Séries temporais** — casos notificados × estimados com faixa de incerteza do
-  *nowcasting*, e a incidência contra o limite esperado do canal endêmico.
+  *nowcasting*, incidência contra o canal endêmico, e a curva **Brasília × Entorno**
+  padronizada por população.
 - **Ranking e relatório** — tabela ordenada por probabilidade de alerta, com os fatores
   que pesaram em cada previsão, e exportação em CSV.
 - **Desempenho do modelo** — métricas da validação temporal, ano a ano.
@@ -96,14 +106,15 @@ expansiva (treina até o ano *t−1*, avalia em *t*), média de 2019 a 2025:
 
 | Modelo | Sensibilidade | Especificidade | VPP | AUC | AUPRC | Brier |
 |---|---|---|---|---|---|---|
-| Referência (persistência) | 0,793 | 0,654 | 0,760 | 0,723 | 0,721 | 0,257 |
-| Interpretável (logística) | 0,721 | 0,649 | 0,741 | 0,764 | 0,819 | 0,196 |
-| Aprendizado (LightGBM) | **0,736** | **0,700** | **0,776** | **0,801** | **0,844** | **0,198** |
+| Referência (persistência) | 0,727 | 0,786 | 0,726 | 0,757 | 0,647 | 0,233 |
+| Interpretável (logística) | 0,711 | 0,730 | 0,675 | 0,798 | 0,773 | 0,185 |
+| Aprendizado (LightGBM) | 0,704 | **0,790** | **0,735** | **0,828** | **0,802** | **0,174** |
 
-Leitura honesta: a persistência tem sensibilidade maior, porque com prevalência de 47,6%
-repetir o estado atual já acerta bastante. O ganho dos modelos está na **discriminação** —
-eles superam a referência em AUC **nos sete anos avaliados**, e a vantagem é máxima
-em 2024 (0,84 contra 0,72), justamente o ano epidêmico em que o alerta precisa funcionar.
+Leitura honesta: a persistência tem sensibilidade ligeiramente maior, porque repetir o
+estado atual já acerta bastante quando a prevalência é alta. O ganho dos modelos está na
+**discriminação e na calibração** — o LightGBM supera a referência em AUC (0,828 contra
+0,757) e reduz o erro de Brier em 25%, e a vantagem é maior nos anos epidêmicos, quando
+o alerta precisa funcionar.
 
 ## Estrutura
 

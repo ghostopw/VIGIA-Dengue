@@ -46,18 +46,37 @@ def _contribuicoes(modelo, X: pd.DataFrame, variaveis: list[str], top: int = 3) 
 
 
 def gerar(base_com_risco: pd.DataFrame, horizonte: int = 4) -> pd.DataFrame:
-    """Produz a tabela final do painel, com previsao e explicacao do alerta."""
-    dados = preparar(base_com_risco, horizonte=horizonte)
-    variaveis = [v for v in VARIAVEIS if v in dados.columns]
+    """Produz a tabela final do painel, com previsao e explicacao do alerta.
 
-    # Treino com todo o historico cujo alvo ja foi observado.
-    modelo = modelo_aprendizado().fit(dados[variaveis], dados["alvo"])
+    O treino exige alvo observado, mas a exibicao nao: as semanas mais recentes
+    -- justamente as que interessam ao alerta precoce -- ainda nao tem desfecho
+    conhecido e mesmo assim precisam aparecer no painel com sua previsao. Por
+    isso o modelo e treinado no subconjunto com alvo e aplicado a toda a base.
+    """
+    treino = preparar(base_com_risco, horizonte=horizonte)
+    variaveis = [v for v in VARIAVEIS if v in treino.columns]
+
+    modelo = modelo_aprendizado().fit(treino[variaveis], treino["alvo"])
+
+    # Previsao para todas as linhas com preditores completos, inclusive as
+    # semanas recentes cujo desfecho ainda nao pode ser observado.
+    dados = base_com_risco.sort_values(["cod_ibge", "data_ini_se"]).copy()
+    risco_alto = (dados["risco_codigo"] >= 2).astype(float)
+    dados["alvo"] = risco_alto.groupby(dados["cod_ibge"]).shift(-horizonte)
+    dados = dados.dropna(subset=variaveis).reset_index(drop=True)
+
     dados["probabilidade_alerta"] = modelo.predict_proba(dados[variaveis])[:, 1]
     dados["fatores_alerta"] = _contribuicoes(modelo, dados[variaveis], variaveis)
     dados["horizonte_semanas"] = horizonte
+    # Marca as linhas cujo desfecho ainda nao ocorreu: servem para operar o
+    # alerta, mas nao podem entrar em nenhuma avaliacao de desempenho.
+    dados["alvo_observado"] = dados["alvo"].notna().astype("int8")
 
     colunas = [c for c in COLUNAS_PAINEL if c in dados.columns]
-    colunas += ["probabilidade_alerta", "fatores_alerta", "horizonte_semanas", "alvo"]
+    colunas += [
+        "probabilidade_alerta", "fatores_alerta", "horizonte_semanas",
+        "alvo", "alvo_observado",
+    ]
     return dados[colunas]
 
 

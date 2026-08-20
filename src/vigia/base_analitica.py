@@ -23,6 +23,10 @@ COLUNAS_CLIMA = ["tempmed", "tempmin", "tempmax", "umidmed", "umidmin", "umidmax
 # deste limiar marca a linha como provisoria.
 LIMIAR_COMPLETUDE = 0.90
 
+# Teto para as razoes de crescimento quando a semana anterior teve zero casos:
+# passar de nenhum caso para algum e crescimento, mas a divisao seria infinita.
+TETO_CRESCIMENTO = 10.0
+
 
 def interpolar_clima(painel: pd.DataFrame) -> pd.DataFrame:
     """Preenche falhas curtas das series climaticas dentro de cada municipio.
@@ -68,11 +72,29 @@ def adicionar_epidemiologicas(painel: pd.DataFrame) -> pd.DataFrame:
         )
 
     # Razao de crescimento entre a media movel curta e a longa.
-    dados["razao_mm3_mm8"] = dados["casos_est_mm3"] / dados["casos_est_mm8"].replace(0, np.nan)
+    #
+    # As duas razoes abaixo dividem por um denominador que pode ser zero em
+    # municipios pequenos e em semanas sem casos. Deixar NaN eliminaria essas
+    # linhas da modelagem e do painel -- justamente os municipios calmos, que
+    # precisam aparecer como risco baixo. A leitura correta e semantica:
+    # sem casos antes e sem casos agora significa estabilidade, nao ausencia
+    # de informacao. Ja passar de zero para algum caso e crescimento, tratado
+    # como o teto da escala.
+    razao = dados["casos_est_mm3"] / dados["casos_est_mm8"].replace(0, np.nan)
+    sem_base_mm = (dados["casos_est_mm8"].fillna(0) == 0)
+    razao = razao.mask(sem_base_mm & (dados["casos_est_mm3"].fillna(0) == 0), 1.0)
+    dados["razao_mm3_mm8"] = razao.mask(
+        sem_base_mm & (dados["casos_est_mm3"].fillna(0) > 0), TETO_CRESCIMENTO
+    )
 
     # Variacao relativa semana contra semana anterior.
     anterior = por_municipio["casos_est"].shift(1)
-    dados["variacao_semanal"] = (dados["casos_est"] - anterior) / anterior.replace(0, np.nan)
+    variacao = (dados["casos_est"] - anterior) / anterior.replace(0, np.nan)
+    sem_base = anterior.fillna(0) == 0
+    variacao = variacao.mask(sem_base & (dados["casos_est"].fillna(0) == 0), 0.0)
+    dados["variacao_semanal"] = variacao.mask(
+        sem_base & (dados["casos_est"].fillna(0) > 0), TETO_CRESCIMENTO
+    )
 
     return dados
 
