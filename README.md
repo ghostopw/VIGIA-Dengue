@@ -1,0 +1,143 @@
+# VIGIA-Dengue
+
+Ferramenta digital de alerta precoce para estratificação espaço-temporal do risco de
+dengue em municípios do Distrito Federal e da RIDE-DF.
+
+Projeto PIBITI 2026 — Iniciação em Desenvolvimento Tecnológico e Inovação
+**Aluno:** João Gabriel Alves Guimarães (2512082047)
+**Orientadora:** Natália Ribeiro de Souza Evangelista (201534)
+**Instituição:** IESB — Ciências da Saúde / Saúde Coletiva / Epidemiologia
+
+---
+
+## O que já está pronto
+
+| Etapa do projeto | Situação | Onde está |
+|---|---|---|
+| 1 — Revisão e planejamento | Dicionário de dados e critérios operacionais | [docs/dicionario_de_dados.md](docs/dicionario_de_dados.md) |
+| 2 — Base analítica | 21.747 linhas município-semana, 2014–2026 | `src/vigia/ingestao_infodengue.py`, `src/vigia/base_analitica.py` |
+| 3 — Análise espaço-temporal | Canal endêmico e estratificação em 4 níveis | `src/vigia/risco.py` |
+| 4 — Modelagem de alerta | 3 modelos com validação temporal | `src/vigia/modelagem.py` |
+| 5 — Dashboard | Painel Streamlit com mapa, séries e relatórios | `app/painel.py` |
+| 6 — Avaliação e documentação | Métricas apuradas; manual e relatório pendentes | `saidas/desempenho_modelos.csv` |
+
+## Território piloto
+
+**33 municípios**: Distrito Federal, 29 municípios goianos do Entorno e 3 municípios
+mineiros, conforme a RIDE-DF (LC 94/1998, ampliada pela LC 163/2018). Todos os códigos
+IBGE são conferidos contra a API do IBGE por `validar_territorio()`.
+
+> O DF é um único município na malha do IBGE e o InfoDengue não o desagrega por Região
+> Administrativa. A RIDE foi adotada para que a análise espacial, os mapas e a
+> estratificação entre municípios — cinco dos objetivos específicos — tivessem base de
+> dados real. A escolha também é epidemiologicamente defensável: a dengue circula pelo
+> pendularismo diário entre o DF e o Entorno.
+
+## Fontes de dados
+
+| Fonte | Uso | Acesso |
+|---|---|---|
+| InfoDengue (Fiocruz/FGV) | Casos, casos estimados por *nowcasting*, incidência, Rt, clima semanal | API pública `alertcity` |
+| IBGE | População e malha cartográfica municipal | APIs de localidades e de malhas |
+
+> **Nota sobre o SINAN.** O projeto previa microdados do SINAN via DATASUS. O acesso
+> (FTP e espelho HTTPS) não respondeu neste ambiente. O InfoDengue foi adotado por
+> processar o próprio SINAN e por já entregar a série em município-semana **com correção
+> do atraso de notificação** — requisito central para alerta precoce. Se o acesso ao
+> DATASUS for restabelecido, os microdados permitem estratificar por idade, sexo e
+> gravidade, o que o InfoDengue não oferece.
+
+## Como reproduzir
+
+```bash
+pip install -r requirements.txt
+
+python src/vigia/executar_ingestao.py        # baixa a série 2014-2026 (~5 min)
+python src/vigia/executar_malha.py           # baixa a malha cartográfica
+python src/vigia/executar_analise.py         # base analítica, risco e validação
+python src/vigia/executar_painel_dados.py    # gera os dados do painel
+
+streamlit run app/painel.py                  # abre o dashboard
+python -m pytest testes -q                   # roda os testes
+```
+
+## O painel
+
+Quatro abas:
+
+- **Mapa de risco** — coroplético dos 33 municípios na semana escolhida, com os quatro
+  níveis de risco, distribuição dos níveis e ranking das maiores probabilidades.
+- **Séries temporais** — casos notificados × estimados com faixa de incerteza do
+  *nowcasting*, e a incidência contra o limite esperado do canal endêmico.
+- **Ranking e relatório** — tabela ordenada por probabilidade de alerta, com os fatores
+  que pesaram em cada previsão, e exportação em CSV.
+- **Desempenho do modelo** — métricas da validação temporal, ano a ano.
+
+Controles: semana epidemiológica, município, limiar de probabilidade do alerta e
+sinalização de semanas com notificação incompleta.
+
+## Estratificação de risco
+
+O nível final é o **maior** entre dois critérios, para que nem uma epidemia fora de época
+nem um patamar alto sustentado passem despercebidos:
+
+1. **Canal endêmico** — posição da incidência frente aos quartis históricos da mesma
+   semana do ano no município (só anos anteriores, janela de ±2 semanas).
+2. **Patamares absolutos** — incidência semanal por 100 mil: 10, 30 e 60.
+
+Validação histórica: o pico de semanas em risco *muito alto* ocorre em **2024 (46,9%)**,
+a grande epidemia do período, seguido de 2022 (32,7%) e 2019 (26,2%); o mínimo é 2018
+(3,4%), ano reconhecidamente calmo.
+
+## Desempenho dos modelos
+
+Desfecho: risco alto ou muito alto **4 semanas à frente**. Validação temporal em janela
+expansiva (treina até o ano *t−1*, avalia em *t*), média de 2019 a 2025:
+
+| Modelo | Sensibilidade | Especificidade | VPP | AUC | AUPRC | Brier |
+|---|---|---|---|---|---|---|
+| Referência (persistência) | 0,793 | 0,654 | 0,760 | 0,723 | 0,721 | 0,257 |
+| Interpretável (logística) | 0,721 | 0,649 | 0,741 | 0,764 | 0,819 | 0,196 |
+| Aprendizado (LightGBM) | **0,736** | **0,700** | **0,776** | **0,801** | **0,844** | **0,198** |
+
+Leitura honesta: a persistência tem sensibilidade maior, porque com prevalência de 47,6%
+repetir o estado atual já acerta bastante. O ganho dos modelos está na **discriminação** —
+eles superam a referência em AUC **nos sete anos avaliados**, e a vantagem é máxima
+em 2024 (0,84 contra 0,72), justamente o ano epidêmico em que o alerta precisa funcionar.
+
+## Estrutura
+
+```
+app/painel.py                  dashboard Streamlit
+src/vigia/territorio.py        os 33 municípios, com validação contra o IBGE
+src/vigia/ingestao_infodengue.py  download da série município-semana
+src/vigia/base_analitica.py    incidência, médias móveis, defasagens, flags
+src/vigia/risco.py             canal endêmico e estratificação em 4 níveis
+src/vigia/modelagem.py         3 modelos e validação temporal
+src/vigia/painel_dados.py      probabilidade de alerta e fatores explicativos
+docs/dicionario_de_dados.md    dicionário completo das 105 variáveis
+testes/test_base.py            testes das regras críticas
+```
+
+## Cuidados metodológicos
+
+**Vazamento temporal.** Nenhuma variável explicativa enxerga o futuro: médias móveis são
+deslocadas por `shift(1)`, o canal endêmico usa só anos anteriores e a validação é
+temporal. Três testes automatizados verificam isso a cada execução, porque é um erro
+silencioso que inflaria as métricas.
+
+**Atraso de notificação.** As semanas recentes vêm subnotificadas — na última semana da
+série, um município exibia 92 casos notificados contra 184 estimados. Todo o cálculo de
+incidência e risco usa `casos_est`, e o painel sinaliza as semanas provisórias.
+
+## Próximos passos
+
+- Etapa 6: manual do usuário e relatório técnico final.
+- Operação sombra: acompanhar os alertas em tempo real e ajustar o limiar.
+- Avaliação de usabilidade com profissionais de vigilância (exige submissão ao CEP).
+- Calibração das probabilidades e análise da antecedência efetiva do alerta.
+
+---
+
+Ferramenta de apoio à vigilância epidemiológica. Não substitui a análise da equipe de
+vigilância local nem orienta conduta clínica individual.
