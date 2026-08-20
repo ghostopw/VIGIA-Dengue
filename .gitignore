@@ -1,0 +1,7 @@
+__pycache__/
+*.pyc
+.venv/
+dados/bruto/
+dados/processado/*.csv
+saidas/figuras/*.png
+.streamlit/secrets.toml
