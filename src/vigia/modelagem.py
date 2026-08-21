@@ -34,15 +34,41 @@ from sklearn.preprocessing import StandardScaler
 HORIZONTE_PADRAO = 4
 
 VARIAVEIS = [
+    # Epidemiologicas -- o proprio historico de dengue. Concentram 59,6% do
+    # ganho do modelo; a incidencia da semana corrente sozinha responde por 33,7%.
     "incidencia_100k", "incidencia_lag1", "incidencia_lag2", "incidencia_lag4",
     "incidencia_mm3", "incidencia_mm8",
     "casos_est_mm3", "casos_est_mm8", "razao_mm3_mm8", "variacao_semanal",
+    # Climaticas -- condicao ambiental para o vetor, com defasagem compativel
+    # com o ciclo do Aedes aegypti (2 a 8 semanas entre a condicao e o caso).
     "tempmed", "tempmed_lag2", "tempmed_lag4", "tempmed_lag8",
     "tempmin_lag4", "tempmax_lag4",
     "umidmed", "umidmed_lag2", "umidmed_lag4",
     "tempmed_anomalia", "umidmed_anomalia", "semanas_favoraveis_8",
+    # Contextuais e historicas.
     "log_pop", "semana", "canal_mediana", "canal_q3",
 ]
+
+# Nota metodologica sobre o bloco climatico.
+#
+# Medido no territorio da RIDE-DF, o clima praticamente nao agrega poder
+# preditivo: sozinho alcanca AUC de 0,586 (o acaso e 0,50) e sua remocao nao
+# piora o modelo completo (0,829 com clima contra 0,838 sem, media de sete anos
+# de validacao temporal).
+#
+# Isso nao contradiz a literatura, que estabelece o clima como determinante da
+# dengue. A razao e o recorte espacial: os 33 municipios ficam no mesmo bioma e
+# na mesma faixa de altitude, e a temperatura varia apenas 0,68 grau entre eles
+# na mesma semana. O clima explica QUANDO a dengue sobe -- a sazonalidade, que a
+# variavel `semana` ja captura --, mas nao explica ONDE, que e o que a
+# estratificacao espacial precisa distinguir. A correlacao com a incidencia
+# futura confirma: 0,21 para a temperatura defasada contra 0,72 para a propria
+# incidencia atual.
+#
+# O bloco foi mantido por tres motivos: consta do projeto aprovado (item 4.4),
+# nao prejudica o desempenho, e sustenta a leitura de receptividade ambiental no
+# painel. Em um territorio climaticamente heterogeneo -- um estado inteiro, por
+# exemplo -- a conclusao provavelmente seria outra.
 
 
 def preparar(base: pd.DataFrame, horizonte: int = HORIZONTE_PADRAO) -> pd.DataFrame:
