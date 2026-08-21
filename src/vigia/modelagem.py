@@ -47,6 +47,8 @@ VARIAVEIS = [
     "tempmed_anomalia", "umidmed_anomalia", "semanas_favoraveis_8",
     # Contextuais e historicas.
     "log_pop", "semana", "canal_mediana", "canal_q3",
+    # Vulnerabilidade socioambiental (Censo 2022), fixa no tempo por municipio.
+    "esgoto_inadequado_pct", "sem_agua_rede_pct", "lixo_sem_coleta_pct",
 ]
 
 # Nota metodologica sobre o bloco climatico.

@@ -16,6 +16,7 @@ import pandas as pd  # noqa: E402
 from vigia.base_analitica import construir  # noqa: E402
 from vigia.modelagem import preparar, validacao_temporal  # noqa: E402
 from vigia.risco import classificar  # noqa: E402
+from vigia.vulnerabilidade import integrar  # noqa: E402
 
 RAIZ = Path(__file__).resolve().parents[2]
 ANOS_AVALIACAO = [2019, 2020, 2021, 2022, 2023, 2024, 2025]
@@ -27,6 +28,17 @@ if __name__ == "__main__":
 
     print("construindo a base analitica...")
     base = construir(bruto)
+
+    # Vulnerabilidade socioambiental: indicadores municipais fixos no tempo,
+    # coletados por executar_vulnerabilidade.py. Se o arquivo ainda nao existir,
+    # a base segue sem o bloco em vez de interromper o pipeline.
+    arquivo_vulnerabilidade = RAIZ / "dados" / "externo" / "vulnerabilidade.csv"
+    if arquivo_vulnerabilidade.exists():
+        base = integrar(base, pd.read_csv(arquivo_vulnerabilidade))
+        print("  bloco de vulnerabilidade socioambiental integrado")
+    else:
+        print("  aviso: vulnerabilidade.csv ausente; execute executar_vulnerabilidade.py")
+
     base.to_csv(processado / "base_analitica.csv", index=False, encoding="utf-8")
     print(f"  {len(base)} linhas x {base.shape[1]} colunas")
 

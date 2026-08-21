@@ -1,6 +1,6 @@
 # Pacote de dados -- VIGIA-Dengue
 
-Gerado em 2026-08-19.
+Gerado em 2026-08-21.
 
 Territorio: Distrito Federal e RIDE-DF (33 municipios).
 Unidade de analise: municipio x semana epidemiologica.
@@ -15,9 +15,9 @@ Fontes:
 | `dengue_municipio_semana.csv` | 21.747 | 37 | Dengue: serie municipio-semana bruta do InfoDengue, 2014-2026. |
 | `chikungunya_municipio_semana.csv` | 21.747 | 37 | Chikungunya: serie municipio-semana bruta do InfoDengue, 2016-2026. |
 | `zika_municipio_semana.csv` | 17.457 | 37 | Zika: serie municipio-semana bruta do InfoDengue, 2016-2026. |
-| `base_analitica.csv` | 21.747 | 96 | Tabela analitica: incidencia, medias moveis, defasagens e flags. |
-| `base_com_risco.csv` | 21.747 | 105 | Base analitica acrescida do canal endemico e da estratificacao de risco. |
-| `painel.csv` | 12.545 | 38 | Base do painel: probabilidade de alerta e fatores explicativos. |
+| `base_analitica.csv` | 21.747 | 100 | Tabela analitica: incidencia, medias moveis, defasagens e flags. |
+| `base_com_risco.csv` | 21.747 | 109 | Base analitica acrescida do canal endemico e da estratificacao de risco. |
+| `painel.csv` | 19.998 | 39 | Base do painel: probabilidade de alerta e fatores explicativos. |
 | `malha_municipios.geojson` | - | - | Malha cartografica dos 33 municipios (IBGE). |
 | `desempenho_modelos.csv` | 21 | 12 | Metricas da validacao temporal dos tres modelos, por ano. |
 | `brutos_por_municipio/` | - | - | 99 CSVs: retorno original da API, um por municipio e arbovirose. |
