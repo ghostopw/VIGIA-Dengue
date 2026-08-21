@@ -45,6 +45,10 @@ os códigos IBGE são conferidos contra a API do IBGE por `validar_territorio()`
 | InfoDengue (Fiocruz/FGV) | Casos, casos estimados por *nowcasting*, incidência, Rt, clima semanal | API pública `alertcity` |
 | IBGE | População e malha cartográfica municipal | APIs de localidades e de malhas |
 
+**Todas as URLs de origem** — as 132 requisições que geraram os dados brutos — estão
+documentadas em [docs/fontes_dos_dados.md](docs/fontes_dos_dados.md). Cada link abre no
+navegador e devolve exatamente o conteúdo que gerou o arquivo local correspondente.
+
 > **Nota sobre o SINAN.** O projeto previa microdados do SINAN via DATASUS. O acesso
 > (FTP e espelho HTTPS) não respondeu neste ambiente. O InfoDengue foi adotado por
 > processar o próprio SINAN e por já entregar a série em município-semana **com correção
