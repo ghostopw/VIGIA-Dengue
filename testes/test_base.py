@@ -166,3 +166,23 @@ def test_semana_sem_casos_tem_variacao_zero(base: pd.DataFrame):
     paradas = municipio[(anterior == 0) & (municipio["casos_est"] == 0)]
     if not paradas.empty:
         assert (paradas["variacao_semanal"] == 0).all()
+
+
+def test_ras_do_df_casam_apesar_do_encoding_corrompido():
+    """As 31 RAs do shapefile devem receber codigo IBGE e populacao.
+
+    O .dbf de origem tem os acentos gravados como bytes invalidos: "Brazlandia"
+    e lido como "BRAZLINDIA". Um casamento por igualdade exata falharia
+    silenciosamente justamente nas maiores RAs -- Ceilandia, Aguas Claras,
+    Guara, Sao Sebastiao -- deixando o mapa intraurbano sem dado.
+    """
+    pytest.importorskip("geopandas")
+    from vigia.ras_df import carregar_malha
+
+    malha = carregar_malha()
+    assert len(malha) == 31
+    assert malha["cod_subdistrito"].notna().all()
+    assert malha["populacao"].notna().all()
+    # A soma tem de ficar proxima da populacao do DF (~2,9 milhoes).
+    assert 2_500_000 < malha["populacao"].sum() < 3_300_000
+    assert "Ceilandia" in set(malha["ra_nome"])
