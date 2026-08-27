@@ -19,7 +19,58 @@ import requests
 IBGE_LOCALIDADES = "https://servicodados.ibge.gov.br/api/v1/localidades"
 
 # O Distrito Federal e um unico municipio na malha do IBGE.
+#
+# Por que nao aparecem aqui Ceilandia, Taguatinga, Samambaia e as demais
+# "cidades de Brasilia": elas nao sao municipios, e sim Regioes Administrativas
+# criadas pela legislacao distrital. O IBGE reconhece no DF exatamente um
+# municipio (5300108, "Brasilia") e um distrito -- o que se verifica chamando
+# .../localidades/estados/53/municipios. As 35 RAs existem no IBGE apenas como
+# SUBDISTRITOS (ver RAS_DF abaixo), um nivel para o qual nao ha dado semanal de
+# dengue publicado: o InfoDengue opera somente no nivel municipal e devolve
+# lista vazia para esses codigos.
 DISTRITO_FEDERAL = {5300108: "Brasilia"}
+
+# As 35 Regioes Administrativas, na codificacao de subdistrito do IBGE.
+# Nao entram na base analitica por falta de serie epidemiologica semanal nesse
+# nivel; ficam registradas porque delimitam o desdobramento intraurbano mais
+# valioso do projeto, caso a Secretaria de Saude do DF ceda os dados por RA.
+RAS_DF = {
+    53001080506: "Plano Piloto",
+    53001080507: "Gama",
+    53001080508: "Taguatinga",
+    53001080509: "Brazlandia",
+    53001080510: "Sobradinho",
+    53001080511: "Planaltina",
+    53001080512: "Paranoa",
+    53001080513: "Riacho Fundo",
+    53001080514: "Nucleo Bandeirante",
+    53001080515: "Ceilandia",
+    53001080516: "Guara",
+    53001080517: "Cruzeiro",
+    53001080518: "Samambaia",
+    53001080519: "Candangolandia",
+    53001080520: "Recanto das Emas",
+    53001080521: "Lago Norte",
+    53001080523: "Lago Sul",
+    53001080525: "Santa Maria",
+    53001080530: "Sao Sebastiao",
+    53001080531: "Sol Nascente/Por do Sol",
+    53001080532: "Arniqueira",
+    53001080533: "SIA",
+    53001080534: "SCIA",
+    53001080535: "Sudoeste/Octogonal",
+    53001080536: "Aguas Claras",
+    53001080537: "Vicente Pires",
+    53001080538: "Itapoa",
+    53001080539: "Fercal",
+    53001080540: "Jardim Botanico",
+    53001080541: "Riacho Fundo II",
+    53001080542: "Park Way",
+    53001080543: "Varjao",
+    53001080544: "Sobradinho II",
+    53001080545: "Arapoanga",
+    53001080546: "Agua Quente",
+}
 
 RIDE_GO = {
     5200100: "Abadiania",
