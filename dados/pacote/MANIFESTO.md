@@ -15,8 +15,8 @@ Fontes:
 | `dengue_municipio_semana.csv` | 19.770 | 37 | Dengue: serie municipio-semana bruta do InfoDengue, 2014-2026. |
 | `chikungunya_municipio_semana.csv` | 19.770 | 37 | Chikungunya: serie municipio-semana bruta do InfoDengue, 2016-2026. |
 | `zika_municipio_semana.csv` | 15.870 | 37 | Zika: serie municipio-semana bruta do InfoDengue, 2016-2026. |
-| `base_analitica.csv` | 19.770 | 100 | Tabela analitica: incidencia, medias moveis, defasagens e flags. |
-| `base_com_risco.csv` | 19.770 | 109 | Base analitica acrescida do canal endemico e da estratificacao de risco. |
+| `base_analitica.csv` | 19.770 | 115 | Tabela analitica: incidencia, medias moveis, defasagens e flags. |
+| `base_com_risco.csv` | 19.770 | 124 | Base analitica acrescida do canal endemico e da estratificacao de risco. |
 | `painel.csv` | 18.180 | 39 | Base do painel: probabilidade de alerta e fatores explicativos. |
 | `malha_municipios.geojson` | - | - | Malha cartografica dos 33 municipios (IBGE). |
 | `desempenho_modelos.csv` | 21 | 12 | Metricas da validacao temporal dos tres modelos, por ano. |

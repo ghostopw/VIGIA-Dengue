@@ -42,6 +42,13 @@ def centroides(geocodigos: list[int]) -> dict[int, tuple[float, float]]:
     Usa a malha do IBGE ja baixada pelo projeto, calculando o centro do
     retangulo envolvente de cada poligono -- suficiente para consultar uma
     grade climatica de 25 km.
+
+    O ponto e o centro geometrico do municipio, nao a sede urbana. Em
+    municipios extensos isso desloca a medida para a area rural: no DF, o
+    centroide rende cerca de 980 mm/ano contra os cerca de 1.300 mm medidos
+    sobre o centro de Brasilia. A sazonalidade -- que e o que o modelo usa --
+    fica preservada, mas o nivel absoluto nao deve ser lido como a chuva da
+    cidade.
     """
     import json
 

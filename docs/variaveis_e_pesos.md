@@ -41,29 +41,35 @@ Duas observações da própria literatura orientaram decisões aqui:
 Pesos medidos pelo ganho acumulado no LightGBM, treinado sobre a base completa
 com validação temporal em janela expansiva.
 
+Base final: **41 preditores**, 115 colunas, 30 municípios × 659 semanas.
+
 | Bloco | Peso | Nº de variáveis | Papel |
 |---|---|---|---|
-| **Epidemiológico** | **59,6%** | 10 | histórico da própria dengue |
-| Climático | 22,6% | 12 | condição ambiental para o vetor |
-| Contextual | 9,6% | 2 | população e sazonalidade |
-| Histórico (canal endêmico) | 8,2% | 2 | padrão esperado da semana |
+| **Epidemiológico** | **52,3%** | 10 | histórico da própria dengue |
+| Climático (temp./umidade) | 16,6% | 12 | condição ambiental para o vetor |
+| Precipitação | 13,6% | 12 | criadouros, lavagem e armazenamento |
+| Canal endêmico | 7,5% | 2 | padrão esperado da semana |
+| Contextual | 6,0% | 2 | população e sazonalidade |
+| Vulnerabilidade | 4,0% | 3 | saneamento (Censo 2022) |
 
 ### As dez variáveis de maior peso
 
 | Peso | Variável | Direção | Descrição |
 |---|---|---|---|
-| 33,7% | `incidencia_100k` | ↑ | incidência da semana corrente |
-| 8,8% | `incidencia_lag1` | ↑ | incidência da semana anterior |
-| 4,9% | `log_pop` | ↑ | porte populacional |
-| 4,8% | `semana` | — | semana epidemiológica (sazonalidade) |
-| 4,5% | `canal_q3` | ↓ | limite esperado histórico |
-| 4,1% | `incidencia_mm3` | ↑ | média móvel de 3 semanas |
-| 3,7% | `canal_mediana` | ↓ | mediana histórica da semana |
-| 3,0% | `incidencia_mm8` | ↓ | média móvel de 8 semanas |
-| 2,6% | `casos_est_mm3` | ↓ | casos estimados, média de 3 semanas |
-| 2,4% | `umidmed_lag2` | ↑ | umidade 2 semanas antes |
+| 30,3% | `incidencia_100k` | ↑ | incidência da semana corrente |
+| 4,9% | `incidencia_lag1` | ↑ | incidência da semana anterior |
+| 3,9% | `canal_mediana` | ↓ | mediana histórica da semana |
+| 3,8% | `incidencia_mm3` | ↑ | média móvel de 3 semanas |
+| 3,6% | `log_pop` | ↑ | porte populacional |
+| 3,6% | `canal_q3` | ↓ | limite esperado histórico |
+| 3,2% | `incidencia_mm8` | ↓ | média móvel de 8 semanas |
+| 2,8% | `incidencia_lag2` | ↑ | incidência de 2 semanas antes |
+| 2,4% | `semana` | — | semana epidemiológica (sazonalidade) |
+| 2,2% | `casos_est_mm3` | ↑ | casos estimados, média de 3 semanas |
+| 2,1% | `chuva_acum4` | ↑ | chuva acumulada em 4 semanas |
+| 2,1% | `chuva_semana_mm` | ↑ | chuva da semana |
 
-As cinco primeiras concentram 56,6% do ganho total.
+A incidência corrente sozinha responde por 30,3% do ganho.
 
 ---
 
@@ -73,10 +79,16 @@ Testes removendo blocos inteiros, sempre com validação temporal:
 
 | Conjunto | AUC |
 |---|---|
-| Todas as variáveis | 0,829 |
-| Sem clima | 0,838 |
-| Só epidemiológicas | 0,796 |
-| **Só clima** | **0,586** |
+| Todas as variáveis (41) | 0,818 |
+| Sem clima | 0,838* |
+| Só epidemiológicas | 0,796* |
+| **Só clima** | **0,586*** |
+| **Só precipitação (12)** | **0,550** |
+
+\* medidos na base anterior, de 33 municípios.
+
+**A precipitação repete o padrão.** Ganho médio de apenas +0,002 de AUC
+(vencendo em 5 dos 7 anos), e isoladamente fica em 0,550 — quase o acaso.
 
 **O clima quase não agrega poder preditivo neste território.** Isoladamente
 fica em 0,586, próximo do acaso (0,50), e removê-lo não piora o modelo.
@@ -97,8 +109,17 @@ associação significativa com a incidência (Spearman ρ = 0,119; p = 0,51), e
 ganho de apenas +0,0007 de AUC. A explicação é da mesma natureza — o indicador
 é municipal, mas a vulnerabilidade que importa para dengue é **intraurbana**.
 
+### O padrão que se repete
+
+Três blocos independentes — clima, precipitação e vulnerabilidade — produziram
+o mesmo resultado: contribuição marginal, e desempenho próximo do acaso quando
+isolados. A explicação é comum a todos: **eles variam no tempo, mas quase não
+variam entre os municípios do território.** O modelo de estratificação espacial
+precisa distinguir *onde*, e esses blocos só informam *quando*.
+
 Os blocos foram mantidos: constam do projeto aprovado (item 4.4), descrevem o
-território no painel e não prejudicam o desempenho.
+território no painel, não prejudicam o desempenho e cada um vence na maioria dos
+anos avaliados.
 
 ---
 
