@@ -51,6 +51,20 @@ VARIAVEIS = [
     "esgoto_inadequado_pct", "sem_agua_rede_pct", "lixo_sem_coleta_pct",
 ]
 
+# Bloco de precipitacao. Fica separado porque depende de coleta propria
+# (executar_chuva.py) e nem sempre esta presente: `preparar` so inclui as
+# variaveis que existirem na base, de modo que o pipeline funcione com ou sem
+# ele. A chuva entra em varias leituras porque seu efeito nao e linear --
+# acumulo cria criadouros, torrencial os lava, seca leva a armazenar agua.
+VARIAVEIS_CHUVA = [
+    "chuva_semana_mm", "chuva_lag2", "chuva_lag4", "chuva_lag6", "chuva_lag8",
+    "chuva_acum4", "chuva_acum8", "chuva_acum12",
+    "semanas_secas_8", "semanas_torrenciais_4", "chuva_anomalia",
+    "chuva_dias_com_chuva",
+]
+
+VARIAVEIS = VARIAVEIS + VARIAVEIS_CHUVA
+
 # Nota metodologica sobre o bloco climatico.
 #
 # Medido no territorio da RIDE-DF, o clima praticamente nao agrega poder

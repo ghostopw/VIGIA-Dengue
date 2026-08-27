@@ -26,8 +26,17 @@ if __name__ == "__main__":
     processado = RAIZ / "dados" / "processado"
     bruto = pd.read_csv(processado / "infodengue_territorio.csv")
 
+    # Precipitacao: bloco opcional, coletado por executar_chuva.py.
+    arquivo_chuva = RAIZ / "dados" / "externo" / "chuva_semanal.csv"
+    chuva = pd.read_csv(arquivo_chuva) if arquivo_chuva.exists() else None
+
     print("construindo a base analitica...")
-    base = construir(bruto)
+    base = construir(bruto, chuva=chuva)
+    if chuva is not None:
+        cobertura = base["chuva_semana_mm"].notna().mean() * 100
+        print(f"  bloco de precipitacao integrado ({cobertura:.0f}% das linhas)")
+    else:
+        print("  aviso: chuva_semanal.csv ausente; execute executar_chuva.py")
 
     # Vulnerabilidade socioambiental: indicadores municipais fixos no tempo,
     # coletados por executar_vulnerabilidade.py. Se o arquivo ainda nao existir,
