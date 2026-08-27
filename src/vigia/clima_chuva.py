@@ -29,15 +29,11 @@ import requests
 from .territorio import TERRITORIO
 
 ARQUIVO_HISTORICO = "https://archive-api.open-meteo.com/v1/archive"
-IBGE_MALHAS_CENTROIDE = "https://servicodados.ibge.gov.br/api/v3/malhas/municipios"
+NASA_POWER = "https://power.larc.nasa.gov/api/temporal/daily/point"
 
-DIARIAS = [
-    "precipitation_sum",
-    "temperature_2m_max",
-    "temperature_2m_min",
-    "temperature_2m_mean",
-    "relative_humidity_2m_mean",
-]
+# Apenas precipitacao: temperatura e umidade ja vem do InfoDengue, e pedi-las
+# aqui quintuplicaria o volume por requisicao contra a cota horaria da API.
+DIARIAS = ["precipitation_sum"]
 
 
 def centroides(geocodigos: list[int]) -> dict[int, tuple[float, float]]:
@@ -78,9 +74,9 @@ def centroides(geocodigos: list[int]) -> dict[int, tuple[float, float]]:
     return pontos
 
 
-def baixar_municipio(latitude: float, longitude: float,
-                     inicio: str, fim: str, tentativas: int = 5) -> pd.DataFrame:
-    """Baixa a serie diaria de um ponto e devolve como DataFrame."""
+def _baixar_open_meteo(latitude: float, longitude: float,
+                       inicio: str, fim: str) -> pd.DataFrame:
+    """Serie diaria de precipitacao pela Open-Meteo (reanalise ERA5)."""
     parametros = {
         "latitude": round(latitude, 4),
         "longitude": round(longitude, 4),
@@ -89,16 +85,57 @@ def baixar_municipio(latitude: float, longitude: float,
         "daily": ",".join(DIARIAS),
         "timezone": "America/Sao_Paulo",
     }
+    resposta = requests.get(ARQUIVO_HISTORICO, params=parametros, timeout=240)
+    resposta.raise_for_status()
+    return pd.DataFrame(resposta.json()["daily"])
+
+
+def _baixar_nasa_power(latitude: float, longitude: float,
+                       inicio: str, fim: str) -> pd.DataFrame:
+    """Serie diaria de precipitacao pela NASA POWER.
+
+    Fonte de reserva: nao exige chave e nao aplica a cota horaria agressiva da
+    Open-Meteo, o que a torna utilizavel quando a primeira se esgota. Entrega
+    `PRECTOTCORR`, precipitacao corrigida por vies, em mm/dia.
+    """
+    parametros = {
+        "parameters": "PRECTOTCORR",
+        "community": "AG",
+        "latitude": round(latitude, 4),
+        "longitude": round(longitude, 4),
+        "start": inicio.replace("-", ""),
+        "end": fim.replace("-", ""),
+        "format": "JSON",
+    }
+    resposta = requests.get(NASA_POWER, params=parametros, timeout=300)
+    resposta.raise_for_status()
+    serie = resposta.json()["properties"]["parameter"]["PRECTOTCORR"]
+
+    tabela = pd.DataFrame(
+        {"time": list(serie.keys()), "precipitation_sum": list(serie.values())}
+    )
+    tabela["time"] = pd.to_datetime(tabela["time"], format="%Y%m%d")
+    # A NASA usa -999 como marcador de dado indisponivel.
+    tabela.loc[tabela["precipitation_sum"] < 0, "precipitation_sum"] = pd.NA
+    return tabela
+
+
+def baixar_municipio(latitude: float, longitude: float, inicio: str, fim: str,
+                     tentativas: int = 3) -> pd.DataFrame:
+    """Baixa a serie diaria de um ponto, com fonte de reserva.
+
+    Tenta a Open-Meteo e, se ela recusar (tipicamente 429 por cota horaria
+    esgotada), recorre a NASA POWER. Assim a coleta nao fica refem da cota de
+    um unico provedor.
+    """
     ultimo_erro: Exception | None = None
     for tentativa in range(tentativas):
-        try:
-            resposta = requests.get(ARQUIVO_HISTORICO, params=parametros, timeout=240)
-            resposta.raise_for_status()
-            return pd.DataFrame(resposta.json()["daily"])
-        except Exception as erro:
-            ultimo_erro = erro
-            # A API limita requisicoes por minuto; espera crescente.
-            time.sleep(20 * (tentativa + 1))
+        for baixar in (_baixar_open_meteo, _baixar_nasa_power):
+            try:
+                return baixar(latitude, longitude, inicio, fim)
+            except Exception as erro:
+                ultimo_erro = erro
+        time.sleep(15 * (tentativa + 1))
     raise RuntimeError(f"falha em ({latitude}, {longitude}): {ultimo_erro}")
 
 
@@ -120,10 +157,6 @@ def agregar_semana_epidemiologica(diario: pd.DataFrame) -> pd.DataFrame:
         chuva_semana_mm=("precipitation_sum", "sum"),
         chuva_dias_com_chuva=("precipitation_sum", lambda s: int((s >= 1.0).sum())),
         chuva_max_diaria_mm=("precipitation_sum", "max"),
-        temp_media_om=("temperature_2m_mean", "mean"),
-        temp_max_om=("temperature_2m_max", "max"),
-        temp_min_om=("temperature_2m_min", "min"),
-        umidade_media_om=("relative_humidity_2m_mean", "mean"),
         dias_no_periodo=("precipitation_sum", "size"),
     ).reset_index()
 
@@ -135,11 +168,12 @@ def coletar(inicio: str = "2014-01-01", fim: str | None = None,
             destino: Path | None = None, anos_por_bloco: int = 4) -> pd.DataFrame:
     """Baixa e consolida a precipitacao semanal de todo o territorio.
 
-    A API gratuita limita o VOLUME por requisicao, nao apenas a frequencia:
-    pedir 12 anos de cinco variaveis de uma vez devolve 429. Por isso a serie
-    de cada municipio e baixada em blocos de poucos anos, e o resultado
-    parcial e gravado a cada municipio -- assim uma interrupcao no meio nao
-    joga fora o que ja foi coletado.
+    A API gratuita impoe uma cota HORARIA de volume, e nao apenas um limite de
+    requisicoes por minuto: uma serie longa de varias variaveis a esgota e
+    passa a devolver 429 ate a hora virar. Por isso este coletor pede somente
+    a precipitacao, baixa em blocos de poucos anos e grava o resultado parcial
+    a cada municipio -- uma interrupcao por cota nao joga fora o ja coletado,
+    e basta reexecutar para retomar de onde parou.
     """
     if fim is None:
         fim = (pd.Timestamp.today() - pd.Timedelta(days=6)).strftime("%Y-%m-%d")

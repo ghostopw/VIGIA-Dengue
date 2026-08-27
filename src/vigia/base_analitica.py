@@ -27,6 +27,16 @@ LIMIAR_COMPLETUDE = 0.90
 # passar de nenhum caso para algum e crescimento, mas a divisao seria infinita.
 TETO_CRESCIMENTO = 10.0
 
+# Defasagens da chuva ate o caso: o intervalo de 4 a 8 semanas cobre o tempo
+# entre a formacao do criadouro, o desenvolvimento do vetor e a notificacao.
+DEFASAGENS_CHUVA = [2, 4, 6, 8, 12]
+
+# Semana com menos de 1 mm acumulado conta como seca.
+LIMIAR_SEMANA_SECA_MM = 1.0
+
+# Chuva diaria capaz de lavar criadouros.
+LIMIAR_CHUVA_TORRENCIAL_MM = 30.0
+
 
 def interpolar_clima(painel: pd.DataFrame) -> pd.DataFrame:
     """Preenche falhas curtas das series climaticas dentro de cada municipio.
@@ -99,6 +109,57 @@ def adicionar_epidemiologicas(painel: pd.DataFrame) -> pd.DataFrame:
     return dados
 
 
+def adicionar_chuva(painel: pd.DataFrame, chuva: pd.DataFrame) -> pd.DataFrame:
+    """Acopla a precipitacao semanal e deriva as variaveis de chuva.
+
+    A literatura de alerta de dengue usa precipitacao em cerca de 83% dos
+    modelos, mas o efeito nao e linear: chuva moderada acumulada cria
+    criadouros, com defasagem de 4 a 8 semanas ate o caso, enquanto chuva
+    torrencial os lava. Seca prolongada em area urbana tambem eleva o risco,
+    porque leva ao armazenamento domiciliar de agua. Por isso a chuva entra em
+    varias leituras, e nao como um unico acumulado.
+    """
+    dados = painel.copy()
+    dados["data_ini_se"] = pd.to_datetime(dados["data_ini_se"])
+
+    medidas = chuva.copy()
+    medidas["data_ini_se"] = pd.to_datetime(medidas["data_ini_se"])
+    colunas = ["cod_ibge", "data_ini_se", "chuva_semana_mm",
+               "chuva_dias_com_chuva", "chuva_max_diaria_mm"]
+    dados = dados.merge(medidas[colunas], on=["cod_ibge", "data_ini_se"], how="left")
+
+    dados = dados.sort_values(["cod_ibge", "data_ini_se"])
+    por_municipio = dados.groupby("cod_ibge", sort=False)
+
+    for lag in DEFASAGENS_CHUVA:
+        dados[f"chuva_lag{lag}"] = por_municipio["chuva_semana_mm"].shift(lag)
+
+    # Acumulados que representam a formacao de criadouros nas semanas anteriores.
+    for janela in (4, 8, 12):
+        dados[f"chuva_acum{janela}"] = por_municipio["chuva_semana_mm"].transform(
+            lambda serie, j=janela: serie.shift(1).rolling(j, min_periods=2).sum()
+        )
+
+    # Semanas secas consecutivas nas ultimas 8: proxy de armazenamento de agua.
+    seca = (dados["chuva_semana_mm"].fillna(0) < LIMIAR_SEMANA_SECA_MM).astype("int8")
+    dados["semanas_secas_8"] = seca.groupby(dados["cod_ibge"]).transform(
+        lambda serie: serie.shift(1).rolling(8, min_periods=4).sum()
+    )
+
+    # Chuva torrencial recente, que tende a lavar criadouros.
+    torrencial = (dados["chuva_max_diaria_mm"].fillna(0) >= LIMIAR_CHUVA_TORRENCIAL_MM)
+    dados["semanas_torrenciais_4"] = torrencial.astype("int8").groupby(
+        dados["cod_ibge"]
+    ).transform(lambda serie: serie.shift(1).rolling(4, min_periods=2).sum())
+
+    # Anomalia: desvio da chuva acumulada frente ao padrao daquela semana do ano.
+    media_sazonal = dados.groupby(["cod_ibge", "semana"])["chuva_semana_mm"].transform("mean")
+    dados["chuva_anomalia"] = dados["chuva_semana_mm"] - media_sazonal
+
+    dados["chuva_ausente"] = dados["chuva_semana_mm"].isna().astype("int8")
+    return dados
+
+
 def adicionar_climaticas(painel: pd.DataFrame) -> pd.DataFrame:
     """Defasagens climaticas e anomalias sazonais."""
     dados = painel.sort_values(["cod_ibge", "data_ini_se"]).copy()
@@ -163,13 +224,20 @@ def adicionar_flags_qualidade(painel: pd.DataFrame) -> pd.DataFrame:
     return dados
 
 
-def construir(bruto: pd.DataFrame) -> pd.DataFrame:
-    """Encadeia todas as etapas e devolve a tabela analitica final."""
+def construir(bruto: pd.DataFrame, chuva: pd.DataFrame | None = None) -> pd.DataFrame:
+    """Encadeia todas as etapas e devolve a tabela analitica final.
+
+    `chuva` e opcional: sem ela a base e construida sem o bloco de
+    precipitacao, em vez de falhar, o que mantem o pipeline utilizavel
+    enquanto a coleta da chuva nao estiver disponivel.
+    """
     dados = bruto.copy()
     dados["data_ini_se"] = pd.to_datetime(dados["data_ini_se"])
     dados = interpolar_clima(dados)
     dados = adicionar_epidemiologicas(dados)
     dados = adicionar_climaticas(dados)
+    if chuva is not None:
+        dados = adicionar_chuva(dados, chuva)
     dados = adicionar_contextuais(dados)
     dados = adicionar_flags_qualidade(dados)
     return dados.sort_values(["cod_ibge", "data_ini_se"]).reset_index(drop=True)

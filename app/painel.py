@@ -16,6 +16,7 @@ import streamlit as st
 RAIZ = Path(__file__).resolve().parents[1]
 CAMINHO_PAINEL = RAIZ / "dados" / "processado" / "painel.csv"
 CAMINHO_MALHA = RAIZ / "dados" / "externo" / "malha_ride_df.geojson"
+CAMINHO_MALHA_RAS = RAIZ / "dados" / "externo" / "malha_ras_df.geojson"
 CAMINHO_DESEMPENHO = RAIZ / "saidas" / "desempenho_modelos.csv"
 
 CORES_RISCO = {
@@ -43,6 +44,14 @@ def carregar_painel() -> pd.DataFrame:
 @st.cache_data
 def carregar_malha() -> dict:
     return json.loads(CAMINHO_MALHA.read_text(encoding="utf-8"))
+
+
+@st.cache_data
+def carregar_malha_ras() -> dict | None:
+    """Malha das 31 Regioes Administrativas do DF, se ja tiver sido gerada."""
+    if CAMINHO_MALHA_RAS.exists():
+        return json.loads(CAMINHO_MALHA_RAS.read_text(encoding="utf-8"))
+    return None
 
 
 @st.cache_data
@@ -185,8 +194,9 @@ with st.expander(
         "atravessa a fronteira do DF nos dois sentidos."
     )
 
-aba_mapa, aba_serie, aba_ranking, aba_modelo = st.tabs(
-    ["Mapa de risco", "Series temporais", "Ranking e relatorio", "Desempenho do modelo"]
+aba_mapa, aba_ras, aba_serie, aba_ranking, aba_modelo = st.tabs(
+    ["Mapa de risco", "Brasilia por Regiao Administrativa", "Series temporais",
+     "Ranking e relatorio", "Desempenho do modelo"]
 )
 
 # ------------------------------------------------------------------------ mapa
@@ -245,6 +255,80 @@ with aba_mapa:
             }),
             hide_index=True, width="stretch",
         )
+
+# ------------------------------------------- Brasilia por Regiao Administrativa
+with aba_ras:
+    malha_ras = carregar_malha_ras()
+
+    if malha_ras is None:
+        st.warning(
+            "Malha das Regioes Administrativas ausente. "
+            "Execute `python src/vigia/executar_ras.py` para gera-la."
+        )
+    else:
+        st.subheader("Estrutura territorial do Distrito Federal")
+        st.caption(
+            "As 31 Regioes Administrativas com geometria disponivel. Brasilia e um "
+            "unico municipio na malha do IBGE, e esta camada mostra a divisao "
+            "intraurbana que o dado municipal nao alcanca."
+        )
+
+        regioes = pd.DataFrame([
+            feicao["properties"] for feicao in malha_ras["features"]
+        ])
+        regioes["populacao"] = pd.to_numeric(regioes["populacao"], errors="coerce")
+
+        indicador = st.radio(
+            "Indicador exibido no mapa",
+            ["Populacao", "Densidade demografica"],
+            horizontal=True,
+        )
+
+        if indicador == "Densidade demografica" and "densidade_hab_km2" in regioes:
+            coluna, rotulo = "densidade_hab_km2", "hab./km2"
+        else:
+            coluna, rotulo = "populacao", "habitantes"
+
+        mapa_ras = px.choropleth_map(
+            regioes,
+            geojson=malha_ras,
+            locations="ra_nome",
+            featureidkey="properties.ra_nome",
+            color=coluna,
+            color_continuous_scale="YlOrRd",
+            map_style="carto-positron",
+            zoom=8.2,
+            center={"lat": -15.78, "lon": -47.93},
+            opacity=0.75,
+            labels={coluna: rotulo},
+            hover_data={"ra_nome": True, coluna: ":,.0f"},
+        )
+        mapa_ras.update_layout(height=560, margin={"r": 0, "t": 0, "l": 0, "b": 0})
+        st.plotly_chart(mapa_ras, width="stretch")
+
+        st.dataframe(
+            regioes.sort_values("populacao", ascending=False)[
+                [c for c in ("ra_nome", "populacao", "cod_subdistrito") if c in regioes]
+            ].rename(columns={
+                "ra_nome": "Regiao Administrativa",
+                "populacao": "Populacao (PDAD 2021)",
+                "cod_subdistrito": "Codigo IBGE (subdistrito)",
+            }),
+            hide_index=True, width="stretch", height=320,
+        )
+
+        st.info(
+            "**Por que este mapa nao mostra casos de dengue.** Nao ha fonte publica "
+            "com serie semanal de casos por Regiao Administrativa: o InfoDengue opera "
+            "apenas no nivel municipal, o painel de incidencia da SES-DF nao expoe "
+            "dados de forma programatica, o LIRAa e publicado como relatorio fechado "
+            "e os microdados do SINAN dependem do FTP do DATASUS. Repartir os casos do "
+            "DF entre as RAs na proporcao da populacao produziria um mapa apenas "
+            "aparentemente informativo, que reproduziria o mapa populacional e "
+            "esconderia a desigualdade intraurbana real. Obtida a serie por RA junto "
+            "a SES-DF, ela se acopla a esta malha pelo nome da regiao."
+        )
+
 
 # -------------------------------------------------------------- series temporais
 with aba_serie:

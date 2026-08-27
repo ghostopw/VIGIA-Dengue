@@ -147,8 +147,14 @@ def exportar_geojson(destino: Path = DESTINO_GEOJSON) -> dict:
     malha = carregar_malha()
     destino.parent.mkdir(parents=True, exist_ok=True)
 
-    colunas = ["ra_nome", "ra_numero", "cod_subdistrito", "populacao", "geometry"]
+    # Densidade: area em projecao equivalente do Brasil (Albers, EPSG:5880).
+    malha["area_km2"] = malha.to_crs("EPSG:5880").geometry.area / 1e6
+    malha["densidade_hab_km2"] = (malha["populacao"] / malha["area_km2"]).round(1)
+
+    colunas = ["ra_nome", "ra_numero", "cod_subdistrito", "populacao",
+               "area_km2", "densidade_hab_km2", "geometry"]
     reduzida = malha[[c for c in colunas if c in malha.columns]].copy()
+    reduzida["area_km2"] = reduzida["area_km2"].round(1)
     # Simplifica a geometria: o painel nao precisa da resolucao original, e o
     # arquivo menor carrega mais rapido no navegador.
     reduzida["geometry"] = reduzida["geometry"].simplify(0.0005, preserve_topology=True)
