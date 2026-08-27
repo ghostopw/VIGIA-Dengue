@@ -1,9 +1,21 @@
-"""Definicao do territorio piloto: Distrito Federal e RIDE-DF.
+"""Definicao do territorio piloto: Distrito Federal e Entorno goiano.
 
-A RIDE-DF (Regiao Integrada de Desenvolvimento do Distrito Federal e Entorno)
-foi instituida pela Lei Complementar 94/1998 e ampliada pela LC 163/2018.
-Reune o Distrito Federal, 29 municipios goianos do Entorno e 3 municipios
-mineiros do noroeste de Minas -- 33 unidades territoriais no total.
+REGRA DO PROJETO -- vale para toda coleta, presente e futura
+------------------------------------------------------------
+O territorio e o Distrito Federal (Brasilia) mais os 29 municipios goianos do
+Entorno: 30 unidades. Municipios de Minas Gerais estao EXCLUIDOS por decisao do
+projeto, ainda que a RIDE-DF legal os inclua.
+
+Toda rotina que buscar dados -- das APIs ja usadas ou de qualquer API que venha
+a ser criada -- deve iterar sobre `TERRITORIO` e nunca sobre uma lista propria
+de municipios. `validar_territorio()` recusa a base se algum municipio fora de
+DF ou GO aparecer, e ha teste automatizado cobrindo essa regra.
+
+A RIDE-DF (Regiao Integrada de Desenvolvimento do Distrito Federal e Entorno),
+instituida pela Lei Complementar 94/1998 e ampliada pela LC 163/2018, reune o
+DF, 29 municipios goianos e 3 mineiros. Este projeto adota o recorte DF + GO,
+mantendo a coesao com a unidade federativa vizinha e com a rede de saude que
+efetivamente compartilha fluxo assistencial diario com o DF.
 
 Todos os codigos IBGE abaixo foram resolvidos e conferidos contra a API de
 localidades do IBGE. A funcao `validar_territorio` refaz essa conferencia sob
@@ -104,18 +116,24 @@ RIDE_GO = {
     5222302: "Vila Propicio",
 }
 
-RIDE_MG = {
+# Municipios mineiros da RIDE-DF, EXCLUIDOS do territorio por decisao do
+# projeto. Ficam registrados apenas para documentar o que foi deixado de fora e
+# permitir reversao consciente -- nao devem ser somados a TERRITORIO.
+RIDE_MG_EXCLUIDOS = {
     3109303: "Buritis",
     3109451: "Cabeceira Grande",
     3170404: "Unai",
 }
 
-TERRITORIO = {**DISTRITO_FEDERAL, **RIDE_GO, **RIDE_MG}
+# Unidades federativas admitidas no territorio. Qualquer municipio fora desta
+# lista e recusado por `validar_territorio`.
+UFS_PERMITIDAS = ("DF", "GO")
+
+TERRITORIO = {**DISTRITO_FEDERAL, **RIDE_GO}
 
 UF_POR_CODIGO = {
     **{c: "DF" for c in DISTRITO_FEDERAL},
     **{c: "GO" for c in RIDE_GO},
-    **{c: "MG" for c in RIDE_MG},
 }
 
 
@@ -134,21 +152,51 @@ def municipios_uf(uf: str) -> dict[int, str]:
     return {int(m["id"]): m["nome"] for m in resposta.json()}
 
 
-def validar_territorio() -> list[str]:
-    """Confere cada codigo do territorio contra a API do IBGE.
+def uf_do_codigo(codigo: int) -> str:
+    """Deduz a UF pelo prefixo do codigo IBGE (53 = DF, 52 = GO, 31 = MG)."""
+    return {"53": "DF", "52": "GO", "31": "MG"}.get(str(codigo)[:2], "??")
 
-    Retorna a lista de divergencias encontradas; lista vazia significa que
-    todos os codigos existem e correspondem ao nome declarado.
+
+def filtrar_territorio(codigos: "list[int]") -> list[int]:
+    """Mantem apenas os codigos que pertencem ao territorio do projeto.
+
+    Use esta funcao em qualquer rotina de coleta que receba municipios de fora
+    -- de uma API nova, de um arquivo enviado por terceiros, de uma lista
+    digitada a mao. Ela e a barreira que impede municipios de MG, ou de
+    qualquer outra UF, de entrarem na base por descuido.
+    """
+    return [c for c in codigos if c in TERRITORIO]
+
+
+def validar_territorio() -> list[str]:
+    """Confere o territorio contra a API do IBGE e contra a regra do projeto.
+
+    Verifica tres coisas: que todo codigo existe no IBGE, que o nome declarado
+    confere com o oficial, e que nenhuma UF fora de `UFS_PERMITIDAS` entrou na
+    base. Retorna a lista de divergencias; lista vazia significa tudo certo.
     """
     divergencias: list[str] = []
     oficiais: dict[int, str] = {}
-    for uf in ("DF", "GO", "MG"):
+    for uf in UFS_PERMITIDAS:
         oficiais.update(municipios_uf(uf))
 
     for codigo, nome in TERRITORIO.items():
+        uf = uf_do_codigo(codigo)
+        if uf not in UFS_PERMITIDAS:
+            divergencias.append(
+                f"{codigo} ({nome}): UF {uf} fora do territorio do projeto "
+                f"(permitidas: {', '.join(UFS_PERMITIDAS)})"
+            )
+            continue
         oficial = oficiais.get(codigo)
         if oficial is None:
             divergencias.append(f"{codigo} ({nome}): codigo inexistente no IBGE")
         elif normalizar(oficial).replace("'", "") != normalizar(nome).replace("'", ""):
             divergencias.append(f"{codigo}: declarado '{nome}', IBGE diz '{oficial}'")
+
+    intrusos = set(TERRITORIO) & set(RIDE_MG_EXCLUIDOS)
+    if intrusos:
+        divergencias.append(
+            f"municipios de MG excluidos voltaram ao territorio: {sorted(intrusos)}"
+        )
     return divergencias

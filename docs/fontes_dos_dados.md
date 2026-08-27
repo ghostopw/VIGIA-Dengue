@@ -32,7 +32,7 @@ API publica alertcity  -->  dados/bruto/infodengue/ (99 arquivos)
 | chikungunya | https://info.dengue.mat.br/api/alertcity?geocode=5300108&disease=chikungunya&format=json&ew_start=1&ew_end=53&ey_start=2014&ey_end=2026 |
 | zika | https://info.dengue.mat.br/api/alertcity?geocode=5300108&disease=zika&format=json&ew_start=1&ew_end=53&ey_start=2014&ey_end=2026 |
 
-## Todas as requisicoes (132)
+## Todas as requisicoes (120)
 
 | Municipio | UF | Fonte | Conteudo | URL |
 |---|---|---|---|---|
@@ -68,14 +68,6 @@ API publica alertcity  -->  dados/bruto/infodengue/ (99 arquivos)
 | Brasilia | DF | InfoDengue | chikungunya: serie municipio-semana 2014-2026 | https://info.dengue.mat.br/api/alertcity?geocode=5300108&disease=chikungunya&format=json&ew_start=1&ew_end=53&ey_start=2014&ey_end=2026 |
 | Brasilia | DF | InfoDengue | zika: serie municipio-semana 2014-2026 | https://info.dengue.mat.br/api/alertcity?geocode=5300108&disease=zika&format=json&ew_start=1&ew_end=53&ey_start=2014&ey_end=2026 |
 | Brasilia | DF | IBGE | malha cartografica municipal (GeoJSON) | https://servicodados.ibge.gov.br/api/v3/malhas/municipios/5300108?formato=application/vnd.geo+json&qualidade=intermediaria |
-| Buritis | MG | InfoDengue | dengue: serie municipio-semana 2014-2026 | https://info.dengue.mat.br/api/alertcity?geocode=3109303&disease=dengue&format=json&ew_start=1&ew_end=53&ey_start=2014&ey_end=2026 |
-| Buritis | MG | InfoDengue | chikungunya: serie municipio-semana 2014-2026 | https://info.dengue.mat.br/api/alertcity?geocode=3109303&disease=chikungunya&format=json&ew_start=1&ew_end=53&ey_start=2014&ey_end=2026 |
-| Buritis | MG | InfoDengue | zika: serie municipio-semana 2014-2026 | https://info.dengue.mat.br/api/alertcity?geocode=3109303&disease=zika&format=json&ew_start=1&ew_end=53&ey_start=2014&ey_end=2026 |
-| Buritis | MG | IBGE | malha cartografica municipal (GeoJSON) | https://servicodados.ibge.gov.br/api/v3/malhas/municipios/3109303?formato=application/vnd.geo+json&qualidade=intermediaria |
-| Cabeceira Grande | MG | InfoDengue | dengue: serie municipio-semana 2014-2026 | https://info.dengue.mat.br/api/alertcity?geocode=3109451&disease=dengue&format=json&ew_start=1&ew_end=53&ey_start=2014&ey_end=2026 |
-| Cabeceira Grande | MG | InfoDengue | chikungunya: serie municipio-semana 2014-2026 | https://info.dengue.mat.br/api/alertcity?geocode=3109451&disease=chikungunya&format=json&ew_start=1&ew_end=53&ey_start=2014&ey_end=2026 |
-| Cabeceira Grande | MG | InfoDengue | zika: serie municipio-semana 2014-2026 | https://info.dengue.mat.br/api/alertcity?geocode=3109451&disease=zika&format=json&ew_start=1&ew_end=53&ey_start=2014&ey_end=2026 |
-| Cabeceira Grande | MG | IBGE | malha cartografica municipal (GeoJSON) | https://servicodados.ibge.gov.br/api/v3/malhas/municipios/3109451?formato=application/vnd.geo+json&qualidade=intermediaria |
 | Cabeceiras | GO | InfoDengue | dengue: serie municipio-semana 2014-2026 | https://info.dengue.mat.br/api/alertcity?geocode=5204003&disease=dengue&format=json&ew_start=1&ew_end=53&ey_start=2014&ey_end=2026 |
 | Cabeceiras | GO | InfoDengue | chikungunya: serie municipio-semana 2014-2026 | https://info.dengue.mat.br/api/alertcity?geocode=5204003&disease=chikungunya&format=json&ew_start=1&ew_end=53&ey_start=2014&ey_end=2026 |
 | Cabeceiras | GO | InfoDengue | zika: serie municipio-semana 2014-2026 | https://info.dengue.mat.br/api/alertcity?geocode=5204003&disease=zika&format=json&ew_start=1&ew_end=53&ey_start=2014&ey_end=2026 |
@@ -152,10 +144,6 @@ API publica alertcity  -->  dados/bruto/infodengue/ (99 arquivos)
 | Simolandia | GO | InfoDengue | chikungunya: serie municipio-semana 2014-2026 | https://info.dengue.mat.br/api/alertcity?geocode=5220686&disease=chikungunya&format=json&ew_start=1&ew_end=53&ey_start=2014&ey_end=2026 |
 | Simolandia | GO | InfoDengue | zika: serie municipio-semana 2014-2026 | https://info.dengue.mat.br/api/alertcity?geocode=5220686&disease=zika&format=json&ew_start=1&ew_end=53&ey_start=2014&ey_end=2026 |
 | Simolandia | GO | IBGE | malha cartografica municipal (GeoJSON) | https://servicodados.ibge.gov.br/api/v3/malhas/municipios/5220686?formato=application/vnd.geo+json&qualidade=intermediaria |
-| Unai | MG | InfoDengue | dengue: serie municipio-semana 2014-2026 | https://info.dengue.mat.br/api/alertcity?geocode=3170404&disease=dengue&format=json&ew_start=1&ew_end=53&ey_start=2014&ey_end=2026 |
-| Unai | MG | InfoDengue | chikungunya: serie municipio-semana 2014-2026 | https://info.dengue.mat.br/api/alertcity?geocode=3170404&disease=chikungunya&format=json&ew_start=1&ew_end=53&ey_start=2014&ey_end=2026 |
-| Unai | MG | InfoDengue | zika: serie municipio-semana 2014-2026 | https://info.dengue.mat.br/api/alertcity?geocode=3170404&disease=zika&format=json&ew_start=1&ew_end=53&ey_start=2014&ey_end=2026 |
-| Unai | MG | IBGE | malha cartografica municipal (GeoJSON) | https://servicodados.ibge.gov.br/api/v3/malhas/municipios/3170404?formato=application/vnd.geo+json&qualidade=intermediaria |
 | Valparaiso de Goias | GO | InfoDengue | dengue: serie municipio-semana 2014-2026 | https://info.dengue.mat.br/api/alertcity?geocode=5221858&disease=dengue&format=json&ew_start=1&ew_end=53&ey_start=2014&ey_end=2026 |
 | Valparaiso de Goias | GO | InfoDengue | chikungunya: serie municipio-semana 2014-2026 | https://info.dengue.mat.br/api/alertcity?geocode=5221858&disease=chikungunya&format=json&ew_start=1&ew_end=53&ey_start=2014&ey_end=2026 |
 | Valparaiso de Goias | GO | InfoDengue | zika: serie municipio-semana 2014-2026 | https://info.dengue.mat.br/api/alertcity?geocode=5221858&disease=zika&format=json&ew_start=1&ew_end=53&ey_start=2014&ey_end=2026 |

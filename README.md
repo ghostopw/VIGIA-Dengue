@@ -1,8 +1,8 @@
 # VIGIA-Dengue
 
 Ferramenta digital de alerta precoce para estratificação espaço-temporal do risco de
-dengue, com **foco em Brasília (Distrito Federal)** e a RIDE-DF como território de
-comparação.
+dengue, com **foco em Brasília (Distrito Federal)** e os 29 municípios goianos do
+Entorno como território de comparação.
 
 Projeto PIBITI 2026 — Iniciação em Desenvolvimento Tecnológico e Inovação
 **Aluno:** João Gabriel Alves Guimarães (2512082047)
@@ -16,7 +16,7 @@ Projeto PIBITI 2026 — Iniciação em Desenvolvimento Tecnológico e Inovação
 | Etapa do projeto | Situação | Onde está |
 |---|---|---|
 | 1 — Revisão e planejamento | Dicionário de dados e critérios operacionais | [docs/dicionario_de_dados.md](docs/dicionario_de_dados.md) |
-| 2 — Base analítica | 21.747 linhas município-semana, 2014–2026 | `src/vigia/ingestao_infodengue.py`, `src/vigia/base_analitica.py` |
+| 2 — Base analítica | 19.770 linhas município-semana, 2014–2026 | `src/vigia/ingestao_infodengue.py`, `src/vigia/base_analitica.py` |
 | 3 — Análise espaço-temporal | Canal endêmico e estratificação em 4 níveis | `src/vigia/risco.py` |
 | 4 — Modelagem de alerta | 3 modelos com validação temporal | `src/vigia/modelagem.py` |
 | 5 — Dashboard | Painel Streamlit com mapa, séries e relatórios | `app/painel.py` |
@@ -28,9 +28,15 @@ Projeto PIBITI 2026 — Iniciação em Desenvolvimento Tecnológico e Inovação
 território — por isso o painel abre em Brasília, com bloco de indicadores próprio, e
 o Entorno entra como contexto recolhido.
 
-**33 municípios na base**: Distrito Federal, 29 municípios goianos do Entorno e 3
-municípios mineiros, conforme a RIDE-DF (LC 94/1998, ampliada pela LC 163/2018). Todos
-os códigos IBGE são conferidos contra a API do IBGE por `validar_territorio()`.
+**30 municípios na base**: o Distrito Federal e os 29 municípios goianos do Entorno.
+
+> **Regra do território — vale para toda coleta, presente e futura.** Municípios de
+> Minas Gerais estão **excluídos** por decisão do projeto, ainda que a RIDE-DF legal
+> (LC 94/1998, ampliada pela LC 163/2018) os inclua. Toda rotina de coleta — das APIs
+> atuais ou de qualquer API que venha a ser criada — deve iterar sobre `TERRITORIO` e
+> usar `filtrar_territorio()` para barrar municípios de fora. `validar_territorio()`
+> recusa a base se alguma UF fora de DF/GO aparecer, e dois testes automatizados
+> cobrem a regra.
 
 > O DF é um único município na malha do IBGE e o InfoDengue não o desagrega por Região
 > Administrativa. A RIDE foi adotada para que a análise espacial, os mapas e a
@@ -78,7 +84,7 @@ No topo, um bloco fixo com a situação de **Brasília**: casos estimados (com v
 frente à semana anterior), incidência, nível de risco e probabilidade de alerta. O
 Entorno fica num painel recolhível logo abaixo.
 
-- **Mapa de risco** — coroplético dos 33 municípios na semana escolhida, com os quatro
+- **Mapa de risco** — coroplético dos 30 municípios na semana escolhida, com os quatro
   níveis de risco, distribuição dos níveis e ranking das maiores probabilidades.
 - **Séries temporais** — casos notificados × estimados com faixa de incerteza do
   *nowcasting*, incidência contra o canal endêmico, e a curva **Brasília × Entorno**
@@ -110,21 +116,21 @@ expansiva (treina até o ano *t−1*, avalia em *t*), média de 2019 a 2025:
 
 | Modelo | Sensibilidade | Especificidade | VPP | AUC | AUPRC | Brier |
 |---|---|---|---|---|---|---|
-| Referência (persistência) | 0,727 | 0,786 | 0,726 | 0,757 | 0,647 | 0,233 |
-| Interpretável (logística) | 0,711 | 0,730 | 0,675 | 0,798 | 0,773 | 0,185 |
-| Aprendizado (LightGBM) | 0,704 | **0,790** | **0,735** | **0,828** | **0,802** | **0,174** |
+| Referência (persistência) | 0,708 | **0,784** | 0,709 | 0,746 | 0,626 | 0,240 |
+| Interpretável (logística) | 0,700 | 0,699 | 0,636 | 0,779 | 0,740 | 0,195 |
+| Aprendizado (LightGBM) | 0,702 | 0,775 | **0,713** | **0,815** | **0,776** | **0,181** |
 
 Leitura honesta: a persistência tem sensibilidade ligeiramente maior, porque repetir o
 estado atual já acerta bastante quando a prevalência é alta. O ganho dos modelos está na
-**discriminação e na calibração** — o LightGBM supera a referência em AUC (0,828 contra
-0,757) e reduz o erro de Brier em 25%, e a vantagem é maior nos anos epidêmicos, quando
+**discriminação e na calibração** — o LightGBM supera a referência em AUC (0,815 contra
+0,746) e reduz o erro de Brier em 25%, e a vantagem é maior nos anos epidêmicos, quando
 o alerta precisa funcionar.
 
 ## Estrutura
 
 ```
 app/painel.py                  dashboard Streamlit
-src/vigia/territorio.py        os 33 municípios, com validação contra o IBGE
+src/vigia/territorio.py        os 30 municípios, com a regra DF+GO validada
 src/vigia/ingestao_infodengue.py  download da série município-semana
 src/vigia/base_analitica.py    incidência, médias móveis, defasagens, flags
 src/vigia/risco.py             canal endêmico e estratificação em 4 níveis

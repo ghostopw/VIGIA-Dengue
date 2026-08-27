@@ -22,7 +22,14 @@ sys.path.insert(0, str(RAIZ / "src"))
 
 from vigia.base_analitica import construir  # noqa: E402
 from vigia.risco import classificar  # noqa: E402
-from vigia.territorio import TERRITORIO, UF_POR_CODIGO  # noqa: E402
+from vigia.territorio import (  # noqa: E402
+    RIDE_MG_EXCLUIDOS,
+    TERRITORIO,
+    UF_POR_CODIGO,
+    UFS_PERMITIDAS,
+    filtrar_territorio,
+    uf_do_codigo,
+)
 
 
 def serie_sintetica(n_semanas: int = 120, n_municipios: int = 3) -> pd.DataFrame:
@@ -64,10 +71,23 @@ def base() -> pd.DataFrame:
     return construir(serie_sintetica())
 
 
-def test_territorio_tem_33_unidades():
-    assert len(TERRITORIO) == 33
+def test_territorio_e_df_mais_entorno_goiano():
+    """Regra do projeto: Brasilia e os 29 municipios goianos do Entorno."""
+    assert len(TERRITORIO) == 30
     assert 5300108 in TERRITORIO  # Distrito Federal
-    assert set(UF_POR_CODIGO.values()) == {"DF", "GO", "MG"}
+    assert set(UF_POR_CODIGO.values()) == {"DF", "GO"}
+
+
+def test_nenhum_municipio_de_minas_no_territorio():
+    """MG esta excluido por decisao do projeto e nao pode voltar por descuido."""
+    assert set(TERRITORIO).isdisjoint(RIDE_MG_EXCLUIDOS)
+    assert all(uf_do_codigo(c) in UFS_PERMITIDAS for c in TERRITORIO)
+
+
+def test_filtro_de_territorio_barra_municipio_de_fora():
+    """A barreira usada pelas rotinas de coleta descarta o que nao pertence."""
+    entrada = [5300108, 3170404, 5208004, 3550308]  # DF, Unai/MG, Formosa/GO, SP
+    assert filtrar_territorio(entrada) == [5300108, 5208004]
 
 
 def test_chave_municipio_semana_e_unica(base: pd.DataFrame):

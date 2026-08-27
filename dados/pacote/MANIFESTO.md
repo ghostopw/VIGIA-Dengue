@@ -1,6 +1,6 @@
 # Pacote de dados -- VIGIA-Dengue
 
-Gerado em 2026-08-21.
+Gerado em 2026-08-27.
 
 Territorio: Distrito Federal e RIDE-DF (33 municipios).
 Unidade de analise: municipio x semana epidemiologica.
@@ -12,15 +12,15 @@ Fontes:
 
 | Arquivo | Linhas | Colunas | Conteudo |
 |---|---|---|---|
-| `dengue_municipio_semana.csv` | 21.747 | 37 | Dengue: serie municipio-semana bruta do InfoDengue, 2014-2026. |
-| `chikungunya_municipio_semana.csv` | 21.747 | 37 | Chikungunya: serie municipio-semana bruta do InfoDengue, 2016-2026. |
-| `zika_municipio_semana.csv` | 17.457 | 37 | Zika: serie municipio-semana bruta do InfoDengue, 2016-2026. |
-| `base_analitica.csv` | 21.747 | 100 | Tabela analitica: incidencia, medias moveis, defasagens e flags. |
-| `base_com_risco.csv` | 21.747 | 109 | Base analitica acrescida do canal endemico e da estratificacao de risco. |
-| `painel.csv` | 19.998 | 39 | Base do painel: probabilidade de alerta e fatores explicativos. |
+| `dengue_municipio_semana.csv` | 19.770 | 37 | Dengue: serie municipio-semana bruta do InfoDengue, 2014-2026. |
+| `chikungunya_municipio_semana.csv` | 19.770 | 37 | Chikungunya: serie municipio-semana bruta do InfoDengue, 2016-2026. |
+| `zika_municipio_semana.csv` | 15.870 | 37 | Zika: serie municipio-semana bruta do InfoDengue, 2016-2026. |
+| `base_analitica.csv` | 19.770 | 100 | Tabela analitica: incidencia, medias moveis, defasagens e flags. |
+| `base_com_risco.csv` | 19.770 | 109 | Base analitica acrescida do canal endemico e da estratificacao de risco. |
+| `painel.csv` | 18.180 | 39 | Base do painel: probabilidade de alerta e fatores explicativos. |
 | `malha_municipios.geojson` | - | - | Malha cartografica dos 33 municipios (IBGE). |
 | `desempenho_modelos.csv` | 21 | 12 | Metricas da validacao temporal dos tres modelos, por ano. |
-| `brutos_por_municipio/` | - | - | 99 CSVs: retorno original da API, um por municipio e arbovirose. |
+| `brutos_por_municipio/` | - | - | 90 CSVs: retorno original da API, um por municipio e arbovirose. |
 
 ## Dicionario das variaveis
 
