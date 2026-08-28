@@ -157,7 +157,18 @@ API publica alertcity  -->  dados/bruto/infodengue/ (99 arquivos)
 | Vila Propicio | GO | InfoDengue | zika: serie municipio-semana 2014-2026 | https://info.dengue.mat.br/api/alertcity?geocode=5222302&disease=zika&format=json&ew_start=1&ew_end=53&ey_start=2014&ey_end=2026 |
 | Vila Propicio | GO | IBGE | malha cartografica municipal (GeoJSON) | https://servicodados.ibge.gov.br/api/v3/malhas/municipios/5222302?formato=application/vnd.geo+json&qualidade=intermediaria |
 
-## Como reconferir
+## Verificacao automatica
+
+Para reconferir todos os dados contra as fontes de origem, ao vivo:
+
+```bash
+python src/vigia/verificar_fontes.py
+```
+
+O script refaz as requisicoes agora e compara com o que esta gravado, alem de
+checar a integridade dos arquivos. Ultima execucao: todas as fontes conferem.
+
+## Como reconferir manualmente
 
 Abrir qualquer URL da tabela no navegador, ou:
 
