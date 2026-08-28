@@ -7,9 +7,9 @@ Documento da **Etapa 1** do projeto. Descreve a tabela analítica principal, no 
 | Item | Valor |
 |---|---|
 | Unidade de análise | Município × semana epidemiológica |
-| Território piloto | Distrito Federal + RIDE-DF (33 municípios: 1 DF, 29 GO, 3 MG) |
+| Território piloto | Brasília (DF) + 29 municípios goianos do Entorno (30 unidades) |
 | Período | 2014-SE01 a 2026-SE32 (659 semanas) |
-| Dimensões | 21.747 linhas × 105 colunas |
+| Dimensões | 19.770 linhas × 124 colunas |
 | Chave primária | `cod_ibge` + `se_codigo` |
 | Fonte epidemiológica e climática | InfoDengue (Fiocruz/FGV), API `alertcity` |
 | Fonte de população e cartografia | IBGE (API de localidades e de malhas) |
