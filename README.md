@@ -19,7 +19,7 @@ Projeto PIBITI 2026 — Iniciação em Desenvolvimento Tecnológico e Inovação
 | 2 — Base analítica | 19.770 linhas município-semana, 2014–2026 | `src/vigia/ingestao_infodengue.py`, `src/vigia/base_analitica.py` |
 | 3 — Análise espaço-temporal | Canal endêmico e estratificação em 4 níveis | `src/vigia/risco.py` |
 | 4 — Modelagem de alerta | 3 modelos com validação temporal | `src/vigia/modelagem.py` |
-| 5 — Dashboard | Painel web com mapa, séries e relatórios | `app/servidor.py`, `app/artifact/corpo.html` |
+| 5 — Dashboard | Painel web com mapa 3D, séries e relatórios | `Painel VIGIA-Dengue (offline).html`, `app/servidor.py` |
 | 6 — Avaliação e documentação | Métricas apuradas; manual e relatório pendentes | `saidas/desempenho_modelos.csv` |
 
 ## Território piloto
@@ -129,8 +129,10 @@ o alerta precisa funcionar.
 ## Estrutura
 
 ```
-app/servidor.py                servidor local do painel (localhost)
-app/artifact/corpo.html        o desenho do painel: layout, CSS e JavaScript
+Painel VIGIA-Dengue (offline).html  o painel: canvas do Claude Design,
+                               autocontido (desenho, dados e fontes)
+app/servidor.py                serve o painel em localhost
+app/artifact/corpo.html        gabarito de uma versão anterior do painel
 app/painel.py                  dashboard Streamlit (versão anterior)
 src/vigia/territorio.py        os 30 municípios, com a regra DF+GO validada
 src/vigia/ingestao_infodengue.py  download da série município-semana
