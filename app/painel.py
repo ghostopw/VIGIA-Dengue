@@ -34,9 +34,20 @@ DIVISOR = "rgba(29,31,32,0.16)"
 
 FONTE_CORPO = "Barlow, system-ui, -apple-system, sans-serif"
 
-# Rampa sequencial de 9 passos, usada nos mapas por intensidade.
+# Rampa sequencial de 9 passos, na familia azul do sistema.
 RAMPA = ["#eef6ff", "#d6ebff", "#b5d9fd", "#94bce3",
          "#749dc4", "#597ea3", "#416180", "#2c455d", "#1d2d3d"]
+
+# Rampa do mapa territorial, no terracota do sistema -- o mesmo tom de "risco
+# muito alto". No azul, os poligonos disputavam com o mapa base cinza-azulado e
+# com o resto da interface; o tom quente se descola dos dois.
+#
+# Foi gerada em OKLCH sobre a MESMA escala de luminosidade da rampa azul, passo
+# a passo, de modo que as duas se equivalham em valor. O croma acompanha o do
+# azul multiplicado por 1,7, que e quanto o vermelho-alaranjado comporta a mais
+# na mesma luminosidade antes de sair do sRGB.
+RAMPA_TERRITORIO = ["#fef4f1", "#fde3dd", "#fec5b9", "#f79781",
+                    "#da7967", "#b45b4a", "#904436", "#6a2d22", "#451e17"]
 
 # Niveis de risco: tres passos do azul e um terracota so no topo, para que
 # "muito alto" seja o unico ponto quente da tela.
@@ -329,7 +340,7 @@ with aba_mapa:
 
         # Quatro passos alternados da rampa. Sao os que mais se separam entre si;
         # o extremo claro fica de fora porque sumiria sobre o mapa base.
-        cores_faixa = dict(zip(rotulos, RAMPA[2:9:2]))
+        cores_faixa = dict(zip(rotulos, RAMPA_TERRITORIO[2:9:2]))
 
         mapa_ras = px.choropleth_map(
             regioes,
