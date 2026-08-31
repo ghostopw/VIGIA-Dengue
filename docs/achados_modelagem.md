@@ -153,3 +153,41 @@ aplicar isso ao DF é extrapolar para fora do que se viu.
 4. **A rede neural fica registrada como tentativa que não venceu.** Se algum dia
    houver série por Região Administrativa, o quadro muda: aí a estrutura espacial
    passa a existir e uma rede com componente espacial volta a fazer sentido.
+
+---
+
+## 6. Vazamento temporal: existia, foi corrigido, mas não inflava o número
+
+Um levantamento independente apontou cinco pontos em que informação do futuro
+entrava no treino. Conferi os cinco linha a linha e todos existiam:
+
+| Arquivo | O que fazia |
+|---|---|
+| `base_analitica.py:53` | `interpolate(limit_direction="both")` — tapava buraco do passado com valor futuro |
+| `base_analitica.py:56` | mediana sazonal sobre a série inteira, para imputar clima |
+| `base_analitica.py:156` | `chuva_anomalia` medida contra média que inclui anos posteriores |
+| `base_analitica.py:175` | idem para `tempmed_anomalia` e `umidmed_anomalia` |
+| `modelagem.py:190` | `treino = ano < ano` deixava passar dezembro, cujo alvo cai no ano de teste |
+
+O quinto é o mais direto: uma linha da semana 50 de 2020 tem alvo na semana 2 de
+2021. Medido no Centro-Oeste: **1.860 linhas por dobra**, 8.382 nas cinco.
+
+Todos foram corrigidos — a anomalia sazonal passou a usar janela expansiva (só
+anos anteriores), a interpolação só preenche para a frente, e a dobra corta pela
+data que o alvo observa, não pela data da linha.
+
+### O efeito medido foi nulo
+
+| Correção | AUC antes | AUC depois |
+|---|---|---|
+| Corte da dobra | 0,8349 | 0,8350 |
+| Anomalia sazonal expansiva | 0,8350 | 0,8348 |
+
+Isto é uma boa notícia, e vale dizer com clareza: **o desempenho relatado pelo
+projeto não estava inflado por vazamento.** As 1.860 linhas eram 1% do treino, e
+as anomalias sazonais têm importância baixa perto do bloco epidemiológico, que
+responde por ~60% do ganho.
+
+As correções ficam de pé por serem corretas, não por mudarem o número. Se algum
+dia o bloco climático ganhar peso — com chuva por município no Centro-Oeste, por
+exemplo —, o vazamento passaria a doer, e aí já estará resolvido.

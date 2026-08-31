@@ -38,6 +38,24 @@ LIMIAR_SEMANA_SECA_MM = 1.0
 LIMIAR_CHUVA_TORRENCIAL_MM = 30.0
 
 
+def sazonal_expansiva(dados: pd.DataFrame, coluna: str, funcao: str = "mean") -> pd.Series:
+    """Estatistica da mesma semana do ano no municipio, so com anos ANTERIORES.
+
+    A forma direta -- `groupby(["cod_ibge", "semana"])[coluna].transform("mean")`
+    -- calcula a media sobre a serie inteira, e ai a anomalia de 2019 e medida
+    contra uma media que ja contem 2025. O modelo aprende com informacao que na
+    epoca nao existia, e a validacao temporal sai otimista sem que se veja.
+
+    Aqui a janela e expansiva: para cada ano, so os anos que vieram antes.
+    """
+    ordenado = dados.sort_values(["cod_ibge", "semana", "ano"])
+    grupo = ordenado.groupby(["cod_ibge", "semana"])[coluna]
+    acumulado = grupo.transform(
+        lambda serie: getattr(serie.expanding(min_periods=1), funcao)().shift(1)
+    )
+    return acumulado.reindex(dados.index)
+
+
 def interpolar_clima(painel: pd.DataFrame) -> pd.DataFrame:
     """Preenche falhas curtas das series climaticas dentro de cada municipio.
 
@@ -51,9 +69,11 @@ def interpolar_clima(painel: pd.DataFrame) -> pd.DataFrame:
             continue
         dados[f"{coluna}_imputado"] = dados[coluna].isna().astype("int8")
         dados[coluna] = dados.groupby("cod_ibge")[coluna].transform(
-            lambda serie: serie.interpolate(limit=3, limit_direction="both")
+            # "forward" e nao "both": preencher para tras usaria um valor futuro
+            # para tapar um buraco do passado.
+            lambda serie: serie.interpolate(limit=3, limit_direction="forward")
         )
-        sazonal = dados.groupby(["cod_ibge", "semana"])[coluna].transform("median")
+        sazonal = sazonal_expansiva(dados, coluna, "median")
         dados[coluna] = dados[coluna].fillna(sazonal)
 
     return dados
@@ -153,7 +173,7 @@ def adicionar_chuva(painel: pd.DataFrame, chuva: pd.DataFrame) -> pd.DataFrame:
     ).transform(lambda serie: serie.shift(1).rolling(4, min_periods=2).sum())
 
     # Anomalia: desvio da chuva acumulada frente ao padrao daquela semana do ano.
-    media_sazonal = dados.groupby(["cod_ibge", "semana"])["chuva_semana_mm"].transform("mean")
+    media_sazonal = sazonal_expansiva(dados, "chuva_semana_mm", "mean")
     dados["chuva_anomalia"] = dados["chuva_semana_mm"] - media_sazonal
 
     dados["chuva_ausente"] = dados["chuva_semana_mm"].isna().astype("int8")
@@ -171,7 +191,7 @@ def adicionar_climaticas(painel: pd.DataFrame) -> pd.DataFrame:
 
     # Anomalia: desvio em relacao a media historica da mesma semana no municipio.
     for coluna in ("tempmed", "umidmed"):
-        media_sazonal = dados.groupby(["cod_ibge", "semana"])[coluna].transform("mean")
+        media_sazonal = sazonal_expansiva(dados, coluna, "mean")
         dados[f"{coluna}_anomalia"] = dados[coluna] - media_sazonal
 
     # Receptividade climatica acumulada: semanas recentes com temperatura na

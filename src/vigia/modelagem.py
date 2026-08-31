@@ -181,13 +181,22 @@ def validacao_temporal(
     dados: pd.DataFrame,
     anos_avaliacao: list[int],
     corte: float = 0.5,
+    horizonte: int = HORIZONTE_PADRAO,
 ) -> pd.DataFrame:
     """Treina em janela expansiva e avalia no ano seguinte."""
     variaveis = [v for v in VARIAVEIS if v in dados.columns]
     linhas: list[dict] = []
 
+    # A data que cada linha de treino vai OBSERVAR, e nao a data em que ela
+    # esta. Cortar por `ano < ano` deixa passar as ultimas semanas de dezembro,
+    # cujo alvo cai dentro do ano de teste: no Centro-Oeste sao 1.860 linhas por
+    # dobra treinando com o rotulo que deveriam prever.
+    datas = pd.to_datetime(dados["data_ini_se"])
+    data_alvo = datas.groupby(dados["cod_ibge"]).shift(-horizonte)
+
     for ano in anos_avaliacao:
-        treino = dados[dados["ano"] < ano]
+        inicio_teste = pd.Timestamp(f"{ano}-01-01")
+        treino = dados[(dados["ano"] < ano) & (data_alvo < inicio_teste)]
         teste = dados[dados["ano"] == ano]
         if treino.empty or teste.empty or treino["alvo"].nunique() < 2:
             continue
