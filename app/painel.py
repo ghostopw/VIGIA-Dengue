@@ -11,6 +11,7 @@ from pathlib import Path
 import pandas as pd
 import plotly.express as px
 import plotly.graph_objects as go
+import plotly.io as pio
 import streamlit as st
 
 RAIZ = Path(__file__).resolve().parents[1]
@@ -19,13 +20,38 @@ CAMINHO_MALHA = RAIZ / "dados" / "externo" / "malha_ride_df.geojson"
 CAMINHO_MALHA_RAS = RAIZ / "dados" / "externo" / "malha_ras_df.geojson"
 CAMINHO_DESEMPENHO = RAIZ / "saidas" / "desempenho_modelos.csv"
 
+# Paleta do painel VIGIA-Dengue (sistema "Industry"), a mesma do canvas em
+# `Painel VIGIA-Dengue (offline).html`, para que as duas telas se leiam como
+# uma coisa so. As rampas foram geradas em OKLCH sobre uma escala de
+# luminosidade compartilhada.
+ACENTO = "#5980a6"
+ACENTO_200 = "#d6ebff"
+ACENTO_200_T = "rgba(214,235,255,0.75)"  # a mesma opacidade do canvas
+ACENTO_800 = "#2c455d"
+NEUTRO_500 = "#98989b"
+NEUTRO_600 = "#7a7a7d"
+TEXTO = "#1d1f20"
+DIVISOR = "rgba(29,31,32,0.16)"
+
+FONTE_CORPO = "Barlow, system-ui, -apple-system, sans-serif"
+
+# Rampa sequencial de 9 passos, usada nos mapas por intensidade.
+RAMPA = ["#eef6ff", "#d6ebff", "#b5d9fd", "#94bce3",
+         "#749dc4", "#597ea3", "#416180", "#2c455d", "#1d2d3d"]
+
+# Niveis de risco: tres passos do azul e um terracota so no topo, para que
+# "muito alto" seja o unico ponto quente da tela.
 CORES_RISCO = {
-    "baixo": "#2E7D32",
-    "moderado": "#F9A825",
-    "alto": "#EF6C00",
-    "muito alto": "#C62828",
+    "baixo": "#94bce3",
+    "moderado": "#597ea3",
+    "alto": "#2c455d",
+    "muito alto": "#a2402f",
 }
 ORDEM_RISCO = ["baixo", "moderado", "alto", "muito alto"]
+
+# Regra de leitura herdada do painel: a serie em foco vai solida no azul
+# escuro; as de comparacao vao neutras e tracejadas, para nao disputar.
+CORES_MODELO = ["#b7b7ba", "#749dc4", "#1d2d3d"]
 
 # Municipio foco do projeto. A RIDE-DF entra como territorio de comparacao.
 FOCO = "Brasilia"
@@ -33,11 +59,44 @@ COD_FOCO = 5300108
 
 st.set_page_config(page_title="VIGIA-Dengue", page_icon="\U0001F99F", layout="wide")
 
+# Um gabarito unico evita repetir fonte e fundo em cada figura. O fundo
+# transparente deixa o grafico assentar sobre a superficie do tema.
+pio.templates["vigia"] = go.layout.Template(layout={
+    "font": {"family": FONTE_CORPO, "color": TEXTO, "size": 13},
+    "paper_bgcolor": "rgba(0,0,0,0)",
+    "plot_bgcolor": "rgba(0,0,0,0)",
+    "colorway": [ACENTO_800, NEUTRO_600, ACENTO, "#a2402f"],
+    "xaxis": {"gridcolor": DIVISOR, "linecolor": DIVISOR, "zeroline": False},
+    "yaxis": {"gridcolor": DIVISOR, "linecolor": DIVISOR, "zeroline": False},
+    "legend": {"font": {"size": 12}},
+})
+pio.templates.default = "plotly_white+vigia"
+
+# Barlow e a tipografia do painel; sem rede, cai no fallback do sistema.
+st.markdown(
+    '<link rel="stylesheet" href="https://fonts.googleapis.com/css2?'
+    'family=Barlow+Condensed:wght@600&family=Barlow:wght@400;500;600'
+    '&display=swap">'
+    """<style>
+      html, body, [class*="css"] { font-family: "Barlow", system-ui, sans-serif; }
+      h1, h2, h3, h4 { font-family: "Barlow Condensed", "Arial Narrow", sans-serif;
+                       font-weight: 600; letter-spacing: 0.2px; }
+    </style>""",
+    unsafe_allow_html=True,
+)
+
 
 @st.cache_data
 def carregar_painel() -> pd.DataFrame:
     dados = pd.read_csv(CAMINHO_PAINEL, parse_dates=["data_ini_se"])
     dados["risco"] = pd.Categorical(dados["risco"], categories=ORDEM_RISCO, ordered=True)
+
+    # O InfoDengue deixa o limite do nowcasting vazio em algumas semanas. Sem
+    # esse tratamento o preenchimento entre as duas curvas atravessa a lacuna
+    # e desenha uma cunha que nao existe no dado; encostando a faixa na linha,
+    # a ausencia de intervalo aparece como ausencia de faixa.
+    for extremo in ("casos_est_min", "casos_est_max"):
+        dados[extremo] = dados[extremo].fillna(dados["casos_est"])
     return dados
 
 
@@ -295,7 +354,7 @@ with aba_ras:
             locations="ra_nome",
             featureidkey="properties.ra_nome",
             color=coluna,
-            color_continuous_scale="YlOrRd",
+            color_continuous_scale=RAMPA,
             map_style="carto-positron",
             zoom=8.2,
             center={"lat": -15.78, "lon": -47.93},
@@ -359,20 +418,21 @@ with aba_serie:
     ))
     figura.add_trace(go.Scatter(
         x=serie["data_ini_se"], y=serie["casos_est_min"],
-        fill="tonexty", fillcolor="rgba(198,40,40,0.15)",
+        fill="tonexty", fillcolor=ACENTO_200_T,
         line={"width": 0}, name="Intervalo do nowcasting", hoverinfo="skip",
     ))
     figura.add_trace(go.Scatter(
         x=serie["data_ini_se"], y=serie["casos_est"],
-        name="Casos estimados", line={"color": "#C62828", "width": 2},
+        name="Casos estimados", line={"color": ACENTO_800, "width": 2},
     ))
     figura.add_trace(go.Scatter(
         x=serie["data_ini_se"], y=serie["casos"],
-        name="Casos notificados", line={"color": "#546E7A", "width": 1, "dash": "dot"},
+        name="Casos notificados",
+        line={"color": NEUTRO_600, "width": 1, "dash": "dash"},
     ))
     marcador = serie.loc[serie["se_codigo"] == semana_escolhida, "data_ini_se"]
     if not marcador.empty:
-        figura.add_vline(x=marcador.iloc[0], line_dash="dash", line_color="#37474F")
+        figura.add_vline(x=marcador.iloc[0], line_dash="dash", line_color=ACENTO)
     figura.update_layout(
         height=380, margin={"t": 30},
         yaxis_title="Casos por semana", xaxis_title=None,
@@ -384,11 +444,11 @@ with aba_serie:
     canal.add_trace(go.Scatter(
         x=serie["data_ini_se"], y=serie["canal_q3"],
         name="Limite esperado (Q3 historico)",
-        line={"color": "#F9A825", "dash": "dash"},
+        line={"color": NEUTRO_500, "dash": "dash"},
     ))
     canal.add_trace(go.Scatter(
         x=serie["data_ini_se"], y=serie["incidencia_100k"],
-        name="Incidencia por 100 mil", line={"color": "#1565C0", "width": 2},
+        name="Incidencia por 100 mil", line={"color": ACENTO_800, "width": 2},
     ))
     canal.update_layout(
         height=300, margin={"t": 30},
@@ -417,7 +477,9 @@ with aba_serie:
 
     figura_comparacao = px.line(
         comparacao, x="data_ini_se", y="incidencia_100k", color="grupo",
-        color_discrete_map={"Brasilia": "#C62828", "Entorno (RIDE)": "#1565C0"},
+        color_discrete_map={"Brasilia": ACENTO_800, "Entorno (RIDE)": NEUTRO_600},
+        line_dash="grupo",
+        line_dash_map={"Brasilia": "solid", "Entorno (RIDE)": "dash"},
         labels={
             "incidencia_100k": "Incidencia / 100 mil",
             "data_ini_se": "Semana",
@@ -495,6 +557,7 @@ with aba_modelo:
 
         linha_auc = px.line(
             desempenho, x="ano", y="auc", color="modelo", markers=True,
+            color_discrete_sequence=CORES_MODELO,
             labels={"auc": "AUC", "ano": "Ano avaliado", "modelo": "Modelo"},
         )
         linha_auc.update_layout(height=360)

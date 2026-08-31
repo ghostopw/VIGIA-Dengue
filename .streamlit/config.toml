@@ -1,0 +1,11 @@
+# Tema do painel VIGIA-Dengue -- os mesmos tokens do canvas do Claude Design
+# em `Painel VIGIA-Dengue (offline).html`, para que as duas telas se leiam
+# como uma coisa so.
+[theme]
+base = "light"
+backgroundColor = "#f2f2f3"          # --color-bg
+secondaryBackgroundColor = "#e9e9ea" # --color-surface
+textColor = "#1d1f20"                # --color-text
+primaryColor = "#5980a6"             # --color-accent
+font = "Barlow, system-ui, sans-serif"
+headingFont = "Barlow Condensed, Arial Narrow, sans-serif"
