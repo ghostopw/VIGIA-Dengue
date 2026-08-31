@@ -225,7 +225,17 @@ def coletar(inicio: str = "2014-01-01", fim: str | None = None,
 
         if destino is not None:
             destino.parent.mkdir(parents=True, exist_ok=True)
-            pd.concat(partes, ignore_index=True).to_csv(destino, index=False, encoding="utf-8")
+            parcial = pd.concat(partes, ignore_index=True)
+            parcial["data_ini_se"] = pd.to_datetime(
+                parcial["data_ini_se"], format="mixed"
+            ).dt.strftime("%Y-%m-%d")
+            parcial.to_csv(destino, index=False, encoding="utf-8")
 
     consolidado = pd.concat(partes, ignore_index=True)
+    # Normaliza a data: ao retomar uma coleta, o trecho lido do CSV vem como
+    # texto "AAAA-MM-DD" e o novo como timestamp, o que gravava duas grafias
+    # na mesma coluna e quebrava a leitura posterior.
+    consolidado["data_ini_se"] = pd.to_datetime(
+        consolidado["data_ini_se"], format="mixed"
+    ).dt.strftime("%Y-%m-%d")
     return consolidado.drop_duplicates(subset=["cod_ibge", "data_ini_se"])

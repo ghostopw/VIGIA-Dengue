@@ -23,7 +23,6 @@ sys.path.insert(0, str(RAIZ / "src"))
 from vigia.base_analitica import construir  # noqa: E402
 from vigia.risco import classificar  # noqa: E402
 from vigia.territorio import (  # noqa: E402
-    RIDE_MG_EXCLUIDOS,
     TERRITORIO,
     UF_POR_CODIGO,
     UFS_PERMITIDAS,
@@ -71,22 +70,24 @@ def base() -> pd.DataFrame:
     return construir(serie_sintetica())
 
 
-def test_territorio_e_df_mais_entorno_goiano():
-    """Regra do projeto: Brasilia e os 29 municipios goianos do Entorno."""
-    assert len(TERRITORIO) == 30
+def test_territorio_e_a_ride_df_completa():
+    """RIDE-DF (LC 94/1998 e LC 163/2018): DF + 29 de Goias + 4 de Minas."""
+    assert len(TERRITORIO) == 34
     assert 5300108 in TERRITORIO  # Distrito Federal
-    assert set(UF_POR_CODIGO.values()) == {"DF", "GO"}
+    assert set(UF_POR_CODIGO.values()) == {"DF", "GO", "MG"}
+    # Arinos entrou na RIDE pela LC 163/2018 e costuma ficar de fora das listas.
+    assert 3104502 in TERRITORIO
+    assert sum(1 for uf in UF_POR_CODIGO.values() if uf == "MG") == 4
 
 
-def test_nenhum_municipio_de_minas_no_territorio():
-    """MG esta excluido por decisao do projeto e nao pode voltar por descuido."""
-    assert set(TERRITORIO).isdisjoint(RIDE_MG_EXCLUIDOS)
+def test_toda_uf_do_territorio_e_permitida():
+    """Nenhum municipio fora de DF, GO ou MG pode entrar na base."""
     assert all(uf_do_codigo(c) in UFS_PERMITIDAS for c in TERRITORIO)
 
 
 def test_filtro_de_territorio_barra_municipio_de_fora():
     """A barreira usada pelas rotinas de coleta descarta o que nao pertence."""
-    entrada = [5300108, 3170404, 5208004, 3550308]  # DF, Unai/MG, Formosa/GO, SP
+    entrada = [5300108, 3550308, 5208004, 3106200]  # DF, SP, Formosa/GO, BH/MG
     assert filtrar_territorio(entrada) == [5300108, 5208004]
 
 

@@ -1,21 +1,16 @@
-"""Definicao do territorio piloto: Distrito Federal e Entorno goiano.
+"""Definicao do territorio piloto: a RIDE-DF completa.
 
 REGRA DO PROJETO -- vale para toda coleta, presente e futura
 ------------------------------------------------------------
-O territorio e o Distrito Federal (Brasilia) mais os 29 municipios goianos do
-Entorno: 30 unidades. Municipios de Minas Gerais estao EXCLUIDOS por decisao do
-projeto, ainda que a RIDE-DF legal os inclua.
+O territorio e a Regiao Integrada de Desenvolvimento do Distrito Federal e
+Entorno (RIDE-DF), instituida pela Lei Complementar 94/1998 e ampliada pela LC
+163/2018: o Distrito Federal, 29 municipios de Goias e 4 de Minas Gerais --
+34 unidades territoriais.
 
 Toda rotina que buscar dados -- das APIs ja usadas ou de qualquer API que venha
 a ser criada -- deve iterar sobre `TERRITORIO` e nunca sobre uma lista propria
 de municipios. `validar_territorio()` recusa a base se algum municipio fora de
-DF ou GO aparecer, e ha teste automatizado cobrindo essa regra.
-
-A RIDE-DF (Regiao Integrada de Desenvolvimento do Distrito Federal e Entorno),
-instituida pela Lei Complementar 94/1998 e ampliada pela LC 163/2018, reune o
-DF, 29 municipios goianos e 3 mineiros. Este projeto adota o recorte DF + GO,
-mantendo a coesao com a unidade federativa vizinha e com a rede de saude que
-efetivamente compartilha fluxo assistencial diario com o DF.
+DF, GO ou MG aparecer, e ha teste automatizado cobrindo essa regra.
 
 Todos os codigos IBGE abaixo foram resolvidos e conferidos contra a API de
 localidades do IBGE. A funcao `validar_territorio` refaz essa conferencia sob
@@ -116,10 +111,10 @@ RIDE_GO = {
     5222302: "Vila Propicio",
 }
 
-# Municipios mineiros da RIDE-DF, EXCLUIDOS do territorio por decisao do
-# projeto. Ficam registrados apenas para documentar o que foi deixado de fora e
-# permitir reversao consciente -- nao devem ser somados a TERRITORIO.
-RIDE_MG_EXCLUIDOS = {
+# Municipios mineiros da RIDE-DF (LC 94/1998, com Arinos e Cabeceira Grande
+# incluidos pela LC 163/2018).
+RIDE_MG = {
+    3104502: "Arinos",
     3109303: "Buritis",
     3109451: "Cabeceira Grande",
     3170404: "Unai",
@@ -127,13 +122,14 @@ RIDE_MG_EXCLUIDOS = {
 
 # Unidades federativas admitidas no territorio. Qualquer municipio fora desta
 # lista e recusado por `validar_territorio`.
-UFS_PERMITIDAS = ("DF", "GO")
+UFS_PERMITIDAS = ("DF", "GO", "MG")
 
-TERRITORIO = {**DISTRITO_FEDERAL, **RIDE_GO}
+TERRITORIO = {**DISTRITO_FEDERAL, **RIDE_GO, **RIDE_MG}
 
 UF_POR_CODIGO = {
     **{c: "DF" for c in DISTRITO_FEDERAL},
     **{c: "GO" for c in RIDE_GO},
+    **{c: "MG" for c in RIDE_MG},
 }
 
 
@@ -194,9 +190,4 @@ def validar_territorio() -> list[str]:
         elif normalizar(oficial).replace("'", "") != normalizar(nome).replace("'", ""):
             divergencias.append(f"{codigo}: declarado '{nome}', IBGE diz '{oficial}'")
 
-    intrusos = set(TERRITORIO) & set(RIDE_MG_EXCLUIDOS)
-    if intrusos:
-        divergencias.append(
-            f"municipios de MG excluidos voltaram ao territorio: {sorted(intrusos)}"
-        )
     return divergencias
