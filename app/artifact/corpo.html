@@ -1,168 +1,304 @@
 <title>VIGIA-Dengue</title>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700&family=Barlow:wght@400;500;600&display=swap">
 <style>
+/* ══════════════════════════════════════════════════════════════════════
+   Tokens do sistema "Industry" — os mesmos valores do painel original.
+   As rampas tonais foram geradas em OKLCH sobre uma escala de luminosidade
+   compartilhada, de modo que o mesmo passo de cada papel case em valor.
+   ══════════════════════════════════════════════════════════════════ */
 :root {
-  --bg: #f2f2f3;
-  --surface: #e9e9ea;
-  --text: #1d1f20;
-  --accent: #5980a6;
-  --accent-2: #728fab;
-  --divider: color-mix(in srgb, #1d1f20 16%, transparent);
-  --n100: #f5f5f8; --n200: #e7e7ea; --n300: #d4d4d7;
-  --n600: #7a7a7d; --n700: #5d5d60; --n900: #2b2b2d;
-  --a100: #eef6ff; --a200: #d7e6f5; --a700: #486077; --a800: #38495a; --a900: #2c3947;
-  --baixo: #6b8f71; --moderado: #c9a227; --alto: #cf7b3f; --muitoalto: #b04a45;
-  --heading: "Barlow Condensed", "Arial Narrow", sans-serif;
-  --body: "Barlow", system-ui, -apple-system, sans-serif;
+  --color-bg: #f2f2f3;
+  --color-surface: #e9e9ea;
+  --color-text: #1d1f20;
+  --color-accent: #5980a6;
+  --color-accent-2: #728fab;
+  --color-divider: color-mix(in srgb, #1d1f20 16%, transparent);
+
+  --color-neutral-100: #f5f5f8;
+  --color-neutral-200: #e7e7ea;
+  --color-neutral-300: #d4d4d7;
+  --color-neutral-400: #b7b7ba;
+  --color-neutral-500: #98989b;
+  --color-neutral-600: #7a7a7d;
+  --color-neutral-700: #5d5d60;
+  --color-neutral-800: #424244;
+  --color-neutral-900: #2b2b2d;
+
+  --color-accent-100: #eef6ff;
+  --color-accent-200: #d6ebff;
+  --color-accent-300: #b5d9fd;
+  --color-accent-400: #94bce3;
+  --color-accent-500: #749dc4;
+  --color-accent-600: #597ea3;
+  --color-accent-700: #416180;
+  --color-accent-800: #2c455d;
+  --color-accent-900: #1d2d3d;
+
+  --color-accent-2-100: #eef6ff;
+  --color-accent-2-700: #486077;
+  --color-accent-2-800: #314457;
+
+  /* Níveis de risco, na mesma família de saturação dos tokens acima, para
+     que a escala epidemiológica conviva com o azul do sistema. */
+  --risco-baixo: #6b8f71;
+  --risco-moderado: #c9a227;
+  --risco-alto: #cf7b3f;
+  --risco-muito-alto: #b04a45;
+
+  --font-heading: "Barlow Condensed", "Arial Narrow", system-ui, sans-serif;
+  --font-heading-weight: 600;
+  --font-body: "Barlow", system-ui, -apple-system, sans-serif;
+
+  --space-1: 3.4px;  --space-2: 6.8px;  --space-3: 10.2px;
+  --space-4: 13.6px; --space-6: 20.4px; --space-8: 27.2px;
+
+  --radius-md: 4px;
 }
-:root:not([data-theme="light"]) { }
+
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme="light"]) {
-    --bg: #16181a; --surface: #1e2124; --text: #e8e8ea;
-    --accent: #7ba3c9; --accent-2: #6d8aa6;
-    --divider: color-mix(in srgb, #e8e8ea 18%, transparent);
-    --n100: #202326; --n200: #282c30; --n300: #34383d;
-    --n600: #8d9096; --n700: #a8abb0; --n900: #d2d4d8;
-    --a100: #1d2731; --a200: #26333f; --a700: #9ec0e0; --a800: #b6d0e8; --a900: #24313d;
-    --baixo: #7fa886; --moderado: #d9b845; --alto: #de9058; --muitoalto: #c96460;
+    --color-bg: #17191b;
+    --color-surface: #1f2225;
+    --color-text: #e9e9ea;
+    --color-accent: #7ba3c9;
+    --color-accent-2: #8ba6c0;
+    --color-divider: color-mix(in srgb, #e9e9ea 18%, transparent);
+    --color-neutral-100: #202326;
+    --color-neutral-200: #282c30;
+    --color-neutral-300: #34383d;
+    --color-neutral-400: #4a4f55;
+    --color-neutral-500: #6a6f76;
+    --color-neutral-600: #8d9096;
+    --color-neutral-700: #a8abb0;
+    --color-neutral-800: #c4c6ca;
+    --color-neutral-900: #dcdee1;
+    --color-accent-100: #1c2732;
+    --color-accent-200: #24323f;
+    --color-accent-300: #2f4356;
+    --color-accent-400: #416180;
+    --color-accent-500: #597ea3;
+    --color-accent-600: #749dc4;
+    --color-accent-700: #94bce3;
+    --color-accent-800: #b5d9fd;
+    --color-accent-900: #16202b;
+    --color-accent-2-100: #1c2732;
+    --color-accent-2-700: #9ec0e0;
+    --color-accent-2-800: #b6d0e8;
+    --risco-baixo: #7fa886;
+    --risco-moderado: #d9b845;
+    --risco-alto: #de9058;
+    --risco-muito-alto: #c96460;
   }
 }
 :root[data-theme="dark"] {
-  --bg: #16181a; --surface: #1e2124; --text: #e8e8ea;
-  --accent: #7ba3c9; --accent-2: #6d8aa6;
-  --divider: color-mix(in srgb, #e8e8ea 18%, transparent);
-  --n100: #202326; --n200: #282c30; --n300: #34383d;
-  --n600: #8d9096; --n700: #a8abb0; --n900: #d2d4d8;
-  --a100: #1d2731; --a200: #26333f; --a700: #9ec0e0; --a800: #b6d0e8; --a900: #24313d;
-  --baixo: #7fa886; --moderado: #d9b845; --alto: #de9058; --muitoalto: #c96460;
+  --color-bg: #17191b;
+  --color-surface: #1f2225;
+  --color-text: #e9e9ea;
+  --color-accent: #7ba3c9;
+  --color-accent-2: #8ba6c0;
+  --color-divider: color-mix(in srgb, #e9e9ea 18%, transparent);
+  --color-neutral-100: #202326;
+  --color-neutral-200: #282c30;
+  --color-neutral-300: #34383d;
+  --color-neutral-400: #4a4f55;
+  --color-neutral-500: #6a6f76;
+  --color-neutral-600: #8d9096;
+  --color-neutral-700: #a8abb0;
+  --color-neutral-800: #c4c6ca;
+  --color-neutral-900: #dcdee1;
+  --color-accent-100: #1c2732;
+  --color-accent-200: #24323f;
+  --color-accent-300: #2f4356;
+  --color-accent-400: #416180;
+  --color-accent-500: #597ea3;
+  --color-accent-600: #749dc4;
+  --color-accent-700: #94bce3;
+  --color-accent-800: #b5d9fd;
+  --color-accent-900: #16202b;
+  --color-accent-2-100: #1c2732;
+  --color-accent-2-700: #9ec0e0;
+  --color-accent-2-800: #b6d0e8;
+  --risco-baixo: #7fa886;
+  --risco-moderado: #d9b845;
+  --risco-alto: #de9058;
+  --risco-muito-alto: #c96460;
 }
 
-* { margin: 0; padding: 0; box-sizing: border-box; }
+/* ───────────────────────────────────────────────────────────── base */
+*, *::before, *::after { box-sizing: border-box; }
 body {
-  background: var(--bg); color: var(--text);
-  font-family: var(--body); font-size: 15px; line-height: 1.55;
+  margin: 0; background: var(--color-bg); color: var(--color-text);
+  font-family: var(--font-body); font-size: 15px; line-height: 1.55; font-weight: 400;
   -webkit-font-smoothing: antialiased;
 }
-h1, h2, h3, h4 { font-family: var(--heading); font-weight: 600; text-wrap: balance; letter-spacing: -0.01em; }
+h1, h2, h3, h4, h5, h6 {
+  font-family: var(--font-heading); font-weight: var(--font-heading-weight);
+  line-height: 1.12; letter-spacing: -0.015em; margin: 0 0 var(--space-2);
+  text-wrap: balance;
+}
+h1 { font-size: 42px; }
+h2 { font-size: 32px; }
+h3 { font-size: 25px; }
+h4 { font-size: 20px; }
+h6 { font-size: 13px; letter-spacing: 0.08em; text-transform: uppercase; }
+p { margin: 0 0 var(--space-3); }
+:focus { outline: none; }
+:focus-visible { outline: 2px solid var(--color-accent); outline-offset: 2px; }
+::selection { background: color-mix(in srgb, var(--color-accent) 30%, transparent); }
 .vg-num { font-variant-numeric: tabular-nums; }
 
-.casca { max-width: 1240px; margin: 0 auto; padding: 26px 26px 70px; }
-
-/* Cabecalho */
-.topo { display: flex; align-items: flex-end; gap: 20px; flex-wrap: wrap;
-        padding-bottom: 16px; border-bottom: 1px solid var(--divider); }
-.marca h1 { font-size: 40px; line-height: 1; letter-spacing: -0.02em; }
-.marca p { font-size: 12px; letter-spacing: 0.12em; text-transform: uppercase;
-           color: color-mix(in srgb, var(--text) 55%, transparent); margin-top: 5px; }
-.selo { margin-left: auto; text-align: right; font-size: 11px; letter-spacing: 0.09em;
-        text-transform: uppercase; color: color-mix(in srgb, var(--text) 50%, transparent); }
-.selo strong { display: block; font-family: var(--heading); font-size: 26px;
-               letter-spacing: 0; color: var(--text); }
-
-/* Navegacao por telas */
-nav { display: flex; gap: 2px; margin: 18px 0 26px; flex-wrap: wrap; }
-nav button {
-  font-family: var(--heading); font-size: 13px; font-weight: 600;
-  letter-spacing: 0.09em; text-transform: uppercase;
-  padding: 9px 15px; border: 1px solid var(--divider); background: transparent;
-  color: color-mix(in srgb, var(--text) 62%, transparent); cursor: pointer;
-  transition: background .14s, color .14s;
+/* ────────────────── blueprint: marcas de registro fora da moldura */
+.blueprint { position: relative; border: 1px solid var(--color-divider); border-radius: 0; }
+.blueprint > .corner {
+  position: absolute; width: 11px; height: 11px;
+  color: color-mix(in srgb, var(--color-text) 55%, transparent);
 }
-nav button:hover { background: var(--n200); color: var(--text); }
-nav button[aria-selected="true"] { background: var(--text); color: var(--bg); border-color: var(--text); }
-nav button:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.blueprint > .corner::before, .blueprint > .corner::after {
+  content: ""; position: absolute; background: currentColor;
+}
+.blueprint > .corner::before { left: 5px; top: 0; width: 1px; height: 100%; }
+.blueprint > .corner::after  { top: 5px; left: 0; width: 100%; height: 1px; }
+.blueprint > .corner.tl { top: -6px; left: -6px; }
+.blueprint > .corner.tr { top: -6px; right: -6px; }
+.blueprint > .corner.bl { bottom: -6px; left: -6px; }
+.blueprint > .corner.br { bottom: -6px; right: -6px; }
 
-/* Moldura blueprint: cantos marcados, herdada do desenho original */
-.blueprint { position: relative; background: var(--n100); border: 1px solid var(--divider); }
-.blueprint .corner { position: absolute; width: 7px; height: 7px; border: 1px solid var(--accent); }
-.corner.tl { top: -1px; left: -1px; border-right: 0; border-bottom: 0; }
-.corner.tr { top: -1px; right: -1px; border-left: 0; border-bottom: 0; }
-.corner.bl { bottom: -1px; left: -1px; border-right: 0; border-top: 0; }
-.corner.br { bottom: -1px; right: -1px; border-left: 0; border-top: 0; }
+/* ──────────────────────────────────────────── controles segmentados */
+.seg { display: inline-flex; overflow: hidden; border: 1px solid var(--color-divider); border-radius: 0; }
+.seg-opt {
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 7px 12px; font-size: 13px; cursor: pointer;
+  font-family: var(--font-heading); font-weight: var(--font-heading-weight);
+  letter-spacing: 0.05em; text-transform: uppercase;
+}
+.seg-opt input { position: absolute; opacity: 0; width: 0; height: 0; pointer-events: none; }
+.seg-opt + .seg-opt { border-left: 1px solid var(--color-divider); }
+.seg-opt:has(input:checked) { background: var(--color-accent); color: var(--color-bg); }
+.seg-opt:not(:has(input:checked)):hover { background: color-mix(in srgb, var(--color-text) 7%, transparent); }
+.seg-opt:has(input:focus-visible) { outline: 2px solid var(--color-accent); outline-offset: -2px; }
+
+/* ─────────────────────────────────────────────────────── tabelas */
+.table { width: 100%; border-collapse: collapse; font-size: 14px; }
+.table th {
+  text-align: left; font-size: 11px; letter-spacing: 0.08em; text-transform: uppercase;
+  color: color-mix(in srgb, var(--color-text) 60%, transparent);
+  padding: var(--space-2); border-bottom: 1px solid var(--color-divider);
+  position: sticky; top: 0; z-index: 1; background: var(--color-bg); white-space: nowrap;
+}
+.table td {
+  padding: var(--space-2);
+  border-bottom: 1px solid color-mix(in srgb, var(--color-text) 8%, transparent);
+}
+.table tbody tr:hover { background: color-mix(in srgb, var(--color-text) 4%, transparent); }
+.table td.num { font-variant-numeric: tabular-nums; text-align: right; }
+.table tr.destaque td { background: var(--color-accent-100); font-weight: 500; }
+
+.tag {
+  display: inline-flex; align-items: center; font-size: 11px;
+  letter-spacing: 0.02em; padding: 3px 10px; border-radius: 0;
+  font-family: var(--font-heading); font-weight: var(--font-heading-weight);
+  text-transform: uppercase;
+}
+
+/* ─────────────────────────────────────────── estrutura da página */
+.casca { max-width: 1240px; margin: 0 auto; padding: var(--space-8) var(--space-6) 70px; }
+
+.topo { display: flex; align-items: flex-end; gap: var(--space-6); flex-wrap: wrap;
+        padding-bottom: var(--space-4); border-bottom: 1px solid var(--color-divider); }
+.marca h1 { margin: 0; line-height: 1; }
+.marca p { margin: var(--space-1) 0 0; font-size: 12px; letter-spacing: 0.12em;
+           text-transform: uppercase; color: color-mix(in srgb, var(--color-text) 55%, transparent); }
+.selo { margin-left: auto; text-align: right; font-size: 11px; letter-spacing: 0.09em;
+        text-transform: uppercase; color: color-mix(in srgb, var(--color-text) 50%, transparent); }
+.selo strong { display: block; font-family: var(--font-heading);
+               font-weight: var(--font-heading-weight); font-size: 26px;
+               letter-spacing: 0; color: var(--color-text); }
+
+nav { display: flex; margin: var(--space-6) 0 var(--space-8); flex-wrap: wrap;
+      border: 1px solid var(--color-divider); width: fit-content; }
+nav button {
+  font-family: var(--font-heading); font-size: 13px; font-weight: var(--font-heading-weight);
+  letter-spacing: 0.08em; text-transform: uppercase;
+  padding: 7px 14px; border: 0; background: transparent;
+  color: color-mix(in srgb, var(--color-text) 62%, transparent); cursor: pointer;
+}
+nav button + button { border-left: 1px solid var(--color-divider); }
+nav button:hover { background: color-mix(in srgb, var(--color-text) 7%, transparent); color: var(--color-text); }
+nav button[aria-selected="true"] { background: var(--color-accent); color: var(--color-bg); }
+nav button:focus-visible { outline: 2px solid var(--color-accent); outline-offset: -2px; }
 
 section { display: none; }
-section.ativa { display: block; animation: entra .22s ease-out; }
-@keyframes entra { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: none; } }
-@media (prefers-reduced-motion: reduce) { section.ativa { animation: none; } }
+section.ativa { display: block; }
 
-.titulo-tela { display: flex; align-items: baseline; gap: 14px; margin-bottom: 16px; flex-wrap: wrap; }
-.titulo-tela h2 { font-size: 30px; }
+.titulo-tela { display: flex; align-items: baseline; gap: var(--space-4);
+               margin-bottom: var(--space-4); flex-wrap: wrap; }
+.titulo-tela h2 { margin: 0; }
 .eyebrow { font-size: 12px; letter-spacing: 0.1em; text-transform: uppercase;
-           color: color-mix(in srgb, var(--text) 50%, transparent); }
+           color: color-mix(in srgb, var(--color-text) 50%, transparent); }
 
-/* Metricas */
+/* ───────────────────────────────────────────────────── métricas */
 .metricas { display: grid; grid-template-columns: repeat(4, 1fr); gap: 18px; }
-.metrica { padding: 16px 18px 18px; display: flex; flex-direction: column; gap: 6px; min-height: 118px; }
-.metrica .rot { font-size: 10px; letter-spacing: 0.11em; text-transform: uppercase; color: var(--a700); }
-.metrica .val { font-family: var(--heading); font-weight: 600; font-size: 40px;
-                line-height: 1; letter-spacing: -0.02em; }
+.metrica { padding: 16px 18px 18px; display: flex; flex-direction: column;
+           gap: var(--space-1); min-height: 118px; background: var(--color-neutral-100); }
+.metrica .rot { font-size: 10px; letter-spacing: 0.11em; text-transform: uppercase;
+                color: var(--color-accent-2-700); }
+.metrica .val { font-family: var(--font-heading); font-weight: var(--font-heading-weight);
+                font-size: 40px; line-height: 1; letter-spacing: -0.02em; }
 .metrica .nota { margin-top: auto; font-size: 11px;
-                 color: color-mix(in srgb, var(--text) 55%, transparent); }
+                 color: color-mix(in srgb, var(--color-text) 55%, transparent); }
 
-.faixa-alerta { margin-top: 20px; padding: 16px 20px; background: var(--a900); color: #f2f2f3;
+.faixa-alerta { margin-top: var(--space-6); padding: 16px 20px;
+                background: var(--color-accent-900); color: #f2f2f3;
                 display: flex; gap: 18px; align-items: center; flex-wrap: wrap; }
-.faixa-alerta .tag { font-family: var(--heading); font-weight: 600; font-size: 13px;
-                     letter-spacing: 0.16em; text-transform: uppercase; padding: 5px 12px;
-                     border: 1px solid rgba(242,242,243,0.5); white-space: nowrap; }
-.aviso { margin-top: 14px; padding: 11px 16px; border-left: 2px solid var(--accent);
-         background: var(--a100); font-size: 13px; }
+.faixa-alerta .tag { border: 1px solid rgba(242,242,243,0.5); color: #f2f2f3;
+                     letter-spacing: 0.16em; padding: 5px 12px; white-space: nowrap; }
+.aviso { margin-top: var(--space-4); padding: 11px 16px;
+         border-left: 2px solid var(--color-accent);
+         background: var(--color-accent-100); font-size: 13px; }
 
-.duas { display: grid; grid-template-columns: 1.55fr 1fr; gap: 26px; margin-top: 30px; align-items: start; }
-.duas h4 { font-size: 19px; margin-bottom: 4px; }
-.legenda-graf { font-size: 12px; color: color-mix(in srgb, var(--text) 55%, transparent); margin-bottom: 10px; }
+.duas { display: grid; grid-template-columns: 1.55fr 1fr; gap: var(--space-8);
+        margin-top: 30px; align-items: start; }
+.duas h4 { margin: 0 0 var(--space-1); }
+.legenda-graf { font-size: 12px; color: color-mix(in srgb, var(--color-text) 55%, transparent);
+                margin-bottom: var(--space-3); }
 
-.lista-contexto { padding: 18px 20px; }
+.lista-contexto { padding: 18px 20px; background: var(--color-neutral-100); }
 .lista-contexto .rot { font-size: 10px; letter-spacing: 0.11em; text-transform: uppercase;
-                       color: var(--a700); margin-bottom: 12px; }
+                       color: var(--color-accent-2-700); margin-bottom: var(--space-3); }
 .lista-contexto .linha { display: flex; justify-content: space-between; align-items: baseline;
-                         padding: 9px 0; border-bottom: 1px solid color-mix(in srgb, var(--text) 8%, transparent); }
+                         padding: 9px 0;
+                         border-bottom: 1px solid color-mix(in srgb, var(--color-text) 8%, transparent); }
 .lista-contexto .linha span:first-child { font-size: 13px; }
-.lista-contexto .linha span:last-child { font-family: var(--heading); font-weight: 600; font-size: 22px; }
-.lista-contexto p { margin-top: 14px; font-size: 12px; line-height: 1.5;
-                    color: color-mix(in srgb, var(--text) 60%, transparent); }
+.lista-contexto .linha span:last-child { font-family: var(--font-heading);
+                                          font-weight: var(--font-heading-weight); font-size: 22px; }
+.lista-contexto p { margin: var(--space-4) 0 0; font-size: 12px; line-height: 1.5;
+                    color: color-mix(in srgb, var(--color-text) 60%, transparent); }
 
-/* Mapa */
-.mapa-area { display: grid; grid-template-columns: minmax(0,1fr) 320px; gap: 24px; align-items: start; }
-.mapa-caixa { position: relative; height: 560px; overflow: hidden; }
+/* ────────────────────────────────────────────────────────── mapas */
+.mapa-area { display: grid; grid-template-columns: minmax(0,1fr) 320px;
+             gap: var(--space-6); align-items: start; }
+.mapa-caixa { position: relative; height: 560px; overflow: hidden;
+              background: linear-gradient(180deg, var(--color-neutral-100), var(--color-bg)); }
 .mapa-caixa svg { position: absolute; inset: 0; width: 100%; height: 100%; }
 .nota-mapa { position: absolute; left: 14px; bottom: 12px; right: 14px; font-size: 11px;
-             line-height: 1.4; color: color-mix(in srgb, var(--text) 50%, transparent);
+             line-height: 1.4; color: color-mix(in srgb, var(--color-text) 50%, transparent);
              pointer-events: none; }
-.legenda { display: flex; gap: 22px; margin-top: 14px; flex-wrap: wrap; }
+.legenda { display: flex; gap: 22px; margin-top: var(--space-4); flex-wrap: wrap; }
 .legenda span { display: inline-flex; align-items: center; gap: 8px; font-size: 12px; }
 .legenda i { width: 14px; height: 14px; display: block;
-             border: 1px solid color-mix(in srgb, var(--text) 30%, transparent); }
-.seg { display: inline-flex; border: 1px solid var(--divider); }
-.seg label { position: relative; }
-.seg input { position: absolute; opacity: 0; pointer-events: none; }
-.seg span { display: block; font-family: var(--heading); font-size: 12px; font-weight: 600;
-            letter-spacing: 0.09em; text-transform: uppercase; padding: 7px 13px; cursor: pointer;
-            color: color-mix(in srgb, var(--text) 62%, transparent); }
-.seg input:checked + span { background: var(--text); color: var(--bg); }
-.seg input:focus-visible + span { outline: 2px solid var(--accent); outline-offset: -2px; }
+             border: 1px solid color-mix(in srgb, var(--color-text) 30%, transparent); }
+.dica { position: absolute; pointer-events: none; background: var(--color-bg);
+        border: 1px solid var(--color-text); padding: 8px 11px; font-size: 12px;
+        max-width: 240px; z-index: 5; }
+.dica .nome { font-family: var(--font-heading); font-weight: var(--font-heading-weight);
+              font-size: 16px; }
 
-.dica { position: absolute; pointer-events: none; background: var(--bg);
-        border: 1px solid var(--text); padding: 8px 11px; font-size: 12px;
-        max-width: 230px; z-index: 5; }
-.dica .nome { font-family: var(--heading); font-weight: 600; font-size: 16px; }
+.rolagem { overflow: auto; max-height: 520px; border: 1px solid var(--color-divider);
+           scrollbar-width: thin; }
 
-/* Tabelas */
-.rolagem { overflow-x: auto; max-height: 520px; overflow-y: auto; border: 1px solid var(--divider); }
-table { width: 100%; border-collapse: collapse; font-size: 13px; }
-th { position: sticky; top: 0; z-index: 1; background: var(--n200); text-align: left;
-     font-family: var(--heading); font-weight: 600; font-size: 12px; letter-spacing: 0.07em;
-     text-transform: uppercase; padding: 9px 12px; border-bottom: 1px solid var(--divider);
-     white-space: nowrap; }
-td { padding: 8px 12px; border-bottom: 1px solid color-mix(in srgb, var(--text) 8%, transparent); }
-tbody tr:hover td { background: var(--a100); }
-td.num { font-variant-numeric: tabular-nums; text-align: right; }
-.pilula { display: inline-block; font-family: var(--heading); font-size: 11px; font-weight: 600;
-          letter-spacing: 0.08em; text-transform: uppercase; padding: 3px 9px; color: #fff; }
-.destaque td { background: var(--a200) !important; font-weight: 600; }
-
-.rodape { margin-top: 34px; padding-top: 18px; border-top: 1px solid var(--divider);
+.rodape { margin-top: 34px; padding-top: 18px; border-top: 1px solid var(--color-divider);
           font-size: 12px; line-height: 1.6;
-          color: color-mix(in srgb, var(--text) 55%, transparent); }
+          color: color-mix(in srgb, var(--color-text) 55%, transparent); }
 
 @media (max-width: 1000px) {
   .metricas { grid-template-columns: repeat(2, 1fr); }
@@ -171,8 +307,10 @@ td.num { font-variant-numeric: tabular-nums; text-align: right; }
 }
 @media (max-width: 600px) {
   .metricas { grid-template-columns: 1fr; }
-  .marca h1 { font-size: 32px; }
+  h1 { font-size: 34px; }
+  h2 { font-size: 26px; }
 }
+
 </style>
 
 <script type="application/json" id="dados">/*__DADOS__*/</script>
@@ -225,8 +363,8 @@ td.num { font-variant-numeric: tabular-nums; text-align: right; }
         </div>
         <div style="display:flex;gap:12px;margin-bottom:12px;flex-wrap:wrap">
           <span class="seg">
-            <label><input type="radio" name="nivelmapa" value="ride" checked><span>RIDE-DF</span></label>
-            <label><input type="radio" name="nivelmapa" value="ras"><span>Brasília por RA</span></label>
+            <label class="seg-opt"><input type="radio" name="nivelmapa" value="ride" checked>RIDE-DF</label>
+            <label class="seg-opt"><input type="radio" name="nivelmapa" value="ras">Brasília por RA</label>
           </span>
         </div>
         <div class="blueprint mapa-caixa" id="mapa-caixa">
@@ -274,7 +412,7 @@ td.num { font-variant-numeric: tabular-nums; text-align: right; }
       <span class="eyebrow" id="rank-sub"></span>
     </div>
     <p class="legenda-graf" id="rank-posicao"></p>
-    <div class="rolagem"><table id="tabela-ranking"></table></div>
+    <div class="rolagem"><table class="table" id="tabela-ranking"></table></div>
   </section>
 
   <!-- 05 DESEMPENHO -->
@@ -285,7 +423,7 @@ td.num { font-variant-numeric: tabular-nums; text-align: right; }
     </div>
     <p class="legenda-graf">Cada ano é avaliado com um modelo treinado apenas nos anos anteriores, nunca no próprio. O desfecho é risco alto ou muito alto quatro semanas à frente.</p>
     <div id="graf-auc"></div>
-    <div class="rolagem" style="margin-top:22px"><table id="tabela-modelo"></table></div>
+    <div class="rolagem" style="margin-top:22px"><table class="table" id="tabela-modelo"></table></div>
   </section>
 
   <!-- 06 RAs -->
@@ -302,7 +440,7 @@ td.num { font-variant-numeric: tabular-nums; text-align: right; }
           <div class="nota-mapa">População por Região Administrativa (PDAD 2021).</div>
         </div>
       </div>
-      <div class="rolagem" style="max-height:520px"><table id="tabela-ras"></table></div>
+      <div class="rolagem" style="max-height:520px"><table class="table" id="tabela-ras"></table></div>
     </div>
     <div class="aviso" style="margin-top:20px">
       <strong>Este mapa não exibe casos de dengue por RA.</strong> Não existe fonte pública com essa série: o InfoDengue opera apenas no nível municipal, o painel da SES-DF não expõe os dados de forma programática, o LIRAa é publicado como relatório fechado e os microdados do SINAN dependem do FTP do DATASUS. Repartir os casos do DF entre as RAs na proporção da população produziria um mapa apenas aparentemente informativo, que reproduziria o mapa populacional e esconderia a desigualdade intraurbana real — justamente o que se quer medir.
@@ -319,8 +457,8 @@ td.num { font-variant-numeric: tabular-nums; text-align: right; }
 (function () {
   "use strict";
   const D = JSON.parse(document.getElementById("dados").textContent);
-  const CORES = { "baixo": "var(--baixo)", "moderado": "var(--moderado)",
-                  "alto": "var(--alto)", "muito alto": "var(--muitoalto)" };
+  const CORES = { "baixo": "var(--risco-baixo)", "moderado": "var(--risco-moderado)",
+                  "alto": "var(--risco-alto)", "muito alto": "var(--risco-muito-alto)" };
 
   const num = (v, c) => Number(v).toLocaleString("pt-BR",
     { minimumFractionDigits: c || 0, maximumFractionDigits: c || 0 });
@@ -361,13 +499,13 @@ td.num { font-variant-numeric: tabular-nums; text-align: right; }
   /* -------------------------------------------------------- panorama */
   const f = D.foco;
   const metricas = [
-    { rot: "Casos estimados", val: num(f.est), cor: "var(--text)",
+    { rot: "Casos estimados", val: num(f.est), cor: "var(--color-text)",
       nota: f.variacao === null ? "" : (f.variacao > 0 ? "+" : "") + f.variacao + "% vs semana anterior" },
-    { rot: "Incidência / 100 mil", val: num(f.inc, 1), cor: "var(--text)",
+    { rot: "Incidência / 100 mil", val: num(f.inc, 1), cor: "var(--color-text)",
       nota: "calculada sobre casos estimados" },
     { rot: "Nível de risco", val: capital(f.risco), cor: CORES[f.risco],
       nota: "canal endêmico e patamar absoluto" },
-    { rot: "Prob. de alerta", val: pct(f.prob), cor: f.prob >= 0.5 ? "var(--muitoalto)" : "var(--text)",
+    { rot: "Prob. de alerta", val: pct(f.prob), cor: f.prob >= 0.5 ? "var(--risco-muito-alto)" : "var(--color-text)",
       nota: D.horizonte + " semanas à frente" },
   ];
   const cx = document.getElementById("pan-metricas");
@@ -416,7 +554,7 @@ td.num { font-variant-numeric: tabular-nums; text-align: right; }
   }
   function texto(x, y, s, extra) {
     const t = no("text", Object.assign({ x: x, y: y, "font-size": 10,
-      fill: "color-mix(in srgb, var(--text) 55%, transparent)",
+      fill: "color-mix(in srgb, var(--color-text) 55%, transparent)",
       "font-family": "Barlow, sans-serif" }, extra || {}));
     t.textContent = s;
     return t;
@@ -433,24 +571,24 @@ td.num { font-variant-numeric: tabular-nums; text-align: right; }
     for (let g = 0; g <= 4; g++) {
       const v = maxY * g / 4, y = py(v);
       s.appendChild(no("line", { x1: L, y1: y, x2: W - R, y2: y,
-        stroke: "var(--divider)", "stroke-width": 1 }));
+        stroke: "var(--color-divider)", "stroke-width": 1 }));
       s.appendChild(texto(L - 8, y + 3, num(v), { "text-anchor": "end" }));
     }
     if (campos.hi) {
       let d = "M" + px(0) + " " + py(serie[0][campos.hi]);
       serie.forEach((p, i) => { d += " L" + px(i) + " " + py(p[campos.hi]); });
       for (let i = serie.length - 1; i >= 0; i--) d += " L" + px(i) + " " + py(serie[i][campos.lo]);
-      s.appendChild(no("path", { d: d + " Z", fill: "var(--a200)", opacity: 0.8 }));
+      s.appendChild(no("path", { d: d + " Z", fill: "var(--color-accent-200)", opacity: 0.8 }));
     }
     if (campos.n) {
       let d = "";
       serie.forEach((p, i) => { d += (i ? " L" : "M") + px(i) + " " + py(p[campos.n]); });
-      s.appendChild(no("path", { d: d, fill: "none", stroke: "var(--n600)",
+      s.appendChild(no("path", { d: d, fill: "none", stroke: "var(--color-neutral-600)",
         "stroke-width": 1, "stroke-dasharray": "3 3" }));
     }
     let d = "";
     serie.forEach((p, i) => { d += (i ? " L" : "M") + px(i) + " " + py(p[campos.e]); });
-    s.appendChild(no("path", { d: d, fill: "none", stroke: "var(--a800)", "stroke-width": 1.8 }));
+    s.appendChild(no("path", { d: d, fill: "none", stroke: "var(--color-accent-800)", "stroke-width": 1.8 }));
 
     const passo = Math.max(1, Math.floor(serie.length / 6));
     serie.forEach((p, i) => {
@@ -479,10 +617,10 @@ td.num { font-variant-numeric: tabular-nums; text-align: right; }
 
     for (let g = 0; g <= 4; g++) {
       const v = maxY * g / 4, y = py(v);
-      s.appendChild(no("line", { x1: L, y1: y, x2: W - R, y2: y, stroke: "var(--divider)" }));
+      s.appendChild(no("line", { x1: L, y1: y, x2: W - R, y2: y, stroke: "var(--color-divider)" }));
       s.appendChild(texto(L - 8, y + 3, num(v, 0), { "text-anchor": "end" }));
     }
-    [[bras, "var(--muitoalto)", 2], [ento, "var(--accent)", 1.6]].forEach(([serie, cor, esp]) => {
+    [[bras, "var(--risco-muito-alto)", 2], [ento, "var(--color-accent)", 1.6]].forEach(([serie, cor, esp]) => {
       let d = "";
       serie.forEach((p, i) => { d += (i ? " L" : "M") + px(i, serie.length) + " " + py(p.v); });
       s.appendChild(no("path", { d: d, fill: "none", stroke: cor, "stroke-width": esp }));
@@ -496,8 +634,8 @@ td.num { font-variant-numeric: tabular-nums; text-align: right; }
     });
     document.getElementById("graf-comparacao").appendChild(s);
     const leg = el("div", { class: "legenda", style: "margin-top:8px" },
-      '<span><i style="background:var(--muitoalto)"></i>Brasília</span>' +
-      '<span><i style="background:var(--accent)"></i>Entorno (RIDE)</span>');
+      '<span><i style="background:var(--risco-muito-alto)"></i>Brasília</span>' +
+      '<span><i style="background:var(--color-accent)"></i>Entorno (RIDE)</span>');
     document.getElementById("graf-comparacao").appendChild(leg);
   })();
 
@@ -556,8 +694,8 @@ td.num { font-variant-numeric: tabular-nums; text-align: right; }
     alvo.setAttribute("viewBox", "0 0 " + W + " " + H);
     projetar(D.malha, W, H).forEach(({ feicao, d }) => {
       const m = porCodigo[feicao.properties.cod_ibge];
-      const cor = m ? CORES[m.risco] : "var(--n200)";
-      const p = no("path", { d: d, fill: cor, stroke: "var(--bg)", "stroke-width": 0.8,
+      const cor = m ? CORES[m.risco] : "var(--color-neutral-200)";
+      const p = no("path", { d: d, fill: cor, stroke: "var(--color-bg)", "stroke-width": 0.8,
                              "fill-opacity": 0.88, style: "cursor:pointer" });
       p.addEventListener("mousemove", ev => mostrarDica(caixa, ev, m, feicao.properties.municipio));
       p.addEventListener("mouseleave", esconderDica);
@@ -594,8 +732,8 @@ td.num { font-variant-numeric: tabular-nums; text-align: right; }
       const nome = feicao.properties.ra_nome;
       const ra = D.ras.find(r => r.nome === nome) || {};
       const t = (ra.pop || 0) / maxPop;
-      const p = no("path", { d: d, fill: "var(--accent)", "fill-opacity": (0.14 + t * 0.78).toFixed(2),
-                             stroke: "var(--bg)", "stroke-width": 0.8, style: "cursor:pointer" });
+      const p = no("path", { d: d, fill: "var(--color-accent)", "fill-opacity": (0.14 + t * 0.78).toFixed(2),
+                             stroke: "var(--color-bg)", "stroke-width": 0.8, style: "cursor:pointer" });
       p.addEventListener("mousemove", ev => {
         mostrarDicaLivre(caixa, ev, nome,
           (ra.pop ? num(ra.pop) + " habitantes" : "sem dado"),
@@ -653,9 +791,9 @@ td.num { font-variant-numeric: tabular-nums; text-align: right; }
       tr.innerHTML = "<td>" + m.nome + "</td><td>" + m.uf + "</td>" +
         '<td class="num">' + num(m.est) + "</td>" +
         '<td class="num">' + num(m.inc, 1) + "</td>" +
-        '<td><span class="pilula" style="background:' + CORES[m.risco] + '">' + m.risco + "</span></td>" +
+        '<td><span class="tag" style="background:' + CORES[m.risco] + '">' + m.risco + "</span></td>" +
         '<td class="num">' + pct(m.prob) + "</td>" +
-        '<td style="font-size:12px;color:color-mix(in srgb, var(--text) 65%, transparent)">' + m.fatores + "</td>";
+        '<td style="font-size:12px;color:color-mix(in srgb, var(--color-text) 65%, transparent)">' + m.fatores + "</td>";
       corpo.appendChild(tr);
     });
     t.appendChild(corpo);
@@ -683,20 +821,20 @@ td.num { font-variant-numeric: tabular-nums; text-align: right; }
 
     for (let v = 0.6; v <= 0.951; v += 0.05) {
       const y = py(v);
-      s.appendChild(no("line", { x1: L, y1: y, x2: W - R, y2: y, stroke: "var(--divider)" }));
+      s.appendChild(no("line", { x1: L, y1: y, x2: W - R, y2: y, stroke: "var(--color-divider)" }));
       s.appendChild(texto(L - 8, y + 3, v.toFixed(2).replace(".", ","), { "text-anchor": "end" }));
     }
-    const cores = { "LightGBM": "var(--muitoalto)", "Logistica": "var(--moderado)",
-                    "Referencia": "var(--accent)" };
+    const cores = { "LightGBM": "var(--risco-muito-alto)", "Logistica": "var(--risco-moderado)",
+                    "Referencia": "var(--color-accent)" };
     Object.keys(porModelo).forEach(nome => {
       const linha = porModelo[nome].sort((a, b) => a.ano - b.ano);
       let d = "";
       linha.forEach((p, i) => { d += (i ? " L" : "M") + px(i) + " " + py(p.auc); });
-      s.appendChild(no("path", { d: d, fill: "none", stroke: cores[nome] || "var(--n600)",
+      s.appendChild(no("path", { d: d, fill: "none", stroke: cores[nome] || "var(--color-neutral-600)",
         "stroke-width": 2 }));
       linha.forEach((p, i) => {
         s.appendChild(no("circle", { cx: px(i), cy: py(p.auc), r: 3.4,
-          fill: cores[nome] || "var(--n600)" }));
+          fill: cores[nome] || "var(--color-neutral-600)" }));
       });
     });
     anos.forEach((a, i) => s.appendChild(texto(px(i), H - 10, a, { "text-anchor": "middle" })));
