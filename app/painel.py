@@ -386,6 +386,8 @@ with aba_mapa:
                 "Esgoto inadequado": ("esgoto_inadequado_pct", "% dos domicilios"),
                 "Sem agua de rede": ("sem_agua_rede_pct", "% dos domicilios"),
                 "Lixo sem coleta": ("lixo_sem_coleta_pct", "% dos domicilios"),
+                "Sem bueiro": ("sem_bueiro_pct", "% dos domicilios"),
+                "Rua sem pavimento": ("sem_pavimento_pct", "% dos domicilios"),
             })
 
         escolhido = st.radio(
@@ -412,6 +414,14 @@ with aba_mapa:
             "lixo_sem_coleta_pct":
                 "Lixo queimado, enterrado ou com outro destino, que acumula "
                 "recipientes com agua parada.",
+            "sem_bueiro_pct":
+                "Domicilios em face de rua sem boca de lobo. E a drenagem que "
+                "decide se a chuva escoa ou empoca, e o Aedes se cria em agua "
+                "parada, nao corrente -- por isso este e o indicador de fluxo "
+                "das aguas na escala em que o mosquito vive.",
+            "sem_pavimento_pct":
+                "Domicilios em face de rua sem pavimento, onde a agua empoca "
+                "mesmo havendo drenagem.",
         }
         if coluna in explicacao:
             st.caption(
