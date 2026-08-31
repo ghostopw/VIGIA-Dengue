@@ -19,7 +19,7 @@ Projeto PIBITI 2026 — Iniciação em Desenvolvimento Tecnológico e Inovação
 | 2 — Base analítica | 19.770 linhas município-semana, 2014–2026 | `src/vigia/ingestao_infodengue.py`, `src/vigia/base_analitica.py` |
 | 3 — Análise espaço-temporal | Canal endêmico e estratificação em 4 níveis | `src/vigia/risco.py` |
 | 4 — Modelagem de alerta | 3 modelos com validação temporal | `src/vigia/modelagem.py` |
-| 5 — Dashboard | Painel Streamlit com mapa, séries e relatórios | `app/painel.py` |
+| 5 — Dashboard | Painel web com mapa, séries e relatórios | `app/servidor.py`, `app/artifact/corpo.html` |
 | 6 — Avaliação e documentação | Métricas apuradas; manual e relatório pendentes | `saidas/desempenho_modelos.csv` |
 
 ## Território piloto
@@ -72,7 +72,7 @@ python src/vigia/executar_malha.py           # baixa a malha cartográfica
 python src/vigia/executar_analise.py         # base analítica, risco e validação
 python src/vigia/executar_painel_dados.py    # gera os dados do painel
 
-streamlit run app/painel.py                  # abre o dashboard
+python app/servidor.py                       # abre o painel em localhost:8000
 python -m pytest testes -q                   # roda os testes
 ```
 
@@ -129,7 +129,9 @@ o alerta precisa funcionar.
 ## Estrutura
 
 ```
-app/painel.py                  dashboard Streamlit
+app/servidor.py                servidor local do painel (localhost)
+app/artifact/corpo.html        o desenho do painel: layout, CSS e JavaScript
+app/painel.py                  dashboard Streamlit (versão anterior)
 src/vigia/territorio.py        os 30 municípios, com a regra DF+GO validada
 src/vigia/ingestao_infodengue.py  download da série município-semana
 src/vigia/base_analitica.py    incidência, médias móveis, defasagens, flags
