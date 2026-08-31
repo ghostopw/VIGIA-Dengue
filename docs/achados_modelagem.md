@@ -191,3 +191,50 @@ responde por ~60% do ganho.
 As correções ficam de pé por serem corretas, não por mudarem o número. Se algum
 dia o bloco climático ganhar peso — com chuva por município no Centro-Oeste, por
 exemplo —, o vazamento passaria a doer, e aí já estará resolvido.
+
+---
+
+## 7. Em quantos por cento o modelo acerta
+
+AUC não é percentual de acerto. As medidas que são, ao limiar em uso, com
+horizonte de 4 semanas:
+
+### No Centro-Oeste, 467 municípios
+
+| Medida | Valor | Leitura |
+|---|---|---|
+| Sensibilidade | **77,9%** | pega 78 de cada 100 surtos |
+| Especificidade | 71,7% | reconhece 72% das semanas calmas |
+| VPP | 65,7% | quando alerta, acerta 2 de cada 3 vezes |
+| Acurácia | 75,3% | |
+
+### Só em Brasília, e aqui havia um defeito
+
+A taxa base de Brasília é alta: em **121 das 209 semanas** avaliadas (58%) havia
+risco alto no horizonte. E o modelo prevê mediana de 0,84. Com o limiar em 0,50,
+o resultado era:
+
+| Limiar | Sensib. | Especif. | VPP | Alertas/ano |
+|---|---|---|---|---|
+| 0,50 (antigo padrão) | 96,7% | **19,3%** | 62,2% | 47 |
+| 0,70 | 85,1% | 43,2% | 67,3% | 38 |
+| **0,80 (novo padrão)** | **71,1%** | **67,0%** | **74,8%** | **29** |
+| 0,85 | 64,5% | 78,4% | 80,4% | 24 |
+| 0,90 | 47,1% | 88,6% | 85,1% | 17 |
+
+Especificidade de 19% significa alertar em quase toda semana. **Alerta que
+dispara sempre não é alerta** — vira ruído, e depois de um mês ninguém abre.
+
+O padrão passou para **0,80**, onde o alerta acerta 3 de cada 4 disparos e cai
+para 29 por ano. O custo é perder os surtos mais fracos: a sensibilidade vai de
+97% para 71%. É a troca certa para um alerta operacional, e o controle continua
+na barra lateral para quem quiser outro ponto.
+
+### A limitação de fundo
+
+Um alerta que dispara em 58% das semanas tem pouco a informar, qualquer que seja
+o limiar. Isso não é defeito do modelo, e sim da estratificação: o critério de
+risco marca Brasília como alto ou muito alto em metade das semanas do ano. Para
+o alerta ganhar poder de discriminação, o desfecho precisaria ser mais raro —
+por exemplo, exigir crescimento acelerado além do patamar, ou usar percentil
+específico de Brasília em vez do corte regional.

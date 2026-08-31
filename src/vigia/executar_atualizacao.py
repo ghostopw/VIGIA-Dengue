@@ -25,7 +25,7 @@ from vigia.notificar import emitir  # noqa: E402
 
 def principal() -> int:
     analisador = argparse.ArgumentParser(description="Ciclo do alerta VIGIA-Dengue.")
-    analisador.add_argument("--limiar", type=float, default=0.50,
+    analisador.add_argument("--limiar", type=float, default=0.80,
                             help="probabilidade a partir da qual Brasilia entra em alerta")
     analisador.add_argument("--sem-busca", action="store_true",
                             help="nao consulta o InfoDengue; so reavalia o que ja existe")

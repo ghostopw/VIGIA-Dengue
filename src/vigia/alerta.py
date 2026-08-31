@@ -114,7 +114,7 @@ def guardar(estado: Estado, caminho: Path = ESTADO) -> None:
     )
 
 
-def comparar(anterior: Estado | None, atual: Estado, limiar: float = 0.50) -> list[str]:
+def comparar(anterior: Estado | None, atual: Estado, limiar: float = 0.80) -> list[str]:
     """Eventos que justificam avisar alguem."""
     if anterior is None:
         return []
@@ -175,7 +175,7 @@ def mensagem(eventos: list[str], estado: Estado) -> str:
     return "\n".join(linhas)
 
 
-def avaliar(limiar: float = 0.50, painel: Path = PAINEL,
+def avaliar(limiar: float = 0.80, painel: Path = PAINEL,
             caminho_estado: Path = ESTADO) -> dict:
     """Le, compara, grava e devolve o que houve.
 

@@ -364,10 +364,21 @@ with st.sidebar:
         format_func=formatar_semana,
     )
 
+    # O padrao era 0,50 e alertava 47 semanas por ano -- alerta quase toda
+    # semana nao e alerta. A taxa base de Brasilia e alta (58% das semanas com
+    # risco alto no horizonte) e o modelo prevê mediana de 0,84, entao meio
+    # caminho nao separa nada: a especificidade fica em 19%.
+    #
+    # Em 0,80 o alerta passa a acertar 3 de cada 4 vezes que dispara (VPP 74,8%)
+    # e reconhece 67% das semanas calmas, ao custo de perder os surtos mais
+    # fracos -- 29 alertas por ano em vez de 47. Medido em 209 semanas de
+    # Brasilia, 2021 a 2025.
     limiar = st.slider(
         "Limiar de probabilidade para o alerta",
-        min_value=0.05, max_value=0.95, value=0.50, step=0.05,
-        help="Probabilidade acima da qual Brasilia entra em alerta.",
+        min_value=0.05, max_value=0.95, value=0.80, step=0.05,
+        help="Probabilidade acima da qual Brasilia entra em alerta. Em 0,80 o "
+             "alerta acerta 3 de cada 4 disparos; em 0,50 dispararia em quase "
+             "toda semana.",
     )
 
     sinalizar_provisorio = st.checkbox(
