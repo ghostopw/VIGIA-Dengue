@@ -12,7 +12,8 @@ from pathlib import Path
 import numpy as np
 import pandas as pd
 
-from .modelagem import VARIAVEIS, modelo_aprendizado, preparar
+from .modelagem import (VARIAVEIS, VARIAVEIS_ESSENCIAIS,
+                        modelo_aprendizado, preparar)
 
 COLUNAS_PAINEL = [
     "cod_ibge", "municipio", "uf", "ano", "semana", "se_codigo", "data_ini_se",
@@ -63,7 +64,12 @@ def gerar(base_com_risco: pd.DataFrame, horizonte: int = 4) -> pd.DataFrame:
     dados = base_com_risco.sort_values(["cod_ibge", "data_ini_se"]).copy()
     risco_alto = (dados["risco_codigo"] >= 2).astype(float)
     dados["alvo"] = risco_alto.groupby(dados["cod_ibge"]).shift(-horizonte)
-    dados = dados.dropna(subset=variaveis).reset_index(drop=True)
+    # Exige so o essencial. Antes o `dropna` cobria todas as variaveis, e a
+    # semana mais recente caia fora sempre que a chuva ainda nao tinha fechado
+    # -- o painel ficava uma semana atras da fonte justamente na ponta que
+    # importa para o alerta.
+    essenciais = [v for v in VARIAVEIS_ESSENCIAIS if v in dados.columns]
+    dados = dados.dropna(subset=essenciais).reset_index(drop=True)
 
     dados["probabilidade_alerta"] = modelo.predict_proba(dados[variaveis])[:, 1]
     dados["fatores_alerta"] = _contribuicoes(modelo, dados[variaveis], variaveis)

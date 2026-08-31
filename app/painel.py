@@ -18,6 +18,7 @@ RAIZ = Path(__file__).resolve().parents[1]
 CAMINHO_PAINEL = RAIZ / "dados" / "processado" / "painel.csv"
 CAMINHO_MALHA_RAS = RAIZ / "dados" / "externo" / "malha_ras_df.geojson"
 CAMINHO_DESEMPENHO = RAIZ / "saidas" / "desempenho_modelos.csv"
+CAMINHO_ALERTA = RAIZ / "saidas" / "alerta.json"
 
 # Paleta do painel VIGIA-Dengue (sistema "Industry"), a mesma do canvas em
 # `Painel VIGIA-Dengue (offline).html`, para que as duas telas se leiam como
@@ -96,7 +97,18 @@ st.markdown(
 )
 
 
-@st.cache_data
+# O cache expira em 10 minutos. Sem prazo, o painel serviria a mesma tabela ate
+# alguem reiniciar o processo -- e o ciclo de atualizacao pode ter trazido uma
+# semana nova nesse meio-tempo.
+@st.cache_data(ttl=600)
+def carregar_alerta() -> dict | None:
+    """Estado deixado pelo ultimo ciclo de `executar_atualizacao.py`."""
+    if CAMINHO_ALERTA.exists():
+        return json.loads(CAMINHO_ALERTA.read_text(encoding="utf-8"))
+    return None
+
+
+@st.cache_data(ttl=600)
 def carregar_painel() -> pd.DataFrame:
     dados = pd.read_csv(CAMINHO_PAINEL, parse_dates=["data_ini_se"])
     dados["risco"] = pd.Categorical(dados["risco"], categories=ORDEM_RISCO, ordered=True)
@@ -200,6 +212,31 @@ st.caption(
     "Alerta precoce do risco de dengue em Brasilia e nas suas Regioes "
     "Administrativas -- as cidades satelites do Distrito Federal"
 )
+
+# ----------------------------------------------------------- estado da coleta
+# Um painel de alerta precisa dizer de quando e o dado que mostra. Sem isso
+# nao da para distinguir "esta calmo" de "ninguem atualizou".
+estado_alerta = carregar_alerta()
+ultima_semana = int(painel[painel["cod_ibge"] == COD_FOCO]["se_codigo"].max())
+
+if estado_alerta is None:
+    st.warning(
+        f"Dado ate a semana **{formatar_semana(ultima_semana)}**. O ciclo de "
+        "atualizacao nunca rodou: execute `python src/vigia/executar_atualizacao.py` "
+        "para o painel passar a acompanhar o InfoDengue sozinho."
+    )
+else:
+    verificado = pd.to_datetime(estado_alerta["estado"]["verificado_em"])
+    horas = (pd.Timestamp.now(tz="UTC") - verificado).total_seconds() / 3600
+    quando = (f"ha {horas * 60:.0f} min" if horas < 1
+              else f"ha {horas:.0f} h" if horas < 48
+              else f"em {verificado.tz_convert(None):%d/%m}")
+    recado = (
+        f"Dado do InfoDengue ate a semana **{formatar_semana(ultima_semana)}** - "
+        f"fonte verificada {quando}."
+    )
+    # Mais de tres dias sem verificar ja e sinal de que o agendamento parou.
+    (st.warning if horas > 72 else st.caption)(recado)
 
 # ---------------------------------------------------------------- barra lateral
 with st.sidebar:

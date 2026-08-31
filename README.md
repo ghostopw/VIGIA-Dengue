@@ -73,6 +73,7 @@ python src/vigia/executar_analise.py         # base analítica, risco e validaç
 python src/vigia/executar_painel_dados.py    # gera os dados do painel
 
 python app/servidor.py                       # abre o painel em localhost:8000
+python src/vigia/executar_atualizacao.py     # busca, reavalia e avisa se mudou
 python -m pytest testes -q                   # roda os testes
 ```
 
@@ -96,6 +97,31 @@ frente à semana anterior), incidência, nível de risco e probabilidade de aler
 
 Controles: semana epidemiológica, limiar de probabilidade do alerta e sinalização de
 semanas com notificação incompleta.
+
+## Alerta ao vivo
+
+`executar_atualizacao.py` é o ciclo que faz o painel acompanhar a fonte sozinho: busca
+as semanas recentes no InfoDengue, reconstrói a base, reavalia Brasília e avisa **só
+quando algo muda** — semana nova, risco subindo, cruzamento do limiar de probabilidade
+ou incidência acima do canal endêmico. Um alerta que chega toda hora dizendo que nada
+mudou deixa de ser lido.
+
+Canais: `saidas/alerta.json` (sempre, e publicado pelo servidor em `/alerta.json`),
+notificação nativa do Windows, e um POST para a URL em `VIGIA_WEBHOOK`, se definida.
+
+Para agendar uma vez por dia no Windows — a fonte publica uma vez por semana, em dia
+que varia:
+
+```
+schtasks /create /tn "VIGIA-Dengue" ^
+  /tr "python L:\Dengue\src\vigia\executar_atualizacao.py" /sc daily /st 08:00
+```
+
+**O que "ao vivo" não resolve.** O InfoDengue publica a semana epidemiológica cerca de
+três semanas depois de ela começar: a notificação leva tempo para ser digitada e o
+*nowcasting* só estabiliza depois. Rodar de hora em hora não adianta — o dado novo
+aparece uma vez por semana. O que o ciclo garante é que, quando a semana sair, ela
+esteja no painel em poucas horas, e não quando alguém lembrar de rodar o pipeline.
 
 ## Estratificação de risco
 

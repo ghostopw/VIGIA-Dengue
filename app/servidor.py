@@ -12,6 +12,7 @@ Uso:  python app/servidor.py                (http://localhost:8000)
 from __future__ import annotations
 
 import argparse
+import json
 import webbrowser
 from functools import partial
 from http.server import HTTPServer, SimpleHTTPRequestHandler
@@ -19,6 +20,7 @@ from pathlib import Path
 
 RAIZ = Path(__file__).resolve().parents[1]
 PAINEL = RAIZ / "Painel VIGIA-Dengue (offline).html"
+ALERTA = RAIZ / "saidas" / "alerta.json"
 
 
 class Servidor(HTTPServer):
@@ -38,8 +40,35 @@ class Manipulador(SimpleHTTPRequestHandler):
     def do_GET(self) -> None:  # noqa: N802 (assinatura da biblioteca padrao)
         if self.path in ("/", "/index.html", "/painel"):
             self.responder_painel()
+        elif self.path.split("?")[0] in ("/alerta.json", "/alerta"):
+            self.responder_alerta()
         else:
             super().do_GET()
+
+    def responder_alerta(self) -> None:
+        """Estado corrente do alerta, para quem quiser consumir de fora.
+
+        E o que `executar_atualizacao.py` deixou em saidas/alerta.json. Sai como
+        JSON com CORS liberado para que uma pagina, um painel de parede ou um
+        script possam ler sem intermediario.
+        """
+        if not ALERTA.exists():
+            corpo = json.dumps({
+                "erro": "alerta ainda nao gerado",
+                "como": "python src/vigia/executar_atualizacao.py",
+            }, ensure_ascii=False).encode("utf-8")
+            codigo = 503
+        else:
+            corpo = ALERTA.read_bytes()
+            codigo = 200
+
+        self.send_response(codigo)
+        self.send_header("Content-Type", "application/json; charset=utf-8")
+        self.send_header("Content-Length", str(len(corpo)))
+        self.send_header("Access-Control-Allow-Origin", "*")
+        self.send_header("Cache-Control", "no-store")
+        self.end_headers()
+        self.wfile.write(corpo)
 
     def responder_painel(self) -> None:
         try:

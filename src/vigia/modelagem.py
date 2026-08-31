@@ -65,6 +65,23 @@ VARIAVEIS_CHUVA = [
 
 VARIAVEIS = VARIAVEIS + VARIAVEIS_CHUVA
 
+# Variaveis sem as quais uma previsao nao se sustenta: o proprio historico de
+# dengue e o porte do municipio. As demais -- clima e chuva -- sao contexto, e
+# o LightGBM trata valor ausente nativamente, mandando a linha para um dos
+# lados do corte.
+#
+# A distincao existe por causa do alerta ao vivo. A chuva vem do ERA5, que
+# fecha a semana com alguns dias de atraso, enquanto o InfoDengue ja publicou a
+# semana. Exigir a chuva descartaria justamente a semana mais recente -- a
+# unica que o alerta precoce tem para trabalhar --, e por um bloco que a
+# validacao mostrou acrescentar quase nada ao modelo.
+VARIAVEIS_ESSENCIAIS = [
+    "incidencia_100k", "incidencia_lag1", "incidencia_lag2", "incidencia_lag4",
+    "incidencia_mm3", "incidencia_mm8",
+    "casos_est_mm3", "casos_est_mm8", "razao_mm3_mm8", "variacao_semanal",
+    "log_pop", "semana", "canal_mediana", "canal_q3",
+]
+
 # Nota metodologica sobre o bloco climatico.
 #
 # Medido no territorio da RIDE-DF, o clima praticamente nao agrega poder

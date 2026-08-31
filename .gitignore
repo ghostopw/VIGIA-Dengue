@@ -8,3 +8,7 @@ dados/bruto/
 dados/processado/
 dados/vigia_dengue_dados.zip
 saidas/figuras/*.png
+
+# Estado do alerta, reescrito a cada ciclo de atualizacao.
+saidas/alerta.json
+saidas/alerta.txt
