@@ -12,3 +12,7 @@ saidas/figuras/*.png
 # Estado do alerta, reescrito a cada ciclo de atualizacao.
 saidas/alerta.json
 saidas/alerta.txt
+
+# Malha bruta dos setores: 6 MB baixaveis do FTP do IBGE. O que o painel
+# usa e o setores_df.geojson derivado, esse sim versionado.
+dados/externo/DF_setores_CD2022.gpkg

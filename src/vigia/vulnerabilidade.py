@@ -78,17 +78,25 @@ LIXO = {
 def _consultar(agregado: int, variavel: int, periodo: int, classificacao: int,
                categorias: list[int], geocodigos: list[int]) -> dict[int, float]:
     """Consulta um agregado do IBGE e soma as categorias pedidas por municipio."""
-    localidades = "N6[" + ",".join(str(g) for g in geocodigos) + "]"
-    parametros = {
-        "localidades": localidades,
-        "classificacao": f"{classificacao}[{','.join(str(c) for c in categorias)}]",
-    }
     url = f"{AGREGADOS}/{agregado}/periodos/{periodo}/variaveis/{variavel}"
-    resposta = requests.get(url, params=parametros, timeout=180)
-    resposta.raise_for_status()
+
+    # Em lotes: com centenas de municipios a lista de localidades estoura o
+    # comprimento aceito na URL, e o IBGE devolve erro em vez de recusar so o
+    # excedente.
+    retornos = []
+    LOTE = 60
+    for inicio in range(0, len(geocodigos), LOTE):
+        fatia = geocodigos[inicio:inicio + LOTE]
+        parametros = {
+            "localidades": "N6[" + ",".join(str(g) for g in fatia) + "]",
+            "classificacao": f"{classificacao}[{','.join(str(c) for c in categorias)}]",
+        }
+        resposta = requests.get(url, params=parametros, timeout=180)
+        resposta.raise_for_status()
+        retornos.extend(resposta.json())
 
     totais: dict[int, float] = {}
-    for variavel_retornada in resposta.json():
+    for variavel_retornada in retornos:
         for resultado in variavel_retornada["resultados"]:
             for serie in resultado["series"]:
                 codigo = int(serie["localidade"]["id"])
@@ -119,9 +127,16 @@ def _proporcao(indicador: dict, categorias: list[int], periodo: int,
     })
 
 
-def coletar(destino: Path | None = None) -> pd.DataFrame:
-    """Monta a tabela municipal de vulnerabilidade socioambiental."""
-    geocodigos = sorted(TERRITORIO)
+def coletar(destino: Path | None = None,
+            municipios: dict[int, str] | None = None) -> pd.DataFrame:
+    """Monta a tabela municipal de vulnerabilidade socioambiental.
+
+    `municipios` permite usar outro recorte que nao o territorio do painel --
+    o Centro-Oeste inteiro, por exemplo, que e o territorio de treino. Sem ele,
+    vale `TERRITORIO`, e o comportamento e o de sempre.
+    """
+    catalogo = municipios if municipios is not None else TERRITORIO
+    geocodigos = sorted(catalogo)
 
     esgoto = _proporcao(ESGOTO, ESGOTO["inadequado"], 2022, geocodigos)
     agua = _proporcao(AGUA, AGUA["adequado"], 2022, geocodigos)
@@ -129,7 +144,7 @@ def coletar(destino: Path | None = None) -> pd.DataFrame:
 
     tabela = pd.DataFrame({
         "cod_ibge": geocodigos,
-        "municipio": [TERRITORIO[g] for g in geocodigos],
+        "municipio": [catalogo[g] for g in geocodigos],
     })
     tabela["esgoto_inadequado_pct"] = tabela["cod_ibge"].map(esgoto)
     tabela["sem_agua_rede_pct"] = tabela["cod_ibge"].map(agua).rsub(100)

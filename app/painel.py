@@ -22,6 +22,7 @@ CAMINHO_ALERTA = RAIZ / "saidas" / "alerta.json"
 CAMINHO_VULNERABILIDADE_RAS = (
     RAIZ / "dados" / "externo" / "vulnerabilidade_ras.csv"
 )
+CAMINHO_SETORES = RAIZ / "dados" / "externo" / "setores_df.geojson"
 
 # Paleta do painel VIGIA-Dengue (sistema "Industry"), a mesma do canvas em
 # `Painel VIGIA-Dengue (offline).html`, para que as duas telas se leiam como
@@ -142,6 +143,25 @@ def carregar_vulnerabilidade_ras():
 
 
 @st.cache_data
+def carregar_setores():
+    """Setores censitarios do DF -- a escala da quadra.
+
+    So os urbanos e com dado: os rurais sao poucos, enormes e sem face de rua
+    levantada, e pintados no mapa esconderiam a malha urbana, que e o que
+    interessa aqui.
+    """
+    if not CAMINHO_SETORES.exists():
+        return None
+    bruto = json.loads(CAMINHO_SETORES.read_text(encoding="utf-8"))
+    feicoes = [
+        f for f in bruto["features"]
+        if f["properties"].get("SITUACAO") == "Urbana"
+        and f["properties"].get("indice_criadouro") is not None
+    ]
+    return {"type": "FeatureCollection", "features": feicoes}
+
+
+@st.cache_data
 def carregar_desempenho():
     if CAMINHO_DESEMPENHO.exists():
         return pd.read_csv(CAMINHO_DESEMPENHO)
@@ -217,6 +237,82 @@ def desempilhar(nomes: list[str], centros: dict, distancia: float = 0.07) -> lis
             aceitos.append(nome)
             postos.append((latitude, longitude))
     return aceitos
+
+
+def desenhar_mapa_setores(setores: dict, coluna: str, rotulo: str) -> None:
+    """Mapa na escala da quadra: um poligono por setor censitario.
+
+    Sao milhares de poligonos pequenos, entao aqui nao cabe o desenho usado nas
+    RAs: nome sobre a regiao seria ilegivel, e borda em cada quadra viraria uma
+    grade que esconde a cor. O nome do lugar sai no cursor, e as ruas quem
+    desenha e o mapa base, quando se aproxima.
+    """
+    registros = pd.DataFrame([f["properties"] for f in setores["features"]])
+
+    # As duas escalas medem as mesmas coisas com nomes diferentes, e nem tudo
+    # existe nas duas: populacao e densidade sao atributos da RA, e o indice da
+    # quadra se chama "criadouro" porque nela as quatro dimensoes sao de
+    # condicao local, sem o componente populacional.
+    EQUIVALENTE = {
+        "indice_vulnerabilidade": "indice_criadouro",
+        "populacao": "domicilios",
+        "densidade_hab_km2": "domicilios",
+    }
+    coluna = EQUIVALENTE.get(coluna, coluna)
+    if coluna == "domicilios":
+        rotulo = "domicilios no setor"
+
+    if coluna not in registros or registros[coluna].isna().all():
+        disponiveis = [c for c in registros.columns
+                       if c.endswith("_pct") or c == "indice_criadouro"]
+        st.warning(
+            "Este indicador nao existe na escala da quadra. Disponiveis: "
+            + ", ".join(disponiveis) + "."
+        )
+        return
+
+    mapa = px.choropleth_map(
+        registros.dropna(subset=[coluna]),
+        geojson=setores,
+        locations="CD_SETOR",
+        featureidkey="properties.CD_SETOR",
+        color=coluna,
+        color_continuous_scale=RAMPA_TERRITORIO[1:],
+        map_style="carto-positron",
+        zoom=9.2,
+        center={"lat": -15.79, "lon": -47.93},
+        opacity=0.75,
+        hover_name="NM_SUBDIST",
+        hover_data={"CD_SETOR": True, coluna: ":.1f", "domicilios": ":,.0f"},
+        labels={coluna: rotulo},
+    )
+    # Sem borda: com milhares de poligonos ela dominaria a cor.
+    mapa.update_traces(marker_line_width=0)
+    mapa.update_layout(
+        height=640, margin={"r": 0, "t": 0, "l": 0, "b": 0},
+        coloraxis_colorbar={"title": rotulo, "thickness": 12},
+    )
+    st.plotly_chart(mapa, width="stretch")
+
+    st.caption(
+        f"{len(registros):,} setores censitarios urbanos. ".replace(",", ".")
+        + "O setor e a menor unidade que o IBGE publica -- algumas quadras, "
+        "cerca de trezentos domicilios. Aproxime para o mapa base nomear as ruas. "
+        "O risco de dengue continua sendo municipal: esta camada mostra onde a "
+        "condicao local favorece o criadouro, nao onde ha caso."
+    )
+
+    piores = registros.nlargest(12, coluna)[
+        [c for c in ("NM_SUBDIST", "CD_SETOR", coluna, "domicilios") if c in registros]
+    ]
+    st.markdown("**As doze quadras em pior situacao neste indicador**")
+    st.dataframe(
+        piores.rename(columns={
+            "NM_SUBDIST": "Regiao Administrativa", "CD_SETOR": "Setor",
+            coluna: rotulo, "domicilios": "Domicilios",
+        }),
+        hide_index=True, width="stretch",
+    )
 
 
 def formatar_semana(codigo: int) -> str:
@@ -390,6 +486,18 @@ with aba_mapa:
                 "Rua sem pavimento": ("sem_pavimento_pct", "% dos domicilios"),
             })
 
+        setores = carregar_setores()
+        escala = "Regiao Administrativa"
+        if setores is not None:
+            escala = st.radio(
+                "Escala do mapa",
+                ["Regiao Administrativa", "Quadra (setor censitario)"],
+                horizontal=True,
+                index=1,
+                help="O setor censitario e a menor unidade que o IBGE publica: "
+                     "algumas quadras, cerca de trezentos domicilios.",
+            )
+
         escolhido = st.radio(
             "Indicador exibido no mapa",
             list(indicadores),
@@ -429,93 +537,96 @@ with aba_mapa:
                 "subdistrito -- no DF, o subdistrito e a Regiao Administrativa."
             )
 
-        # Classes por quantil, e nao escala linear. A populacao das RAs vai de
-        # 2.286 a 348.000: numa escala linear, 18 das 31 caem nos dois tons mais
-        # claros da rampa -- quase brancos sobre um mapa base quase branco, e
-        # indistinguiveis entre si. Por quantil cada faixa recebe seis ou sete
-        # RAs, e todas se separam.
-        faixas = pd.qcut(regioes[coluna], q=4, duplicates="drop")
-        # A borda esquerda que o `qcut` devolve fica um pouco abaixo do minimo,
-        # para incluir o proprio minimo no intervalo. No rotulo isso aparecia
-        # como "-0 a 3"; o valor observado e o que interessa a quem le.
-        limites = [float(regioes[coluna].min())] + [
-            float(categoria.right) for categoria in faixas.cat.categories
-        ]
-        rotulos = [
-            f"{formatar_faixa(limites[i])} a {formatar_faixa(limites[i + 1])}"
-            for i in range(len(limites) - 1)
-        ]
-        regioes["faixa"] = faixas.cat.rename_categories(rotulos).astype(str)
+        if escala.startswith("Quadra"):
+            desenhar_mapa_setores(setores, coluna, rotulo)
+        else:
+            # Classes por quantil, e nao escala linear. A populacao das RAs vai de
+            # 2.286 a 348.000: numa escala linear, 18 das 31 caem nos dois tons mais
+            # claros da rampa -- quase brancos sobre um mapa base quase branco, e
+            # indistinguiveis entre si. Por quantil cada faixa recebe seis ou sete
+            # RAs, e todas se separam.
+            faixas = pd.qcut(regioes[coluna], q=4, duplicates="drop")
+            # A borda esquerda que o `qcut` devolve fica um pouco abaixo do minimo,
+            # para incluir o proprio minimo no intervalo. No rotulo isso aparecia
+            # como "-0 a 3"; o valor observado e o que interessa a quem le.
+            limites = [float(regioes[coluna].min())] + [
+                float(categoria.right) for categoria in faixas.cat.categories
+            ]
+            rotulos = [
+                f"{formatar_faixa(limites[i])} a {formatar_faixa(limites[i + 1])}"
+                for i in range(len(limites) - 1)
+            ]
+            regioes["faixa"] = faixas.cat.rename_categories(rotulos).astype(str)
 
-        # Quatro passos alternados da rampa. Sao os que mais se separam entre si;
-        # o extremo claro fica de fora porque sumiria sobre o mapa base.
-        cores_faixa = dict(zip(rotulos, RAMPA_TERRITORIO[2:9:2]))
+            # Quatro passos alternados da rampa. Sao os que mais se separam entre si;
+            # o extremo claro fica de fora porque sumiria sobre o mapa base.
+            cores_faixa = dict(zip(rotulos, RAMPA_TERRITORIO[2:9:2]))
 
-        mapa_ras = px.choropleth_map(
-            regioes,
-            geojson=malha_ras,
-            locations="ra_nome",
-            featureidkey="properties.ra_nome",
-            color="faixa",
-            color_discrete_map=cores_faixa,
-            category_orders={"faixa": rotulos},
-            map_style="carto-positron",
-            zoom=8.55,
-            center={"lat": -15.79, "lon": -47.87},
-            opacity=0.88,
-            hover_name="ra_nome",
-            hover_data={"faixa": False, coluna: ":,.0f"},
-            labels={coluna: rotulo, "faixa": rotulo.capitalize()},
-        )
-        # Borda clara: sem ela duas RAs vizinhas da mesma faixa viram uma mancha.
-        mapa_ras.update_traces(marker_line_color="#f2f2f3", marker_line_width=1.1)
+            mapa_ras = px.choropleth_map(
+                regioes,
+                geojson=malha_ras,
+                locations="ra_nome",
+                featureidkey="properties.ra_nome",
+                color="faixa",
+                color_discrete_map=cores_faixa,
+                category_orders={"faixa": rotulos},
+                map_style="carto-positron",
+                zoom=8.55,
+                center={"lat": -15.79, "lon": -47.87},
+                opacity=0.88,
+                hover_name="ra_nome",
+                hover_data={"faixa": False, coluna: ":,.0f"},
+                labels={coluna: rotulo, "faixa": rotulo.capitalize()},
+            )
+            # Borda clara: sem ela duas RAs vizinhas da mesma faixa viram uma mancha.
+            mapa_ras.update_traces(marker_line_color="#f2f2f3", marker_line_width=1.1)
 
-        # O nome sobre a regiao. Era o que mais faltava: com 31 poligonos, ter
-        # de passar o cursor um a um para saber qual e qual inviabiliza a leitura.
-        #
-        # So as RAs com area suficiente recebem rotulo: doze das trinta e uma tem
-        # menos de 30 km2 -- o Varjao tem 1 km2 -- e ficam amontoadas no centro,
-        # onde os nomes se sobreporiam e piorariam justamente o que se quer
-        # resolver. Elas continuam no `hover` e na tabela abaixo do mapa.
-        centros = centroides_ras(malha_ras)
-        # As maiores primeiro: quando duas competem pelo mesmo espaco, quem fica
-        # e a que o leitor consegue localizar no mapa.
-        ordem = regioes.sort_values("area_km2", ascending=False)["ra_nome"].tolist()
-        nomeadas = desempilhar(ordem, centros)
-        cabe_rotulo = regioes[regioes["ra_nome"].isin(nomeadas)]
+            # O nome sobre a regiao. Era o que mais faltava: com 31 poligonos, ter
+            # de passar o cursor um a um para saber qual e qual inviabiliza a leitura.
+            #
+            # So as RAs com area suficiente recebem rotulo: doze das trinta e uma tem
+            # menos de 30 km2 -- o Varjao tem 1 km2 -- e ficam amontoadas no centro,
+            # onde os nomes se sobreporiam e piorariam justamente o que se quer
+            # resolver. Elas continuam no `hover` e na tabela abaixo do mapa.
+            centros = centroides_ras(malha_ras)
+            # As maiores primeiro: quando duas competem pelo mesmo espaco, quem fica
+            # e a que o leitor consegue localizar no mapa.
+            ordem = regioes.sort_values("area_km2", ascending=False)["ra_nome"].tolist()
+            nomeadas = desempilhar(ordem, centros)
+            cabe_rotulo = regioes[regioes["ra_nome"].isin(nomeadas)]
 
-        # Texto escuro sobre as duas faixas claras, claro sobre as duas escuras.
-        # Vao em dois tracos porque `textfont.color` do scattermap aceita uma cor
-        # so por traco, e nao uma lista.
-        clara = {rotulos[i] for i in range(min(2, len(rotulos)))}
-        for faixas_do_traco, cor in ((clara, TEXTO), (set(rotulos) - clara, "#f2f2f3")):
-            grupo = cabe_rotulo[cabe_rotulo["faixa"].isin(faixas_do_traco)]
-            if grupo.empty:
-                continue
-            mapa_ras.add_trace(go.Scattermap(
-                lat=[centros[n][0] for n in grupo["ra_nome"]],
-                lon=[centros[n][1] for n in grupo["ra_nome"]],
-                mode="text",
-                text=list(grupo["ra_nome"]),
-                textfont={"size": 10, "family": FONTE_CORPO, "color": cor},
-                hoverinfo="skip",
-                showlegend=False,
-            ))
-        mapa_ras.update_layout(
-            height=620,
-            margin={"r": 0, "t": 0, "l": 0, "b": 0},
-            legend={"title_text": rotulo.capitalize(), "y": 0.98, "x": 0.01,
-                    "bgcolor": "rgba(242,242,243,0.88)", "bordercolor": DIVISOR,
-                    "borderwidth": 1},
-        )
-        st.plotly_chart(mapa_ras, width="stretch")
-        st.caption(
-            f"Nomeadas no mapa {len(cabe_rotulo)} das 31 RAs: onde varias se "
-            "aglomeram, fica o nome da maior, e as demais aparecem ao passar o "
-            "cursor e na tabela abaixo -- uma pilha de nomes sobrepostos seria "
-            "pior do que nome nenhum. As faixas sao quartis, com cerca de oito "
-            "RAs cada; numa escala linear, 18 das 31 cairiam no mesmo tom claro."
-        )
+            # Texto escuro sobre as duas faixas claras, claro sobre as duas escuras.
+            # Vao em dois tracos porque `textfont.color` do scattermap aceita uma cor
+            # so por traco, e nao uma lista.
+            clara = {rotulos[i] for i in range(min(2, len(rotulos)))}
+            for faixas_do_traco, cor in ((clara, TEXTO), (set(rotulos) - clara, "#f2f2f3")):
+                grupo = cabe_rotulo[cabe_rotulo["faixa"].isin(faixas_do_traco)]
+                if grupo.empty:
+                    continue
+                mapa_ras.add_trace(go.Scattermap(
+                    lat=[centros[n][0] for n in grupo["ra_nome"]],
+                    lon=[centros[n][1] for n in grupo["ra_nome"]],
+                    mode="text",
+                    text=list(grupo["ra_nome"]),
+                    textfont={"size": 10, "family": FONTE_CORPO, "color": cor},
+                    hoverinfo="skip",
+                    showlegend=False,
+                ))
+            mapa_ras.update_layout(
+                height=620,
+                margin={"r": 0, "t": 0, "l": 0, "b": 0},
+                legend={"title_text": rotulo.capitalize(), "y": 0.98, "x": 0.01,
+                        "bgcolor": "rgba(242,242,243,0.88)", "bordercolor": DIVISOR,
+                        "borderwidth": 1},
+            )
+            st.plotly_chart(mapa_ras, width="stretch")
+            st.caption(
+                f"Nomeadas no mapa {len(cabe_rotulo)} das 31 RAs: onde varias se "
+                "aglomeram, fica o nome da maior, e as demais aparecem ao passar o "
+                "cursor e na tabela abaixo -- uma pilha de nomes sobrepostos seria "
+                "pior do que nome nenhum. As faixas sao quartis, com cerca de oito "
+                "RAs cada; numa escala linear, 18 das 31 cairiam no mesmo tom claro."
+            )
 
         st.dataframe(
             regioes.sort_values("populacao", ascending=False)[
