@@ -9,3 +9,10 @@ textColor = "#1d1f20"                # --color-text
 primaryColor = "#5980a6"             # --color-accent
 font = "Barlow, system-ui, sans-serif"
 headingFont = "Barlow Condensed, Arial Narrow, sans-serif"
+
+[server]
+# Recarrega o painel ao salvar o arquivo. Sem isto o Streamlit apenas
+# avisa que a fonte mudou e continua servindo a versao antiga ate que
+# alguem clique em Rerun -- o que faz uma alteracao parecer nao ter tido
+# efeito.
+runOnSave = true
