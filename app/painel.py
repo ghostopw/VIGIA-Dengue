@@ -114,6 +114,70 @@ def carregar_desempenho():
     return None
 
 
+def formatar_milhar(valor: float) -> str:
+    """Numero curto para rotulo de legenda: 348000 vira "348 mil"."""
+    if valor >= 1000:
+        return f"{valor / 1000:.0f} mil"
+    return f"{valor:.0f}"
+
+
+def _aneis(geometria: dict) -> list[list]:
+    """Todos os aneis externos da geometria, seja Polygon ou MultiPolygon."""
+    coordenadas = geometria["coordinates"]
+    if geometria["type"] == "Polygon":
+        return [coordenadas[0]]
+    return [parte[0] for parte in coordenadas]
+
+
+def _centro_do_anel(anel: list) -> tuple[float, float, float]:
+    """Centroide de area e area assinada de um anel, pela formula do sapateiro."""
+    soma = cx = cy = 0.0
+    for (x1, y1), (x2, y2) in zip(anel, anel[1:] + anel[:1]):
+        cruzado = x1 * y2 - x2 * y1
+        soma += cruzado
+        cx += (x1 + x2) * cruzado
+        cy += (y1 + y2) * cruzado
+    if soma == 0:
+        return anel[0][1], anel[0][0], 0.0
+    area = soma / 2
+    return cy / (3 * soma), cx / (3 * soma), abs(area)
+
+
+def centroides_ras(malha: dict) -> dict[str, tuple[float, float]]:
+    """Ponto para ancorar o nome de cada RA.
+
+    Usa o centroide de area do maior anel, e nao o centro da caixa envolvente:
+    em regiao alongada ou recortada -- o Lago Norte contornando o lago, por
+    exemplo -- o centro da caixa cai fora do proprio poligono, e o nome flutua
+    sobre a vizinha.
+    """
+    centros: dict[str, tuple[float, float]] = {}
+    for feicao in malha["features"]:
+        candidatos = [_centro_do_anel(anel) for anel in _aneis(feicao["geometry"])]
+        latitude, longitude, _ = max(candidatos, key=lambda c: c[2])
+        centros[feicao["properties"]["ra_nome"]] = (latitude, longitude)
+    return centros
+
+
+def desempilhar(nomes: list[str], centros: dict, distancia: float = 0.07) -> list[str]:
+    """Descarta rotulos que cairiam em cima de outro ja colocado.
+
+    Percorre na ordem recebida -- as maiores primeiro -- e so aceita um nome se
+    ele estiver a mais de `distancia` grau de todos os aceitos. Sem isso a
+    conurbacao central vira uma pilha de nomes sobrepostos, que e pior do que
+    nome nenhum.
+    """
+    aceitos: list[str] = []
+    postos: list[tuple[float, float]] = []
+    for nome in nomes:
+        latitude, longitude = centros[nome]
+        if all((latitude - la) ** 2 + (longitude - lo) ** 2 > distancia ** 2
+               for la, lo in postos):
+            aceitos.append(nome)
+            postos.append((latitude, longitude))
+    return aceitos
+
+
 def formatar_semana(codigo: int) -> str:
     return f"{int(codigo) % 100:02d}/{int(codigo) // 100}"
 
@@ -248,22 +312,90 @@ with aba_mapa:
         else:
             coluna, rotulo = "populacao", "habitantes"
 
+        # Classes por quantil, e nao escala linear. A populacao das RAs vai de
+        # 2.286 a 348.000: numa escala linear, 18 das 31 caem nos dois tons mais
+        # claros da rampa -- quase brancos sobre um mapa base quase branco, e
+        # indistinguiveis entre si. Por quantil cada faixa recebe seis ou sete
+        # RAs, e todas se separam.
+        faixas = pd.qcut(regioes[coluna], q=4, duplicates="drop")
+        limites = [faixas.cat.categories[0].left] + [
+            categoria.right for categoria in faixas.cat.categories
+        ]
+        rotulos = [
+            f"{formatar_milhar(limites[i])} a {formatar_milhar(limites[i + 1])}"
+            for i in range(len(limites) - 1)
+        ]
+        regioes["faixa"] = faixas.cat.rename_categories(rotulos).astype(str)
+
+        # Quatro passos alternados da rampa. Sao os que mais se separam entre si;
+        # o extremo claro fica de fora porque sumiria sobre o mapa base.
+        cores_faixa = dict(zip(rotulos, RAMPA[2:9:2]))
+
         mapa_ras = px.choropleth_map(
             regioes,
             geojson=malha_ras,
             locations="ra_nome",
             featureidkey="properties.ra_nome",
-            color=coluna,
-            color_continuous_scale=RAMPA,
+            color="faixa",
+            color_discrete_map=cores_faixa,
+            category_orders={"faixa": rotulos},
             map_style="carto-positron",
-            zoom=8.2,
-            center={"lat": -15.78, "lon": -47.93},
-            opacity=0.75,
-            labels={coluna: rotulo},
-            hover_data={"ra_nome": True, coluna: ":,.0f"},
+            zoom=8.55,
+            center={"lat": -15.79, "lon": -47.87},
+            opacity=0.88,
+            hover_name="ra_nome",
+            hover_data={"faixa": False, coluna: ":,.0f"},
+            labels={coluna: rotulo, "faixa": rotulo.capitalize()},
         )
-        mapa_ras.update_layout(height=560, margin={"r": 0, "t": 0, "l": 0, "b": 0})
+        # Borda clara: sem ela duas RAs vizinhas da mesma faixa viram uma mancha.
+        mapa_ras.update_traces(marker_line_color="#f2f2f3", marker_line_width=1.1)
+
+        # O nome sobre a regiao. Era o que mais faltava: com 31 poligonos, ter
+        # de passar o cursor um a um para saber qual e qual inviabiliza a leitura.
+        #
+        # So as RAs com area suficiente recebem rotulo: doze das trinta e uma tem
+        # menos de 30 km2 -- o Varjao tem 1 km2 -- e ficam amontoadas no centro,
+        # onde os nomes se sobreporiam e piorariam justamente o que se quer
+        # resolver. Elas continuam no `hover` e na tabela abaixo do mapa.
+        centros = centroides_ras(malha_ras)
+        # As maiores primeiro: quando duas competem pelo mesmo espaco, quem fica
+        # e a que o leitor consegue localizar no mapa.
+        ordem = regioes.sort_values("area_km2", ascending=False)["ra_nome"].tolist()
+        nomeadas = desempilhar(ordem, centros)
+        cabe_rotulo = regioes[regioes["ra_nome"].isin(nomeadas)]
+
+        # Texto escuro sobre as duas faixas claras, claro sobre as duas escuras.
+        # Vao em dois tracos porque `textfont.color` do scattermap aceita uma cor
+        # so por traco, e nao uma lista.
+        clara = {rotulos[i] for i in range(min(2, len(rotulos)))}
+        for faixas_do_traco, cor in ((clara, TEXTO), (set(rotulos) - clara, "#f2f2f3")):
+            grupo = cabe_rotulo[cabe_rotulo["faixa"].isin(faixas_do_traco)]
+            if grupo.empty:
+                continue
+            mapa_ras.add_trace(go.Scattermap(
+                lat=[centros[n][0] for n in grupo["ra_nome"]],
+                lon=[centros[n][1] for n in grupo["ra_nome"]],
+                mode="text",
+                text=list(grupo["ra_nome"]),
+                textfont={"size": 10, "family": FONTE_CORPO, "color": cor},
+                hoverinfo="skip",
+                showlegend=False,
+            ))
+        mapa_ras.update_layout(
+            height=620,
+            margin={"r": 0, "t": 0, "l": 0, "b": 0},
+            legend={"title_text": rotulo.capitalize(), "y": 0.98, "x": 0.01,
+                    "bgcolor": "rgba(242,242,243,0.88)", "bordercolor": DIVISOR,
+                    "borderwidth": 1},
+        )
         st.plotly_chart(mapa_ras, width="stretch")
+        st.caption(
+            f"Nomeadas no mapa {len(cabe_rotulo)} das 31 RAs: onde varias se "
+            "aglomeram, fica o nome da maior, e as demais aparecem ao passar o "
+            "cursor e na tabela abaixo -- uma pilha de nomes sobrepostos seria "
+            "pior do que nome nenhum. As faixas sao quartis, com cerca de oito "
+            "RAs cada; numa escala linear, 18 das 31 cairiam no mesmo tom claro."
+        )
 
         st.dataframe(
             regioes.sort_values("populacao", ascending=False)[
