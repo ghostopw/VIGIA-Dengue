@@ -19,6 +19,9 @@ CAMINHO_PAINEL = RAIZ / "dados" / "processado" / "painel.csv"
 CAMINHO_MALHA_RAS = RAIZ / "dados" / "externo" / "malha_ras_df.geojson"
 CAMINHO_DESEMPENHO = RAIZ / "saidas" / "desempenho_modelos.csv"
 CAMINHO_ALERTA = RAIZ / "saidas" / "alerta.json"
+CAMINHO_VULNERABILIDADE_RAS = (
+    RAIZ / "dados" / "externo" / "vulnerabilidade_ras.csv"
+)
 
 # Paleta do painel VIGIA-Dengue (sistema "Industry"), a mesma do canvas em
 # `Painel VIGIA-Dengue (offline).html`, para que as duas telas se leiam como
@@ -131,17 +134,32 @@ def carregar_malha_ras() -> dict | None:
 
 
 @st.cache_data
+def carregar_vulnerabilidade_ras():
+    """Indicadores do Censo 2022 por Regiao Administrativa, se ja coletados."""
+    if CAMINHO_VULNERABILIDADE_RAS.exists():
+        return pd.read_csv(CAMINHO_VULNERABILIDADE_RAS)
+    return None
+
+
+@st.cache_data
 def carregar_desempenho():
     if CAMINHO_DESEMPENHO.exists():
         return pd.read_csv(CAMINHO_DESEMPENHO)
     return None
 
 
-def formatar_milhar(valor: float) -> str:
-    """Numero curto para rotulo de legenda: 348000 vira "348 mil"."""
-    if valor >= 1000:
+def formatar_faixa(valor: float) -> str:
+    """Numero curto para rotulo de legenda.
+
+    Atende as duas escalas do mapa: contagens grandes, onde "348 mil" le melhor
+    que 348000, e percentuais de um digito, onde arredondar para inteiro juntaria
+    faixas distintas num mesmo rotulo.
+    """
+    if abs(valor) >= 1000:
         return f"{valor / 1000:.0f} mil"
-    return f"{valor:.0f}"
+    if abs(valor) >= 10 or valor == int(valor):
+        return f"{valor:.0f}"
+    return f"{valor:.1f}".replace(".", ",")
 
 
 def _aneis(geometria: dict) -> list[list]:
@@ -349,16 +367,57 @@ with aba_mapa:
         ])
         regioes["populacao"] = pd.to_numeric(regioes["populacao"], errors="coerce")
 
-        indicador = st.radio(
-            "Indicador exibido no mapa",
-            ["Populacao", "Densidade demografica"],
-            horizontal=True,
-        )
+        # Indicadores do Censo 2022 por RA. Sao eles que dao conteudo proprio a
+        # cada area: sem eles o mapa so sabe repetir o tamanho da populacao.
+        vulnerabilidade = carregar_vulnerabilidade_ras()
+        if vulnerabilidade is not None:
+            regioes = regioes.merge(
+                vulnerabilidade.drop(columns=["ra_nome"]),
+                on="cod_subdistrito", how="left",
+            )
 
-        if indicador == "Densidade demografica" and "densidade_hab_km2" in regioes:
-            coluna, rotulo = "densidade_hab_km2", "hab./km2"
-        else:
+        indicadores = {
+            "Populacao": ("populacao", "habitantes"),
+            "Densidade": ("densidade_hab_km2", "hab./km2"),
+        }
+        if vulnerabilidade is not None:
+            indicadores.update({
+                "Vulnerabilidade": ("indice_vulnerabilidade", "indice (0 a 100)"),
+                "Esgoto inadequado": ("esgoto_inadequado_pct", "% dos domicilios"),
+                "Sem agua de rede": ("sem_agua_rede_pct", "% dos domicilios"),
+                "Lixo sem coleta": ("lixo_sem_coleta_pct", "% dos domicilios"),
+            })
+
+        escolhido = st.radio(
+            "Indicador exibido no mapa",
+            list(indicadores),
+            horizontal=True,
+            index=2 if vulnerabilidade is not None else 0,
+        )
+        coluna, rotulo = indicadores[escolhido]
+        if coluna not in regioes:
             coluna, rotulo = "populacao", "habitantes"
+
+        explicacao = {
+            "indice_vulnerabilidade":
+                "Media das tres dimensoes abaixo, cada uma como distancia relativa "
+                "dentro do proprio DF. Ordena as RAs numa leitura so; nao pondera as "
+                "dimensoes, porque nao ha estudo local que sustente pesos diferentes.",
+            "esgoto_inadequado_pct":
+                "Domicilios com esgoto em fossa rudimentar, vala ou outra forma -- "
+                "agua parada exposta.",
+            "sem_agua_rede_pct":
+                "Domicilios sem ligacao a rede geral. Levam ao armazenamento em "
+                "caixas e toneis, criadouro classico do Aedes aegypti.",
+            "lixo_sem_coleta_pct":
+                "Lixo queimado, enterrado ou com outro destino, que acumula "
+                "recipientes com agua parada.",
+        }
+        if coluna in explicacao:
+            st.caption(
+                explicacao[coluna] + " Fonte: Censo 2022 (IBGE), agregados por "
+                "subdistrito -- no DF, o subdistrito e a Regiao Administrativa."
+            )
 
         # Classes por quantil, e nao escala linear. A populacao das RAs vai de
         # 2.286 a 348.000: numa escala linear, 18 das 31 caem nos dois tons mais
@@ -366,11 +425,14 @@ with aba_mapa:
         # indistinguiveis entre si. Por quantil cada faixa recebe seis ou sete
         # RAs, e todas se separam.
         faixas = pd.qcut(regioes[coluna], q=4, duplicates="drop")
-        limites = [faixas.cat.categories[0].left] + [
-            categoria.right for categoria in faixas.cat.categories
+        # A borda esquerda que o `qcut` devolve fica um pouco abaixo do minimo,
+        # para incluir o proprio minimo no intervalo. No rotulo isso aparecia
+        # como "-0 a 3"; o valor observado e o que interessa a quem le.
+        limites = [float(regioes[coluna].min())] + [
+            float(categoria.right) for categoria in faixas.cat.categories
         ]
         rotulos = [
-            f"{formatar_milhar(limites[i])} a {formatar_milhar(limites[i + 1])}"
+            f"{formatar_faixa(limites[i])} a {formatar_faixa(limites[i + 1])}"
             for i in range(len(limites) - 1)
         ]
         regioes["faixa"] = faixas.cat.rename_categories(rotulos).astype(str)

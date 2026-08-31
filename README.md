@@ -86,9 +86,12 @@ variação espacial para estratificar risco (ver *Modelagem*).
 No topo, um bloco fixo com a situação de **Brasília**: casos estimados (com variação
 frente à semana anterior), incidência, nível de risco e probabilidade de alerta.
 
-- **Brasília por Região Administrativa** — as 31 RAs com geometria disponível, por
-  população ou densidade. Não há casos por RA: o InfoDengue opera no nível municipal,
-  e o DF é um único município.
+- **Brasília por Região Administrativa** — as 31 RAs por população, densidade ou
+  vulnerabilidade socioambiental do Censo 2022 (esgoto inadequado, sem água de rede,
+  lixo sem coleta). Não há *casos* por RA — o InfoDengue opera no nível municipal e o
+  DF é um único município —, mas há condição: 0,12% de esgotamento inadequado no Plano
+  Piloto contra 30,5% na Fercal. A correlação entre o índice e a população é de −0,141
+  (Spearman, p = 0,45): o mapa não é o mapa populacional repintado.
 - **Séries temporais** — casos notificados × estimados com faixa de incerteza do
   *nowcasting*, e incidência contra o canal endêmico.
 - **Relatório da semana** — os indicadores de Brasília na semana escolhida, com os
