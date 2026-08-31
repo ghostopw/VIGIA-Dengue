@@ -78,23 +78,24 @@ python -m pytest testes -q                   # roda os testes
 
 ## O painel
 
-Quatro abas:
+O painel é inteiramente **Brasília e suas cidades satélites**. Os municípios vizinhos
+não aparecem na tela: entram apenas como massa de treino do modelo, que precisa da
+variação espacial para estratificar risco (ver *Modelagem*).
 
 No topo, um bloco fixo com a situação de **Brasília**: casos estimados (com variação
-frente à semana anterior), incidência, nível de risco e probabilidade de alerta. O
-Entorno fica num painel recolhível logo abaixo.
+frente à semana anterior), incidência, nível de risco e probabilidade de alerta.
 
-- **Mapa de risco** — coroplético dos 30 municípios na semana escolhida, com os quatro
-  níveis de risco, distribuição dos níveis e ranking das maiores probabilidades.
+- **Brasília por Região Administrativa** — as 31 RAs com geometria disponível, por
+  população ou densidade. Não há casos por RA: o InfoDengue opera no nível municipal,
+  e o DF é um único município.
 - **Séries temporais** — casos notificados × estimados com faixa de incerteza do
-  *nowcasting*, incidência contra o canal endêmico, e a curva **Brasília × Entorno**
-  padronizada por população.
-- **Ranking e relatório** — tabela ordenada por probabilidade de alerta, com os fatores
-  que pesaram em cada previsão, e exportação em CSV.
+  *nowcasting*, e incidência contra o canal endêmico.
+- **Relatório da semana** — os indicadores de Brasília na semana escolhida, com os
+  fatores que pesaram na previsão, e a série completa em CSV.
 - **Desempenho do modelo** — métricas da validação temporal, ano a ano.
 
-Controles: semana epidemiológica, município, limiar de probabilidade do alerta e
-sinalização de semanas com notificação incompleta.
+Controles: semana epidemiológica, limiar de probabilidade do alerta e sinalização de
+semanas com notificação incompleta.
 
 ## Estratificação de risco
 

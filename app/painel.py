@@ -16,7 +16,6 @@ import streamlit as st
 
 RAIZ = Path(__file__).resolve().parents[1]
 CAMINHO_PAINEL = RAIZ / "dados" / "processado" / "painel.csv"
-CAMINHO_MALHA = RAIZ / "dados" / "externo" / "malha_ride_df.geojson"
 CAMINHO_MALHA_RAS = RAIZ / "dados" / "externo" / "malha_ras_df.geojson"
 CAMINHO_DESEMPENHO = RAIZ / "saidas" / "desempenho_modelos.csv"
 
@@ -101,11 +100,6 @@ def carregar_painel() -> pd.DataFrame:
 
 
 @st.cache_data
-def carregar_malha() -> dict:
-    return json.loads(CAMINHO_MALHA.read_text(encoding="utf-8"))
-
-
-@st.cache_data
 def carregar_malha_ras() -> dict | None:
     """Malha das 31 Regioes Administrativas do DF, se ja tiver sido gerada."""
     if CAMINHO_MALHA_RAS.exists():
@@ -125,12 +119,11 @@ def formatar_semana(codigo: int) -> str:
 
 
 painel = carregar_painel()
-malha = carregar_malha()
 
 st.title("VIGIA-Dengue")
 st.caption(
-    "Alerta precoce e estratificacao espaco-temporal do risco de dengue -- "
-    "Distrito Federal, com a RIDE-DF como territorio de comparacao"
+    "Alerta precoce do risco de dengue em Brasilia e nas suas Regioes "
+    "Administrativas -- as cidades satelites do Distrito Federal"
 )
 
 # ---------------------------------------------------------------- barra lateral
@@ -145,16 +138,10 @@ with st.sidebar:
         format_func=formatar_semana,
     )
 
-    # Brasilia e o foco do projeto: concentra 69% da populacao e 63% dos casos
-    # do territorio, por isso abre selecionada em vez de ordem alfabetica.
-    outros = sorted(m for m in painel["municipio"].dropna().unique() if m != FOCO)
-    municipios = [FOCO, "(territorio inteiro)"] + outros
-    municipio_escolhido = st.selectbox("Municipio em detalhe", municipios, index=0)
-
     limiar = st.slider(
         "Limiar de probabilidade para o alerta",
         min_value=0.05, max_value=0.95, value=0.50, step=0.05,
-        help="Probabilidade acima da qual o municipio entra em alerta.",
+        help="Probabilidade acima da qual Brasilia entra em alerta.",
     )
 
     sinalizar_provisorio = st.checkbox(
@@ -223,100 +210,13 @@ else:
             f"({linha['completude']:.0%} digitado). Os casos observados tendem a subir."
         )
 
-# ------------------------------------------------- contexto da RIDE (comparacao)
-resto = semana_atual[semana_atual["cod_ibge"] != COD_FOCO]
-with st.expander(
-    f"Contexto da RIDE-DF -- {len(resto)} municipios do Entorno", expanded=False
-):
-    col1, col2, col3 = st.columns(3)
-    col1.metric(
-        "Casos estimados no Entorno",
-        f"{resto['casos_est'].sum():,.0f}".replace(",", "."),
-    )
-    col2.metric(
-        "Municipios em risco alto/muito alto",
-        int((resto["risco_codigo"] >= 2).sum()),
-        help=f"De {len(resto)} municipios do Entorno.",
-    )
-    col3.metric(
-        f"Em alerta para {horizonte} semanas",
-        int(resto["em_alerta"].sum()),
-    )
-
-    incompletos = resto.loc[resto["dado_provisorio"] == 1, "municipio"].tolist()
-    if sinalizar_provisorio and incompletos:
-        st.caption(
-            "Notificacao ainda incompleta em: " + ", ".join(incompletos) + "."
-        )
-    st.caption(
-        "O Entorno acompanha Brasilia pelo pendularismo diario: a circulacao viral "
-        "atravessa a fronteira do DF nos dois sentidos."
-    )
-
-aba_mapa, aba_ras, aba_serie, aba_ranking, aba_modelo = st.tabs(
-    ["Mapa de risco", "Brasilia por Regiao Administrativa", "Series temporais",
-     "Ranking e relatorio", "Desempenho do modelo"]
+aba_mapa, aba_serie, aba_relatorio, aba_modelo = st.tabs(
+    ["Brasilia por Regiao Administrativa", "Series temporais",
+     "Relatorio da semana", "Desempenho do modelo"]
 )
 
-# ------------------------------------------------------------------------ mapa
-with aba_mapa:
-    esquerda, direita = st.columns([3, 2])
-
-    with esquerda:
-        mapa = px.choropleth_map(
-            semana_atual,
-            geojson=malha,
-            locations="cod_ibge",
-            featureidkey="properties.cod_ibge",
-            color="risco",
-            color_discrete_map=CORES_RISCO,
-            category_orders={"risco": ORDEM_RISCO},
-            hover_name="municipio",
-            hover_data={
-                "cod_ibge": False,
-                "casos_est": ":.0f",
-                "incidencia_100k": ":.1f",
-                "probabilidade_alerta": ":.0%",
-            },
-            center={"lat": -15.8, "lon": -47.6},
-            zoom=6.2,
-            map_style="carto-positron",
-            opacity=0.75,
-            height=560,
-        )
-        mapa.update_layout(margin={"r": 0, "t": 0, "l": 0, "b": 0}, legend_title="Risco")
-        st.plotly_chart(mapa, width="stretch")
-
-    with direita:
-        st.subheader("Distribuicao dos niveis")
-        contagem = (
-            semana_atual["risco"].value_counts().reindex(ORDEM_RISCO).fillna(0).reset_index()
-        )
-        contagem.columns = ["risco", "municipios"]
-        barras = px.bar(
-            contagem, x="municipios", y="risco", orientation="h",
-            color="risco", color_discrete_map=CORES_RISCO,
-            category_orders={"risco": ORDEM_RISCO},
-        )
-        barras.update_layout(showlegend=False, height=240, margin={"t": 10, "b": 10})
-        st.plotly_chart(barras, width="stretch")
-
-        st.subheader("Maiores probabilidades de alerta")
-        topo = semana_atual.nlargest(6, "probabilidade_alerta")[
-            ["municipio", "probabilidade_alerta", "risco"]
-        ].copy()
-        topo["probabilidade_alerta"] = topo["probabilidade_alerta"].map("{:.0%}".format)
-        st.dataframe(
-            topo.rename(columns={
-                "municipio": "Municipio",
-                "probabilidade_alerta": "Prob.",
-                "risco": "Risco atual",
-            }),
-            hide_index=True, width="stretch",
-        )
-
 # ------------------------------------------- Brasilia por Regiao Administrativa
-with aba_ras:
+with aba_mapa:
     malha_ras = carregar_malha_ras()
 
     if malha_ras is None:
@@ -391,25 +291,12 @@ with aba_ras:
 
 # -------------------------------------------------------------- series temporais
 with aba_serie:
-    if municipio_escolhido == "(territorio inteiro)":
-        # Serie agregada: casos somados, incidencia recalculada sobre a
-        # populacao total (a media simples entre municipios distorceria).
-        serie = (
-            painel.groupby(["se_codigo", "data_ini_se"], as_index=False)
-            .agg({
-                "casos": "sum", "casos_est": "sum",
-                "casos_est_min": "sum", "casos_est_max": "sum",
-                "pop": "sum", "canal_q3": "mean",
-            })
-            .sort_values("data_ini_se")
-        )
-        serie["incidencia_100k"] = serie["casos_est"] / serie["pop"] * 1e5
-        alvo = "Territorio inteiro (DF + RIDE)"
-    else:
-        alvo = municipio_escolhido
-        serie = painel[painel["municipio"] == alvo].sort_values("data_ini_se")
-
-    st.caption(f"Serie de **{alvo}**.")
+    serie = painel[painel["cod_ibge"] == COD_FOCO].sort_values("data_ini_se")
+    st.caption(
+        "Serie de **Brasilia**. O InfoDengue publica casos no nivel municipal, "
+        "e o Distrito Federal e um unico municipio: esta e a serie do territorio "
+        "inteiro, cidades satelites incluidas."
+    )
 
     figura = go.Figure()
     figura.add_trace(go.Scatter(
@@ -461,75 +348,51 @@ with aba_serie:
         "historico daquela semana do ano no municipio (canal endemico)."
     )
 
-    # Comparacao Brasilia x Entorno: mostra se o sinal do DF antecede, acompanha
-    # ou segue o do Entorno -- leitura util para a vigilancia do pendularismo.
-    st.subheader("Brasilia frente ao Entorno")
-    agrupado = painel.assign(
-        grupo=lambda d: d["cod_ibge"].map(
-            lambda c: "Brasilia" if c == COD_FOCO else "Entorno (RIDE)"
-        )
-    )
-    comparacao = (
-        agrupado.groupby(["grupo", "data_ini_se"], as_index=False)
-        .agg({"casos_est": "sum", "pop": "sum"})
-    )
-    comparacao["incidencia_100k"] = comparacao["casos_est"] / comparacao["pop"] * 1e5
+# ----------------------------------------------------------- relatorio da semana
+with aba_relatorio:
+    if foco.empty:
+        st.warning("Sem dado de Brasilia nesta semana.")
+    else:
+        r = foco.iloc[0]
+        st.subheader(f"Brasilia -- semana {formatar_semana(semana_escolhida)}")
 
-    figura_comparacao = px.line(
-        comparacao, x="data_ini_se", y="incidencia_100k", color="grupo",
-        color_discrete_map={"Brasilia": ACENTO_800, "Entorno (RIDE)": NEUTRO_600},
-        line_dash="grupo",
-        line_dash_map={"Brasilia": "solid", "Entorno (RIDE)": "dash"},
-        labels={
-            "incidencia_100k": "Incidencia / 100 mil",
-            "data_ini_se": "Semana",
-            "grupo": "Grupo",
-        },
-    )
-    figura_comparacao.update_layout(
-        height=320, margin={"t": 20},
-        xaxis_title=None,
-        legend={"orientation": "h", "y": 1.15, "title_text": ""},
-    )
-    st.plotly_chart(figura_comparacao, width="stretch")
-    st.caption(
-        "Incidencia padronizada pela populacao de cada grupo, o que torna as duas "
-        "curvas comparaveis apesar da diferenca de porte."
-    )
+        resumo = pd.DataFrame({
+            "Indicador": [
+                "Casos notificados",
+                "Casos estimados",
+                "Incidencia / 100 mil",
+                "Nivel de risco",
+                f"Probabilidade de alerta ({horizonte} semanas)",
+                "Principais fatores",
+                "Notificacao completa",
+            ],
+            "Valor": [
+                f"{r['casos']:,.0f}".replace(",", "."),
+                f"{r['casos_est']:,.0f}".replace(",", "."),
+                f"{r['incidencia_100k']:.1f}",
+                str(r["risco"]).capitalize(),
+                f"{r['probabilidade_alerta']:.0%}",
+                r["fatores_alerta"],
+                "nao" if r["dado_provisorio"] == 1 else "sim",
+            ],
+        })
+        st.dataframe(resumo, hide_index=True, width="stretch")
 
-# ------------------------------------------------------------ ranking e relatorio
-with aba_ranking:
-    tabela = semana_atual.sort_values("probabilidade_alerta", ascending=False)[
-        ["municipio", "uf", "casos", "casos_est", "incidencia_100k", "risco",
-         "probabilidade_alerta", "fatores_alerta", "dado_provisorio"]
-    ].copy()
-    tabela["probabilidade_alerta"] = tabela["probabilidade_alerta"].round(3)
-    tabela["incidencia_100k"] = tabela["incidencia_100k"].round(1)
-    tabela["dado_provisorio"] = tabela["dado_provisorio"].map({1: "sim", 0: "nao"})
-
-    # Posicao de Brasilia no ranking, para nao se perder entre os 33 municipios.
-    posicao = tabela.reset_index(drop=True).index[tabela["municipio"].values == FOCO]
-    if len(posicao):
-        st.info(
-            f"**Brasilia** ocupa a posicao **{int(posicao[0]) + 1} de {len(tabela)}** "
-            "no ranking de probabilidade de alerta desta semana."
-        )
-
-    st.dataframe(
-        tabela.rename(columns={
-            "municipio": "Municipio", "uf": "UF", "casos": "Casos notificados",
-            "casos_est": "Casos estimados", "incidencia_100k": "Incid./100mil",
-            "risco": "Risco", "probabilidade_alerta": "Prob. alerta",
-            "fatores_alerta": "Principais fatores", "dado_provisorio": "Provisorio",
-        }),
-        hide_index=True, width="stretch", height=460,
-    )
-
+    # A serie inteira, e nao so a semana: quem leva o CSV costuma querer
+    # remontar a curva, nao apenas o retrato de uma semana.
+    serie_bsb = painel[painel["cod_ibge"] == COD_FOCO].sort_values("se_codigo")[
+        ["se_codigo", "data_ini_se", "casos", "casos_est", "incidencia_100k",
+         "risco", "probabilidade_alerta", "fatores_alerta", "dado_provisorio"]
+    ]
     st.download_button(
-        "Baixar relatorio da semana (CSV)",
-        data=tabela.to_csv(index=False).encode("utf-8"),
-        file_name=f"vigia_dengue_SE{semana_escolhida}.csv",
+        "Baixar a serie completa de Brasilia (CSV)",
+        data=serie_bsb.to_csv(index=False).encode("utf-8"),
+        file_name="vigia_dengue_brasilia.csv",
         mime="text/csv",
+    )
+    st.caption(
+        f"{len(serie_bsb)} semanas, de {formatar_semana(serie_bsb['se_codigo'].iloc[0])} "
+        f"a {formatar_semana(serie_bsb['se_codigo'].iloc[-1])}."
     )
 
 # ------------------------------------------------------------ desempenho do modelo
