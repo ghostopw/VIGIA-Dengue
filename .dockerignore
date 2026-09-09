@@ -1,0 +1,27 @@
+# O contexto de build precisa ser pequeno: o repositório tem 600 MB de dados
+# brutos e histórico que a imagem não usa.
+.git
+.pytest_cache
+__pycache__
+*.pyc
+dados/bruto
+dados/pacote
+dados/processado
+dados/externo
+saidas
+notebooks
+testes
+docs
+src
+app
+*.html
+*.md
+
+# Reabre o que o Dockerfile realmente copia.
+!app/painel.py
+!dados/externo/malha_ras_df.geojson
+!dados/externo/setores_df.geojson
+!dados/externo/vulnerabilidade_ras.csv
+!dados/processado/painel.csv
+!saidas/desempenho_modelos.csv
+!saidas/alerta.json

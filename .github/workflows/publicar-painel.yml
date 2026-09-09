@@ -1,0 +1,72 @@
+name: Publicar painel
+
+# O painel é servido em vigia.guimm.site como aplicativo Streamlit. A imagem
+# é construída aqui, e não no repositório do site, porque é aqui que o código
+# do painel vive: assim o que está no ar acompanha a pesquisa sem cópia manual.
+on:
+  push:
+    branches: [master, main]
+    paths:
+      - "app/painel.py"
+      - ".streamlit/**"
+      - "dados/externo/malha_ras_df.geojson"
+      - "dados/externo/setores_df.geojson"
+      - "dados/externo/vulnerabilidade_ras.csv"
+      - "dados/processado/painel.csv"
+      - "saidas/desempenho_modelos.csv"
+      - "saidas/alerta.json"
+      - "Dockerfile"
+      - "requirements-painel.txt"
+      - ".github/workflows/publicar-painel.yml"
+  workflow_dispatch:
+
+concurrency:
+  group: publicar-painel
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+  packages: write
+
+jobs:
+  construir:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Entrar no registry
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Construir e publicar
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          push: true
+          # A tag com o SHA permite voltar a uma versão exata do painel;
+          # a `latest` é a que o compose do site usa.
+          tags: |
+            ghcr.io/${{ github.repository_owner }}/guimm-vigia:latest
+            ghcr.io/${{ github.repository_owner }}/guimm-vigia:${{ github.sha }}
+
+  avisar-portainer:
+    needs: construir
+    runs-on: ubuntu-latest
+    steps:
+      - name: Chamar o webhook do stack
+        env:
+          WEBHOOK: ${{ secrets.PORTAINER_WEBHOOK }}
+        run: |
+          if [ -z "$WEBHOOK" ]; then
+            echo "PORTAINER_WEBHOOK nao configurado; pulando."
+            exit 0
+          fi
+          codigo=$(curl -s -o /dev/null -w '%{http_code}' -X POST "$WEBHOOK")
+          echo "Portainer respondeu HTTP $codigo"
+          case "$codigo" in
+            2*) echo "Republicacao disparada." ;;
+            *)  echo "::error::O Portainer nao aceitou o webhook (HTTP $codigo)."; exit 1 ;;
+          esac

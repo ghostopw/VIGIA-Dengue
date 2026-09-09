@@ -1,0 +1,6 @@
+# Só o que o painel precisa para rodar. O requirements.txt completo é do
+# pipeline de análise (geopandas, lightgbm, scikit-learn, statsmodels) e não
+# é usado em tempo de execução: os dados já chegam processados.
+streamlit>=1.36
+pandas>=2.2
+plotly>=5.22

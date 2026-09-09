@@ -16,3 +16,12 @@ saidas/alerta.txt
 # Malha bruta dos setores: 6 MB baixaveis do FTP do IBGE. O que o painel
 # usa e o setores_df.geojson derivado, esse sim versionado.
 dados/externo/DF_setores_CD2022.gpkg
+
+# Exceções para a publicação do painel.
+#
+# `dados/processado/` e `alerta.json` continuam fora do git como regra: são
+# gerados pelo pipeline e somam centenas de megabytes. Estes dois arquivos,
+# porém, são o que o painel publicado lê em tempo de execução, e a imagem é
+# construída no GitHub Actions, que só enxerga o que está versionado.
+!dados/processado/painel.csv
+!saidas/alerta.json
