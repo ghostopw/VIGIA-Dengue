@@ -48,9 +48,12 @@ jobs:
           push: true
           # A tag com o SHA permite voltar a uma versão exata do painel;
           # a `latest` é a que o compose do site usa.
+          # Pacote próprio deste repositório. O nome `guimm-vigia` pertence ao
+          # repositório do site, e o token daqui não pode escrever nele:
+          # pacotes do GHCR ficam vinculados a quem os criou.
           tags: |
-            ghcr.io/${{ github.repository_owner }}/guimm-vigia:latest
-            ghcr.io/${{ github.repository_owner }}/guimm-vigia:${{ github.sha }}
+            ghcr.io/${{ github.repository_owner }}/vigia-dengue:latest
+            ghcr.io/${{ github.repository_owner }}/vigia-dengue:${{ github.sha }}
 
   avisar-portainer:
     needs: construir
