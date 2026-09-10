@@ -1,8 +1,8 @@
 # VIGIA-Dengue
 
 Ferramenta digital de alerta precoce para estratificação espaço-temporal do risco de
-dengue, com **foco em Brasília (Distrito Federal)** e os 29 municípios goianos do
-Entorno como território de comparação.
+dengue, com **foco em Brasília (Distrito Federal)** e os demais municípios da RIDE-DF
+como território de comparação.
 
 Projeto PIBITI 2026 — Iniciação em Desenvolvimento Tecnológico e Inovação
 **Aluno:** João Gabriel Alves Guimarães (2512082047)
@@ -16,9 +16,9 @@ Projeto PIBITI 2026 — Iniciação em Desenvolvimento Tecnológico e Inovação
 | Etapa do projeto | Situação | Onde está |
 |---|---|---|
 | 1 — Revisão e planejamento | Dicionário de dados e critérios operacionais | [docs/dicionario_de_dados.md](docs/dicionario_de_dados.md) |
-| 2 — Base analítica | 19.770 linhas município-semana, 2014–2026 | `src/vigia/ingestao_infodengue.py`, `src/vigia/base_analitica.py` |
+| 2 — Base analítica | 22.440 linhas município-semana, 2014–2026 | `src/vigia/ingestao_infodengue.py`, `src/vigia/base_analitica.py` |
 | 3 — Análise espaço-temporal | Canal endêmico e estratificação em 4 níveis | `src/vigia/risco.py` |
-| 4 — Modelagem de alerta | 3 modelos com validação temporal | `src/vigia/modelagem.py` |
+| 4 — Modelagem de alerta | 3 modelos com validação temporal, mais uma rede neural avaliada | `src/vigia/modelagem.py`, `src/vigia/rede_neural.py` |
 | 5 — Dashboard | Painel web com mapa 3D, séries e relatórios | `Painel VIGIA-Dengue (offline).html`, `app/servidor.py` |
 | 6 — Avaliação e documentação | Métricas apuradas; manual e relatório pendentes | `saidas/desempenho_modelos.csv` |
 
@@ -28,15 +28,21 @@ Projeto PIBITI 2026 — Iniciação em Desenvolvimento Tecnológico e Inovação
 território — por isso o painel abre em Brasília, com bloco de indicadores próprio, e
 o Entorno entra como contexto recolhido.
 
-**30 municípios na base**: o Distrito Federal e os 29 municípios goianos do Entorno.
+**34 municípios na base**: o Distrito Federal, os 29 municípios goianos do Entorno e os
+4 mineiros da RIDE-DF — Arinos, Buritis, Cabeceira Grande e Unaí.
 
-> **Regra do território — vale para toda coleta, presente e futura.** Municípios de
-> Minas Gerais estão **excluídos** por decisão do projeto, ainda que a RIDE-DF legal
-> (LC 94/1998, ampliada pela LC 163/2018) os inclua. Toda rotina de coleta — das APIs
-> atuais ou de qualquer API que venha a ser criada — deve iterar sobre `TERRITORIO` e
-> usar `filtrar_territorio()` para barrar municípios de fora. `validar_territorio()`
-> recusa a base se alguma UF fora de DF/GO aparecer, e dois testes automatizados
-> cobrem a regra.
+> **Regra do território — vale para toda coleta, presente e futura.** O território é a
+> RIDE-DF completa, nos termos da LC 94/1998, ampliada pela LC 163/2018. Toda rotina de
+> coleta — das APIs atuais ou de qualquer API que venha a ser criada — deve iterar sobre
+> `TERRITORIO` e usar `filtrar_territorio()` para barrar municípios de fora.
+> `validar_territorio()` recusa a base se alguma UF fora de DF/GO/MG aparecer, e dois
+> testes automatizados cobrem a regra.
+
+> **Pendência conhecida.** O pacote versionado em `dados/pacote/` (19.770 linhas) e a
+> lista de fontes em `docs/fontes_dos_dados.csv` (120 requisições) ainda são do território
+> anterior, de 30 municípios, e o mesmo vale para as contagens esperadas em
+> `src/vigia/verificar_fontes.py`, que por isso acusa erro em quatro checagens de volume
+> sem que haja erro. Reexportar os três resolve.
 
 > O DF é um único município na malha do IBGE e o InfoDengue não o desagrega por Região
 > Administrativa. A RIDE foi adotada para que a análise espacial, os mapas e a
@@ -49,18 +55,28 @@ o Entorno entra como contexto recolhido.
 | Fonte | Uso | Acesso |
 |---|---|---|
 | InfoDengue (Fiocruz/FGV) | Casos, casos estimados por *nowcasting*, incidência, Rt, clima semanal | API pública `alertcity` |
-| IBGE | População e malha cartográfica municipal | APIs de localidades e de malhas |
+| IBGE | População, malhas cartográficas e indicadores do Censo 2022 | APIs de localidades, de malhas e SIDRA |
+| Open-Meteo (reanálise ERA5/ECMWF) | Precipitação, temperatura e umidade diárias por município | API `archive-api`, com NASA POWER como reserva |
 
-**Todas as URLs de origem** — as 132 requisições que geraram os dados brutos — estão
-documentadas em [docs/fontes_dos_dados.md](docs/fontes_dos_dados.md). Cada link abre no
-navegador e devolve exatamente o conteúdo que gerou o arquivo local correspondente.
+**Todas as URLs de origem** estão documentadas em
+[docs/fontes_dos_dados.md](docs/fontes_dos_dados.md): cada link abre no navegador e
+devolve exatamente o conteúdo que gerou o arquivo local correspondente. A lista atual
+cobre 120 requisições, do território de 30 municípios; reexportá-la com
+`exportar_fontes.py` a leva às 132 do território atual (34 municípios × 3 arboviroses,
+mais 30 do IBGE).
 
-> **Nota sobre o SINAN.** O projeto previa microdados do SINAN via DATASUS. O acesso
-> (FTP e espelho HTTPS) não respondeu neste ambiente. O InfoDengue foi adotado por
-> processar o próprio SINAN e por já entregar a série em município-semana **com correção
-> do atraso de notificação** — requisito central para alerta precoce. Se o acesso ao
-> DATASUS for restabelecido, os microdados permitem estratificar por idade, sexo e
-> gravidade, o que o InfoDengue não oferece.
+> **Nota sobre o SINAN.** O projeto previa microdados do SINAN via DATASUS. Durante a
+> montagem da base o acesso não respondeu — timeout nas portas 21, 80 e 443 do FTP —, e o
+> InfoDengue foi adotado por processar o próprio SINAN e por já entregar a série em
+> município-semana **com correção do atraso de notificação**, requisito central para
+> alerta precoce. Essa continua sendo a fonte do painel.
+>
+> **O acesso foi restabelecido.** Em 09/09/2026 o FTP respondeu na porta 21, com login
+> anônimo e download iniciado: `DENGBR20` a `DENGBR25` em
+> `/dissemin/publicos/SINAN/DADOS/FINAIS` e o preliminar `DENGBR26` em `PRELIM`. Os
+> microdados trazem bairro de residência, idade, sexo e gravidade — o que o InfoDengue
+> não oferece, e o que abre caminho para a escala intraurbana. A incorporação está nos
+> próximos passos.
 
 ## Como reproduzir
 
@@ -146,14 +162,18 @@ expansiva (treina até o ano *t−1*, avalia em *t*), média de 2019 a 2025:
 
 | Modelo | Sensibilidade | Especificidade | VPP | AUC | AUPRC | Brier |
 |---|---|---|---|---|---|---|
-| Referência (persistência) | 0,708 | **0,784** | 0,709 | 0,746 | 0,626 | 0,240 |
-| Interpretável (logística) | 0,700 | 0,699 | 0,636 | 0,779 | 0,740 | 0,195 |
-| Aprendizado (LightGBM) | 0,702 | 0,775 | **0,713** | **0,815** | **0,776** | **0,181** |
+| Referência (persistência) | **0,726** | 0,788 | 0,725 | 0,757 | 0,645 | 0,233 |
+| Interpretável (logística) | 0,719 | 0,730 | 0,677 | 0,803 | 0,775 | 0,183 |
+| Aprendizado (LightGBM) | 0,698 | **0,803** | **0,740** | **0,830** | **0,802** | **0,172** |
+
+Médias calculadas de `saidas/desempenho_modelos.csv`, sobre os 34 municípios — 1.768
+linhas avaliadas por ano, 1.802 nos anos de 53 semanas. Prevalência média do desfecho:
+43,6%.
 
 Leitura honesta: a persistência tem sensibilidade ligeiramente maior, porque repetir o
 estado atual já acerta bastante quando a prevalência é alta. O ganho dos modelos está na
-**discriminação e na calibração** — o LightGBM supera a referência em AUC (0,815 contra
-0,746) e reduz o erro de Brier em 25%, e a vantagem é maior nos anos epidêmicos, quando
+**discriminação e na calibração** — o LightGBM supera a referência em AUC (0,830 contra
+0,757) e reduz o erro de Brier em 26%, e a vantagem é maior nos anos epidêmicos, quando
 o alerta precisa funcionar.
 
 ## Estrutura
@@ -164,13 +184,18 @@ Painel VIGIA-Dengue (offline).html  o painel: canvas do Claude Design,
 app/servidor.py                serve o painel em localhost
 app/artifact/corpo.html        gabarito de uma versão anterior do painel
 app/painel.py                  dashboard Streamlit (versão anterior)
-src/vigia/territorio.py        os 30 municípios, com a regra DF+GO validada
+src/vigia/territorio.py        os 34 municípios da RIDE-DF, com a regra validada
 src/vigia/ingestao_infodengue.py  download da série município-semana
 src/vigia/base_analitica.py    incidência, médias móveis, defasagens, flags
 src/vigia/risco.py             canal endêmico e estratificação em 4 níveis
 src/vigia/modelagem.py         3 modelos e validação temporal
+src/vigia/rede_neural.py       a GRU avaliada, mantida como registro
+src/vigia/setores_df.py        malha e indicadores por setor censitário
 src/vigia/painel_dados.py      probabilidade de alerta e fatores explicativos
-docs/dicionario_de_dados.md    dicionário completo das 105 variáveis
+src/vigia/alerta.py            o ciclo que avisa só quando algo muda
+src/vigia/verificar_fontes.py  reconfere os dados contra as fontes de origem
+docs/dicionario_de_dados.md    as variáveis da base, em oito blocos
+docs/achados_modelagem.md      o que foi medido, inclusive o que não funcionou
 testes/test_base.py            testes das regras críticas
 ```
 
@@ -187,6 +212,8 @@ incidência e risco usa `casos_est`, e o painel sinaliza as semanas provisórias
 
 ## Próximos passos
 
+- Incorporar os microdados do SINAN, cujo acesso foi restabelecido, para estratificar
+  por idade, sexo e gravidade e testar a escala intraurbana pelo bairro de residência.
 - Etapa 6: manual do usuário e relatório técnico final.
 - Operação sombra: acompanhar os alertas em tempo real e ajustar o limiar.
 - Avaliação de usabilidade com profissionais de vigilância (exige submissão ao CEP).
