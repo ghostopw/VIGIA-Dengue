@@ -1,0 +1,125 @@
+coluna,bloco,tipo,descricao,fonte,papel,preenchida_pct
+semanas_favoraveis_8,Climático,float64,Quantas das últimas 8 semanas tiveram temperatura na faixa favorável ao Aedes aegypti.,Derivada,preditor,99.39393939393939
+tempmax,Climático,float64,Temperatura máxima da semana.,ERA5/Open-Meteo,apoio,100.0
+tempmax_imputado,Climático,int64,Marca 1 quando a temperatura máxima foi imputada naquela linha.,Derivada,apoio,100.0
+tempmax_lag1,Climático,float64,A temperatura máxima com defasagem de 1 semanas.,Derivada,apoio,99.84848484848486
+tempmax_lag2,Climático,float64,A temperatura máxima com defasagem de 2 semanas.,Derivada,apoio,99.69696969696969
+tempmax_lag3,Climático,float64,A temperatura máxima com defasagem de 3 semanas.,Derivada,apoio,99.54545454545455
+tempmax_lag4,Climático,float64,A temperatura máxima com defasagem de 4 semanas.,Derivada,preditor,99.39393939393939
+tempmax_lag6,Climático,float64,A temperatura máxima com defasagem de 6 semanas.,Derivada,apoio,99.0909090909091
+tempmax_lag8,Climático,float64,A temperatura máxima com defasagem de 8 semanas.,Derivada,apoio,98.7878787878788
+tempmed,Climático,float64,"Temperatura média da semana, em graus Celsius.",ERA5/Open-Meteo,preditor,100.0
+tempmed_anomalia,Climático,float64,"Desvio da temperatura média frente à média histórica da mesma semana do ano, calculada só com anos anteriores.",Derivada,preditor,100.0
+tempmed_imputado,Climático,int64,Marca 1 quando a temperatura média foi imputada naquela linha.,Derivada,apoio,100.0
+tempmed_lag1,Climático,float64,A temperatura média com defasagem de 1 semanas.,Derivada,apoio,99.84848484848486
+tempmed_lag2,Climático,float64,A temperatura média com defasagem de 2 semanas.,Derivada,preditor,99.69696969696969
+tempmed_lag3,Climático,float64,A temperatura média com defasagem de 3 semanas.,Derivada,apoio,99.54545454545455
+tempmed_lag4,Climático,float64,A temperatura média com defasagem de 4 semanas.,Derivada,preditor,99.39393939393939
+tempmed_lag6,Climático,float64,A temperatura média com defasagem de 6 semanas.,Derivada,apoio,99.0909090909091
+tempmed_lag8,Climático,float64,A temperatura média com defasagem de 8 semanas.,Derivada,preditor,98.7878787878788
+tempmin,Climático,float64,Temperatura mínima da semana.,ERA5/Open-Meteo,apoio,100.0
+tempmin_imputado,Climático,int64,Marca 1 quando a temperatura mínima foi imputada naquela linha.,Derivada,apoio,100.0
+tempmin_lag1,Climático,float64,A temperatura mínima com defasagem de 1 semanas.,Derivada,apoio,99.84848484848486
+tempmin_lag2,Climático,float64,A temperatura mínima com defasagem de 2 semanas.,Derivada,apoio,99.69696969696969
+tempmin_lag3,Climático,float64,A temperatura mínima com defasagem de 3 semanas.,Derivada,apoio,99.54545454545455
+tempmin_lag4,Climático,float64,A temperatura mínima com defasagem de 4 semanas.,Derivada,preditor,99.39393939393939
+tempmin_lag6,Climático,float64,A temperatura mínima com defasagem de 6 semanas.,Derivada,apoio,99.0909090909091
+tempmin_lag8,Climático,float64,A temperatura mínima com defasagem de 8 semanas.,Derivada,apoio,98.7878787878788
+umidmax,Climático,float64,Umidade relativa máxima da semana.,ERA5/Open-Meteo,apoio,100.0
+umidmax_imputado,Climático,int64,Marca 1 quando a umidade máxima foi imputada naquela linha.,Derivada,apoio,100.0
+umidmed,Climático,float64,"Umidade relativa média da semana, em porcentagem.",ERA5/Open-Meteo,preditor,100.0
+umidmed_anomalia,Climático,float64,"Desvio da umidade média frente à média histórica da mesma semana do ano, só com anos anteriores.",Derivada,preditor,100.0
+umidmed_imputado,Climático,int64,Marca 1 quando a umidade média foi imputada naquela linha.,Derivada,apoio,100.0
+umidmed_lag1,Climático,float64,A umidade média com defasagem de 1 semanas.,Derivada,apoio,99.84848484848486
+umidmed_lag2,Climático,float64,A umidade média com defasagem de 2 semanas.,Derivada,preditor,99.69696969696969
+umidmed_lag3,Climático,float64,A umidade média com defasagem de 3 semanas.,Derivada,apoio,99.54545454545455
+umidmed_lag4,Climático,float64,A umidade média com defasagem de 4 semanas.,Derivada,preditor,99.39393939393939
+umidmed_lag6,Climático,float64,A umidade média com defasagem de 6 semanas.,Derivada,apoio,99.0909090909091
+umidmed_lag8,Climático,float64,A umidade média com defasagem de 8 semanas.,Derivada,apoio,98.7878787878788
+umidmin,Climático,float64,Umidade relativa mínima da semana.,ERA5/Open-Meteo,apoio,100.0
+umidmin_imputado,Climático,int64,Marca 1 quando a umidade mínima foi imputada naquela linha.,Derivada,apoio,100.0
+log_pop,Contextual,float64,Logaritmo da população. Entra no modelo porque o efeito do porte não é linear.,Derivada,preditor essencial,100.0
+pop,Contextual,int64,População residente do município.,IBGE,apoio,100.0
+porte_populacional,Contextual,object,Faixa de porte do município.,Derivada,apoio,100.0
+Rt,Epidemiológico,float64,Número reprodutivo efetivo estimado pelo InfoDengue.,InfoDengue,apoio,100.0
+casconf,Epidemiológico,float64,Casos laboratorialmente confirmados.,InfoDengue,apoio,0.0
+casos,Epidemiológico,int64,Casos notificados de dengue na semana. Subnotificado nas semanas recentes.,InfoDengue/SINAN,apoio,100.0
+casos_est,Epidemiológico,float64,"Casos estimados por nowcasting, corrigindo o atraso de notificação. É a base de todo o cálculo de risco.",InfoDengue,apoio,100.0
+casos_est_lag1,Epidemiológico,float64,Os casos estimados com defasagem de 1 semanas.,Derivada,apoio,99.84848484848486
+casos_est_lag2,Epidemiológico,float64,Os casos estimados com defasagem de 2 semanas.,Derivada,apoio,99.69696969696969
+casos_est_lag3,Epidemiológico,float64,Os casos estimados com defasagem de 3 semanas.,Derivada,apoio,99.54545454545455
+casos_est_lag4,Epidemiológico,float64,Os casos estimados com defasagem de 4 semanas.,Derivada,apoio,99.39393939393939
+casos_est_lag8,Epidemiológico,float64,Os casos estimados com defasagem de 8 semanas.,Derivada,apoio,98.7878787878788
+casos_est_max,Epidemiológico,float64,Limite superior do intervalo de credibilidade dos casos estimados.,InfoDengue,apoio,99.94206773618538
+casos_est_min,Epidemiológico,int64,Limite inferior do intervalo de credibilidade dos casos estimados.,InfoDengue,apoio,100.0
+casos_est_mm3,Epidemiológico,float64,"Média móvel de 3 semanas de os casos estimados, deslocada em uma semana para não enxergar o presente.",Derivada,preditor essencial,99.69696969696969
+casos_est_mm4,Epidemiológico,float64,"Média móvel de 4 semanas de os casos estimados, deslocada em uma semana para não enxergar o presente.",Derivada,apoio,99.69696969696969
+casos_est_mm8,Epidemiológico,float64,"Média móvel de 8 semanas de os casos estimados, deslocada em uma semana para não enxergar o presente.",Derivada,preditor essencial,99.69696969696969
+casprov,Epidemiológico,int64,Casos prováveis notificados.,InfoDengue,apoio,100.0
+casprov_est,Epidemiológico,float64,Casos prováveis estimados por nowcasting.,InfoDengue,apoio,0.0
+casprov_est_max,Epidemiológico,float64,Limite superior dos casos prováveis estimados.,InfoDengue,apoio,0.0
+casprov_est_min,Epidemiológico,float64,Limite inferior dos casos prováveis estimados.,InfoDengue,apoio,0.0
+incidencia_100k,Epidemiológico,float64,"Casos estimados por 100 mil habitantes na semana. Variável mais importante do modelo: sozinha responde por 33,7% do ganho.",Derivada,preditor essencial,100.0
+incidencia_lag1,Epidemiológico,float64,A incidência por 100 mil com defasagem de 1 semanas.,Derivada,preditor essencial,99.84848484848486
+incidencia_lag2,Epidemiológico,float64,A incidência por 100 mil com defasagem de 2 semanas.,Derivada,preditor essencial,99.69696969696969
+incidencia_lag3,Epidemiológico,float64,A incidência por 100 mil com defasagem de 3 semanas.,Derivada,apoio,99.54545454545455
+incidencia_lag4,Epidemiológico,float64,A incidência por 100 mil com defasagem de 4 semanas.,Derivada,preditor essencial,99.39393939393939
+incidencia_lag8,Epidemiológico,float64,A incidência por 100 mil com defasagem de 8 semanas.,Derivada,apoio,98.7878787878788
+incidencia_mm3,Epidemiológico,float64,"Média móvel de 3 semanas de a incidência por 100 mil, deslocada em uma semana para não enxergar o presente.",Derivada,preditor essencial,99.69696969696969
+incidencia_mm4,Epidemiológico,float64,"Média móvel de 4 semanas de a incidência por 100 mil, deslocada em uma semana para não enxergar o presente.",Derivada,apoio,99.69696969696969
+incidencia_mm8,Epidemiológico,float64,"Média móvel de 8 semanas de a incidência por 100 mil, deslocada em uma semana para não enxergar o presente.",Derivada,preditor essencial,99.69696969696969
+nivel,Epidemiológico,int64,Nível de alerta do próprio InfoDengue (1 verde a 4 vermelho). Não é o risco do projeto.,InfoDengue,apoio,100.0
+nivel_inc,Epidemiológico,int64,Nível de incidência segundo o InfoDengue.,InfoDengue,apoio,100.0
+notif_accum_year,Epidemiológico,int64,Notificações acumuladas no ano até a semana.,InfoDengue,apoio,100.0
+p_inc100k,Epidemiológico,float64,Incidência por 100 mil calculada pelo próprio InfoDengue. Mantida para conferência.,InfoDengue,apoio,100.0
+p_rt1,Epidemiológico,float64,"Probabilidade de o Rt ser maior que 1, isto é, de a transmissão estar crescendo.",InfoDengue,apoio,100.0
+razao_mm3_mm8,Epidemiológico,float64,Razão entre a média móvel de 3 e a de 8 semanas. Mede aceleração: acima de 1 a curva sobe.,Derivada,preditor essencial,100.0
+receptivo,Epidemiológico,int64,Indicador do InfoDengue de receptividade climática ao vetor.,InfoDengue,apoio,100.0
+transmissao,Epidemiológico,int64,Indicador do InfoDengue de evidência de transmissão sustentada.,InfoDengue,apoio,100.0
+tweet,Epidemiológico,float64,Menções a dengue no Twitter/X captadas pelo InfoDengue. Não usada pelo projeto.,InfoDengue,apoio,75.0
+variacao_semanal,Epidemiológico,float64,Variação relativa da incidência frente à semana anterior.,Derivada,preditor essencial,100.0
+Localidade_id,Identificação,int64,Identificador interno de localidade do InfoDengue.,InfoDengue,apoio,100.0
+ano,Identificação,int64,Ano epidemiológico. Define as dobras da validação temporal.,Derivada,apoio,100.0
+cod_ibge,Identificação,int64,Código IBGE de 7 dígitos do município. Chave de integração entre todas as bases.,IBGE,apoio,100.0
+data_iniSE,Identificação,object,"Mesma data, no nome original do InfoDengue. Mantida para rastreio.",InfoDengue,apoio,100.0
+data_ini_se,Identificação,object,Data do primeiro dia da semana epidemiológica (domingo). Chave temporal.,InfoDengue,apoio,100.0
+id,Identificação,int64,Identificador da linha no InfoDengue.,InfoDengue,apoio,100.0
+municipio,Identificação,object,Nome do município conforme o IBGE.,IBGE,apoio,100.0
+municipio_nome,Identificação,object,Nome do município conforme o InfoDengue. Mantido para conferência da junção.,InfoDengue,apoio,100.0
+se_codigo,Identificação,int64,"Semana epidemiológica no formato AAAASS, ex. 202633.",InfoDengue,apoio,100.0
+semana,Identificação,int64,"Semana epidemiológica no ano, de 1 a 53. Entra no modelo como marcador de sazonalidade.",Derivada,preditor essencial,100.0
+uf,Identificação,object,"Unidade federativa: DF, GO ou MG.",IBGE,apoio,100.0
+versao_modelo,Identificação,object,Versão do modelo de nowcasting que gerou os casos estimados.,InfoDengue,apoio,100.0
+chuva_acum12,Precipitação,float64,Precipitação acumulada nas últimas 12 semanas.,Derivada,preditor,99.54545454545455
+chuva_acum4,Precipitação,float64,Precipitação acumulada nas últimas 4 semanas.,Derivada,preditor,99.54545454545455
+chuva_acum8,Precipitação,float64,Precipitação acumulada nas últimas 8 semanas.,Derivada,preditor,99.54545454545455
+chuva_anomalia,Precipitação,float64,"Desvio da chuva frente à média histórica da mesma semana, só com anos anteriores.",Derivada,preditor,99.71479500891266
+chuva_dias_com_chuva,Precipitação,float64,Número de dias com chuva na semana.,Derivada,preditor,99.71479500891266
+chuva_lag12,Precipitação,float64,A precipitação semanal com defasagem de 12 semanas.,Derivada,apoio,98.03030303030303
+chuva_lag2,Precipitação,float64,A precipitação semanal com defasagem de 2 semanas.,Derivada,preditor,99.54545454545455
+chuva_lag4,Precipitação,float64,A precipitação semanal com defasagem de 4 semanas.,Derivada,preditor,99.24242424242425
+chuva_lag6,Precipitação,float64,A precipitação semanal com defasagem de 6 semanas.,Derivada,preditor,98.93939393939394
+chuva_lag8,Precipitação,float64,A precipitação semanal com defasagem de 8 semanas.,Derivada,preditor,98.63636363636363
+chuva_max_diaria_mm,Precipitação,float64,Maior precipitação diária da semana. Distingue chuva torrencial de chuva distribuída.,ERA5/Open-Meteo,apoio,99.71479500891266
+chuva_semana_mm,Precipitação,float64,"Precipitação acumulada na semana, em milímetros.",ERA5/Open-Meteo,preditor,99.71479500891266
+semanas_secas_8,Precipitação,float64,"Quantas das últimas 8 semanas foram secas. Seca leva a armazenar água em casa, o que cria criadouro.",Derivada,preditor,99.39393939393939
+semanas_torrenciais_4,Precipitação,float64,Quantas das últimas 4 semanas tiveram chuva torrencial. Chuva forte lava criadouros em vez de criá-los.,Derivada,preditor,99.69696969696969
+chuva_ausente,Qualidade,int64,Marca 1 quando a série de chuva não estava disponível para a semana.,Derivada,apoio,100.0
+clima_imputado,Qualidade,int64,Marca 1 quando alguma variável climática da linha foi imputada.,Derivada,apoio,100.0
+completude,Qualidade,float64,Proporção estimada de notificação já digitada na semana. Abaixo de 1 a semana ainda vai crescer.,Derivada,apoio,100.0
+dado_provisorio,Qualidade,int64,Marca 1 quando a semana ainda está sujeita a revisão pelo atraso de notificação.,Derivada,apoio,100.0
+historico_insuficiente,Qualidade,int64,Marca 1 quando não há anos anteriores bastantes para o canal endêmico ser válido.,Derivada,apoio,100.0
+incerteza_nowcast,Qualidade,float64,Largura relativa do intervalo de credibilidade do nowcasting.,Derivada,apoio,100.0
+anos_historico,Risco,int64,Quantos anos anteriores sustentam o canal endêmico daquela semana.,Derivada,apoio,100.0
+canal_mediana,Risco,float64,Mediana histórica da incidência na mesma semana do ano. Piso da faixa de alerta do canal endêmico.,Derivada,preditor essencial,91.96969696969697
+canal_q1,Risco,float64,"Primeiro quartil histórico da incidência na mesma semana do ano, só com anos anteriores.",Derivada,apoio,91.96969696969697
+canal_q3,Risco,float64,Terceiro quartil histórico. Acima dele a incidência entra em zona epidêmica.,Derivada,preditor essencial,91.96969696969697
+nivel_absoluto,Risco,int64,"Nível de risco pelos patamares absolutos de incidência: 10, 30 e 60 por 100 mil.",Derivada,apoio,100.0
+nivel_canal,Risco,int64,"Nível de risco pela posição no canal endêmico, de 0 a 3.",Derivada,apoio,100.0
+risco,Risco,object,"Nome do nível final: baixo, moderado, alto ou muito alto.",Derivada,apoio,100.0
+risco_codigo,Risco,int64,"Nível final, o maior entre canal e patamar: 0 baixo, 1 moderado, 2 alto, 3 muito alto. É a base do alvo do modelo.",Derivada,origem do alvo,100.0
+risco_sem_canal,Risco,int64,"Nível calculado só pelos patamares absolutos, para medir o quanto o canal acrescenta.",Derivada,apoio,100.0
+esgoto_inadequado_pct,Vulnerabilidade,float64,"Domicílios sem esgotamento sanitário adequado, em porcentagem.",IBGE Censo 2022,preditor,100.0
+lixo_sem_coleta_pct,Vulnerabilidade,float64,"Domicílios sem coleta de lixo, em porcentagem.",IBGE Censo 2022,preditor,100.0
+sem_agua_rede_pct,Vulnerabilidade,float64,"Domicílios sem ligação à rede de água. Único indicador com associação significativa à incidência no território (ρ = +0,397; p = 0,020).",IBGE Censo 2022,preditor,100.0
+vulnerabilidade_socioambiental,Vulnerabilidade,float64,Índice que resume os três indicadores acima.,Derivada,apoio,100.0

@@ -23,6 +23,7 @@ CAMINHO_VULNERABILIDADE_RAS = (
     RAIZ / "dados" / "externo" / "vulnerabilidade_ras.csv"
 )
 CAMINHO_SETORES = RAIZ / "dados" / "externo" / "setores_df.geojson"
+CAMINHO_DICIONARIO = RAIZ / "docs" / "dicionario_de_dados.csv"
 
 # Paleta do painel VIGIA-Dengue (sistema "Industry"), a mesma do canvas em
 # `Painel VIGIA-Dengue (offline).html`, para que as duas telas se leiam como
@@ -159,6 +160,19 @@ def carregar_setores():
         and f["properties"].get("indice_criadouro") is not None
     ]
     return {"type": "FeatureCollection", "features": feicoes}
+
+
+@st.cache_data
+def carregar_dicionario():
+    """Dicionario de dados gerado da propria base analitica.
+
+    Vem de `docs/dicionario_de_dados.csv`, reescrito por `gerar_dicionario.py`
+    a cada vez que a base muda -- assim a documentacao no ar nunca descreve uma
+    base que deixou de existir.
+    """
+    if not CAMINHO_DICIONARIO.exists():
+        return None
+    return pd.read_csv(CAMINHO_DICIONARIO)
 
 
 @st.cache_data
@@ -447,9 +461,9 @@ else:
             f"({linha['completude']:.0%} digitado). Os casos observados tendem a subir."
         )
 
-aba_mapa, aba_serie, aba_relatorio, aba_modelo = st.tabs(
+aba_mapa, aba_serie, aba_relatorio, aba_modelo, aba_dicionario = st.tabs(
     ["Brasilia por Regiao Administrativa", "Series temporais",
-     "Relatorio da semana", "Desempenho do modelo"]
+     "Relatorio da semana", "Desempenho do modelo", "Dicionario de dados"]
 )
 
 # ------------------------------------------- Brasilia por Regiao Administrativa
@@ -799,6 +813,78 @@ with aba_modelo:
         )
         linha_auc.update_layout(height=360)
         st.plotly_chart(linha_auc, width="stretch")
+
+# ------------------------------------------------------- Dicionario de dados
+with aba_dicionario:
+    dicionario = carregar_dicionario()
+
+    if dicionario is None:
+        st.warning(
+            "Dicionario nao encontrado. Gere-o com `gerar_dicionario.py` para "
+            "que esta aba mostre as colunas da base."
+        )
+    else:
+        st.subheader("As colunas da base analitica")
+        st.markdown(
+            "Cada linha e uma coluna da base municipio-semana que sustenta a "
+            "previsao. O campo **papel** diz como ela entra: *preditor "
+            "essencial* e o que a previsao nao dispensa, *preditor* e tudo que "
+            "o modelo usa, *origem do alvo* e a coluna de onde sai o desfecho, "
+            "e *apoio* sustenta calculo, conferencia e painel sem entrar no "
+            "treino."
+        )
+
+        preditoras = int(dicionario["papel"].str.startswith("preditor").sum())
+        essenciais = int((dicionario["papel"] == "preditor essencial").sum())
+        col_a, col_b, col_c = st.columns(3)
+        col_a.metric("Colunas na base", len(dicionario))
+        col_b.metric("Preditoras do modelo", preditoras)
+        col_c.metric("Essenciais", essenciais)
+
+        filtro_a, filtro_b = st.columns(2)
+        blocos = ["todos"] + sorted(dicionario["bloco"].unique())
+        papeis = ["todos"] + sorted(dicionario["papel"].unique())
+        bloco_escolhido = filtro_a.selectbox("Bloco", blocos)
+        papel_escolhido = filtro_b.selectbox("Papel na previsao", papeis)
+        busca = st.text_input(
+            "Buscar", placeholder="nome da coluna, descricao ou fonte",
+            label_visibility="collapsed",
+        )
+
+        visivel = dicionario
+        if bloco_escolhido != "todos":
+            visivel = visivel[visivel["bloco"] == bloco_escolhido]
+        if papel_escolhido != "todos":
+            visivel = visivel[visivel["papel"] == papel_escolhido]
+        if busca:
+            alvo = (visivel["coluna"] + " " + visivel["descricao"] + " "
+                    + visivel["fonte"])
+            visivel = visivel[alvo.str.contains(busca, case=False, na=False)]
+
+        st.caption(
+            f"{len(visivel)} de {len(dicionario)} colunas"
+            if len(visivel) != len(dicionario) else f"{len(dicionario)} colunas"
+        )
+        st.dataframe(
+            visivel.rename(columns={
+                "coluna": "Coluna", "bloco": "Bloco", "tipo": "Tipo",
+                "papel": "Papel", "preenchida_pct": "Preenchida (%)",
+                "fonte": "Fonte", "descricao": "Descricao",
+            }),
+            hide_index=True, width="stretch", height=520,
+            column_config={
+                "Preenchida (%)": st.column_config.NumberColumn(format="%.1f%%"),
+            },
+        )
+
+        st.caption(
+            "Nenhuma variavel enxerga o futuro: medias moveis sao deslocadas em "
+            "uma semana, as anomalias sazonais e o canal endemico usam apenas "
+            "anos anteriores, e a dobra de validacao corta pela data que o alvo "
+            "observa. As colunas abaixo de 100% de preenchimento faltam por "
+            "construcao -- o canal endemico exige anos anteriores, e o primeiro "
+            "ano da serie nao os tem."
+        )
 
 st.divider()
 st.caption(
