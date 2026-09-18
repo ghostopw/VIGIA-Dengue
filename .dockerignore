@@ -25,3 +25,4 @@ app
 !dados/processado/painel.csv
 !saidas/desempenho_modelos.csv
 !saidas/alerta.json
+!docs/dicionario_de_dados.csv

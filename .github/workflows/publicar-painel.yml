@@ -17,6 +17,7 @@ on:
       - "saidas/alerta.json"
       - "docs/dicionario_de_dados.csv"
       - "Dockerfile"
+      - ".dockerignore"
       - "requirements-painel.txt"
       - ".github/workflows/publicar-painel.yml"
   workflow_dispatch:
