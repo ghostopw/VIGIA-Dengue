@@ -27,6 +27,7 @@ CAMINHO_VULNERABILIDADE_RAS = (
 )
 CAMINHO_SETORES = RAIZ / "dados" / "externo" / "setores_df.geojson"
 CAMINHO_DICIONARIO = RAIZ / "docs" / "dicionario_de_dados.csv"
+CAMINHO_GLOSSARIO = RAIZ / "docs" / "glossario.csv"
 
 # Paleta do painel VIGIA-Dengue (sistema "Industry"), a mesma do canvas em
 # `Painel VIGIA-Dengue (offline).html`, para que as duas telas se leiam como
@@ -83,8 +84,28 @@ ORDEM_RISCO = ["baixo", "moderado", "alto", "muito alto"]
 CORES_TENDENCIA = {"▲": "#b25a33", "▼": ACENTO, "▬": NEUTRO_600}
 
 # Regra de leitura herdada do painel: a serie em foco vai solida no azul
-# escuro; as de comparacao vao neutras e tracejadas, para nao disputar.
-CORES_MODELO = ["#b7b7ba", "#749dc4", "#1d2d3d"]
+# escuro; as de comparacao vao mais claras e tracejadas, para nao disputar.
+# A cor e fixada por modelo, e nao por ordem: com uma lista de tres cores, o
+# quarto modelo voltava a primeira e o combinado -- o modelo em operacao --
+# saia no mesmo cinza da referencia.
+NOMES_MODELO = {
+    "referencia": "Referencia (persistencia)",
+    "interpretavel": "Interpretavel (logistica)",
+    "aprendizado": "Aprendizado (LightGBM)",
+    "combinado": "Combinado (em operacao)",
+}
+CORES_MODELO = {
+    "Referencia (persistencia)": "#b7b7ba",
+    "Interpretavel (logistica)": "#9fb8d0",
+    "Aprendizado (LightGBM)": "#5980a6",
+    "Combinado (em operacao)": "#1d2d3d",
+}
+TRACO_MODELO = {
+    "Referencia (persistencia)": "dot",
+    "Interpretavel (logistica)": "dash",
+    "Aprendizado (LightGBM)": "dash",
+    "Combinado (em operacao)": "solid",
+}
 
 # Municipio foco do projeto. A RIDE-DF entra como territorio de comparacao.
 FOCO = "Brasilia"
@@ -408,13 +429,21 @@ def carregar_setores():
 def carregar_dicionario():
     """Dicionario de dados gerado da propria base analitica.
 
-    Vem de `docs/dicionario_de_dados.csv`, reescrito por `gerar_dicionario.py`
+    Vem de `docs/dicionario_de_dados.csv`, reescrito por `executar_dicionario.py`
     a cada vez que a base muda -- assim a documentacao no ar nunca descreve uma
     base que deixou de existir.
     """
     if not CAMINHO_DICIONARIO.exists():
         return None
     return pd.read_csv(CAMINHO_DICIONARIO)
+
+
+@st.cache_data
+def carregar_glossario():
+    """Glossario gerado junto com o dicionario, por `executar_dicionario.py`."""
+    if not CAMINHO_GLOSSARIO.exists():
+        return None
+    return pd.read_csv(CAMINHO_GLOSSARIO)
 
 
 @st.cache_data
@@ -1612,9 +1641,13 @@ with aba_modelo:
             "Cada ano e previsto por um modelo treinado apenas com os anos "
             "anteriores. Nenhuma informacao do futuro entra no treino."
         )
-        medias = desempenho.groupby("modelo")[
+        desempenho = desempenho.assign(
+            modelo=desempenho["modelo"].map(NOMES_MODELO)
+            .fillna(desempenho["modelo"]))
+        ordem_modelos = [m for m in CORES_MODELO if m in set(desempenho["modelo"])]
+        medias = (desempenho.groupby("modelo")[
             ["sensibilidade", "especificidade", "vpp", "auc", "auprc", "brier"]
-        ].mean().round(3).reset_index()
+        ].mean().round(3).reindex(ordem_modelos).reset_index())
         st.dataframe(
             medias.rename(columns={
                 "modelo": "Modelo", "sensibilidade": "Sensibilidade",
@@ -1626,9 +1659,15 @@ with aba_modelo:
 
         linha_auc = px.line(
             desempenho, x="ano", y="auc", color="modelo", markers=True,
-            color_discrete_sequence=CORES_MODELO,
+            color_discrete_map=CORES_MODELO, line_dash="modelo",
+            line_dash_map=TRACO_MODELO,
+            category_orders={"modelo": ordem_modelos},
             labels={"auc": "AUC", "ano": "Ano avaliado", "modelo": "Modelo"},
         )
+        # A serie em operacao vai mais grossa: e a que a pessoa procura.
+        linha_auc.for_each_trace(
+            lambda tr: tr.update(line_width=3 if tr.name.startswith("Combinado")
+                                 else 1.8))
         linha_auc.update_layout(height=360)
         st.plotly_chart(linha_auc, width="stretch", config=CONFIG_GRAFICO)
 
@@ -1638,7 +1677,7 @@ with aba_dicionario:
 
     if dicionario is None:
         st.warning(
-            "Dicionario nao encontrado. Gere-o com `gerar_dicionario.py` para "
+            "Dicionario nao encontrado. Gere-o com `executar_dicionario.py` para "
             "que esta aba mostre as colunas da base."
         )
     else:
@@ -1712,6 +1751,49 @@ with aba_dicionario:
             "construcao -- o canal endemico exige anos anteriores, e o primeiro "
             "ano da serie nao os tem."
         )
+
+        # ---- glossario: o que cada termo da tabela significa ----------
+        glossario_tab = carregar_glossario()
+        if glossario_tab is not None:
+            st.subheader("O que cada termo significa")
+            st.caption(
+                "Para quem nao e da area: as colunas da tabela, os tipos de "
+                "dado, os papeis na previsao, as fontes e os termos que "
+                "aparecem nas descricoes."
+            )
+            def _itens(linhas: pd.DataFrame) -> str:
+                return "\n".join(
+                    f"- **{html.escape(str(l.termo))}** -- "
+                    f"{html.escape(str(l.significado))}"
+                    for l in linhas.itertuples()
+                )
+
+            # Grupos curtos vao lado a lado, cada um na coluna que estiver
+            # mais curta. Grupo comprido ocupa a largura toda, com os termos
+            # repartidos nas duas colunas -- inteiro numa so, ele deixava a
+            # outra coluna vazia pela metade da tela.
+            grupos = list(dict.fromkeys(glossario_tab["grupo"]))
+            tamanho = {g: int((glossario_tab["grupo"] == g).sum()) for g in grupos}
+            curtos = [g for g in grupos if tamanho[g] <= 8]
+            longos = [g for g in grupos if tamanho[g] > 8]
+
+            colunas_glossario = st.columns(2)
+            ocupado = [0, 0]
+            for grupo in curtos:
+                lado = 0 if ocupado[0] <= ocupado[1] else 1
+                ocupado[lado] += tamanho[grupo] + 1
+                linhas = glossario_tab[glossario_tab["grupo"] == grupo]
+                with colunas_glossario[lado]:
+                    st.markdown(f"**{html.escape(grupo).upper()}**\n\n"
+                                f"{_itens(linhas)}")
+
+            for grupo in longos:
+                linhas = glossario_tab[glossario_tab["grupo"] == grupo]
+                metade = (len(linhas) + 1) // 2
+                st.markdown(f"**{html.escape(grupo).upper()}**")
+                esquerda, direita = st.columns(2)
+                esquerda.markdown(_itens(linhas.iloc[:metade]))
+                direita.markdown(_itens(linhas.iloc[metade:]))
 
 st.divider()
 st.caption(
