@@ -134,11 +134,16 @@ def verificar_integridade_local() -> bool:
     print("\n  Integridade dos arquivos em disco:")
     tudo_certo = True
 
+    # 34 = a RIDE-DF completa, len(TERRITORIO). O numero vem da constante
+    # para o verificador acompanhar o territorio em vez de fossilizar de novo:
+    # foi exatamente este bloco que ficou preso no 30 quando MG voltou.
+    from .territorio import TERRITORIO
+
     esperados = {
-        "dados/processado/infodengue_territorio.csv": 30,
-        "dados/processado/base_com_risco.csv": 30,
-        "dados/externo/chuva_semanal.csv": 30,
-        "dados/externo/vulnerabilidade.csv": 30,
+        "dados/processado/infodengue_territorio.csv": len(TERRITORIO),
+        "dados/processado/base_com_risco.csv": len(TERRITORIO),
+        "dados/externo/chuva_semanal.csv": len(TERRITORIO),
+        "dados/externo/vulnerabilidade.csv": len(TERRITORIO),
     }
     for caminho, municipios in esperados.items():
         arquivo = RAIZ / caminho
@@ -153,7 +158,8 @@ def verificar_integridade_local() -> bool:
         print(f"    {'ok ' if certo else 'ERRO'} {caminho}: "
               f"{len(tabela)} linhas, {encontrados}/{municipios} municipios")
 
-    for caminho, poligonos in [("dados/externo/malha_ride_df.geojson", 30),
+    for caminho, poligonos in [("dados/externo/malha_ride_df.geojson",
+                                len(TERRITORIO)),
                                ("dados/externo/malha_ras_df.geojson", 31)]:
         arquivo = RAIZ / caminho
         if not arquivo.exists():
@@ -168,10 +174,12 @@ def verificar_integridade_local() -> bool:
               f"{encontrados}/{poligonos} poligonos")
 
     brutos = list((RAIZ / "dados" / "bruto" / "infodengue").glob("*.csv"))
-    certo = len(brutos) == 90
+    esperado_brutos = len(TERRITORIO) * 3
+    certo = len(brutos) == esperado_brutos
     tudo_certo &= certo
     print(f"    {'ok ' if certo else 'ERRO'} brutos por municipio: "
-          f"{len(brutos)}/90 (30 municipios x 3 arboviroses)")
+          f"{len(brutos)}/{esperado_brutos} "
+          f"({len(TERRITORIO)} municipios x 3 arboviroses)")
 
     return tudo_certo
 
