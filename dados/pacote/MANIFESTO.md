@@ -1,8 +1,9 @@
 # Pacote de dados -- VIGIA-Dengue
 
-Gerado em 2026-08-27.
+Gerado em 2026-09-27.
 
-Territorio: Distrito Federal e RIDE-DF (33 municipios).
+Territorio: a RIDE-DF completa -- Distrito Federal, Entorno goiano e os
+4 municipios mineiros (34 ao todo).
 Unidade de analise: municipio x semana epidemiologica.
 
 Fontes:
@@ -12,20 +13,21 @@ Fontes:
 
 | Arquivo | Linhas | Colunas | Conteudo |
 |---|---|---|---|
-| `dengue_municipio_semana.csv` | 19.770 | 37 | Dengue: serie municipio-semana bruta do InfoDengue, 2014-2026. |
-| `chikungunya_municipio_semana.csv` | 19.770 | 37 | Chikungunya: serie municipio-semana bruta do InfoDengue, 2016-2026. |
-| `zika_municipio_semana.csv` | 15.870 | 37 | Zika: serie municipio-semana bruta do InfoDengue, 2016-2026. |
-| `base_analitica.csv` | 19.770 | 115 | Tabela analitica: incidencia, medias moveis, defasagens e flags. |
-| `base_com_risco.csv` | 19.770 | 124 | Base analitica acrescida do canal endemico e da estratificacao de risco. |
-| `painel.csv` | 18.180 | 39 | Base do painel: probabilidade de alerta e fatores explicativos. |
-| `malha_municipios.geojson` | - | - | Malha cartografica dos 33 municipios (IBGE). |
-| `desempenho_modelos.csv` | 21 | 12 | Metricas da validacao temporal dos tres modelos, por ano. |
-| `brutos_por_municipio/` | - | - | 90 CSVs: retorno original da API, um por municipio e arbovirose. |
+| `dengue_municipio_semana.csv` | 22.440 | 37 | Dengue: serie municipio-semana bruta do InfoDengue, 2014-2026. |
+| `chikungunya_municipio_semana.csv` | 22.440 | 37 | Chikungunya: serie municipio-semana bruta do InfoDengue, 2016-2026. |
+| `zika_municipio_semana.csv` | 17.986 | 37 | Zika: serie municipio-semana bruta do InfoDengue, 2016-2026. |
+| `base_analitica.csv` | 22.440 | 119 | Tabela analitica: incidencia, medias moveis, defasagens e flags. |
+| `base_com_risco.csv` | 22.440 | 128 | Base analitica acrescida do canal endemico e da estratificacao de risco. |
+| `painel.csv` | 20.638 | 39 | Base do painel: probabilidade de alerta e fatores explicativos. |
+| `malha_municipios.geojson` | - | - | Malha cartografica dos municipios da RIDE-DF (IBGE). |
+| `desempenho_modelos.csv` | 28 | 12 | Metricas da validacao temporal dos tres modelos, por ano. |
+| `brutos_por_municipio/` | - | - | 102 CSVs: retorno original da API, um por municipio e arbovirose. |
 
 ## Dicionario das variaveis
 
-A descricao completa das 105 variaveis da base analitica esta em
-`docs/dicionario_de_dados.md` no repositorio do projeto.
+A descricao completa de todas as colunas da base analitica esta em
+`docs/dicionario_de_dados_completo.md` no repositorio do projeto,
+gerada da propria base por `src/vigia/executar_dicionario.py`.
 
 ## Observacoes de uso
 

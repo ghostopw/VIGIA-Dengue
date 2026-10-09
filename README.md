@@ -15,10 +15,10 @@ Projeto PIBITI 2026 — Iniciação em Desenvolvimento Tecnológico e Inovação
 
 | Etapa do projeto | Situação | Onde está |
 |---|---|---|
-| 1 — Revisão e planejamento | Dicionário de dados e critérios operacionais | [docs/dicionario_de_dados.md](docs/dicionario_de_dados.md) |
+| 1 — Revisão e planejamento | Dicionário de dados e critérios operacionais | [docs/dicionario_de_dados_completo.md](docs/dicionario_de_dados_completo.md) |
 | 2 — Base analítica | 22.440 linhas município-semana, 2014–2026 | `src/vigia/ingestao_infodengue.py`, `src/vigia/base_analitica.py` |
 | 3 — Análise espaço-temporal | Canal endêmico e estratificação em 4 níveis | `src/vigia/risco.py` |
-| 4 — Modelagem de alerta | 3 modelos com validação temporal, mais uma rede neural avaliada | `src/vigia/modelagem.py`, `src/vigia/rede_neural.py` |
+| 4 — Modelagem de alerta | 4 modelos com validação temporal, mais uma rede neural avaliada e descartada | `src/vigia/modelagem.py`, `src/vigia/rede_neural.py` |
 | 5 — Dashboard | Painel web com mapa 3D, séries e relatórios | `Painel VIGIA-Dengue (offline).html`, `app/servidor.py` |
 | 6 — Avaliação e documentação | Métricas apuradas; manual e relatório pendentes | `saidas/desempenho_modelos.csv` |
 
@@ -38,11 +38,6 @@ o Entorno entra como contexto recolhido.
 > `validar_territorio()` recusa a base se alguma UF fora de DF/GO/MG aparecer, e dois
 > testes automatizados cobrem a regra.
 
-> **Pendência conhecida.** O pacote versionado em `dados/pacote/` (19.770 linhas) e a
-> lista de fontes em `docs/fontes_dos_dados.csv` (120 requisições) ainda são do território
-> anterior, de 30 municípios, e o mesmo vale para as contagens esperadas em
-> `src/vigia/verificar_fontes.py`, que por isso acusa erro em quatro checagens de volume
-> sem que haja erro. Reexportar os três resolve.
 
 > O DF é um único município na malha do IBGE e o InfoDengue não o desagrega por Região
 > Administrativa. A RIDE foi adotada para que a análise espacial, os mapas e a
@@ -58,12 +53,12 @@ o Entorno entra como contexto recolhido.
 | IBGE | População, malhas cartográficas e indicadores do Censo 2022 | APIs de localidades, de malhas e SIDRA |
 | Open-Meteo (reanálise ERA5/ECMWF) | Precipitação, temperatura e umidade diárias por município | API `archive-api`, com NASA POWER como reserva |
 
-**Todas as URLs de origem** estão documentadas em
+**Todas as URLs de origem** — as 136 requisições que geraram os dados brutos
+(34 municípios × 3 arboviroses no InfoDengue, mais 34 do IBGE) — estão documentadas em
 [docs/fontes_dos_dados.md](docs/fontes_dos_dados.md): cada link abre no navegador e
-devolve exatamente o conteúdo que gerou o arquivo local correspondente. A lista atual
-cobre 120 requisições, do território de 30 municípios; reexportá-la com
-`exportar_fontes.py` a leva às 132 do território atual (34 municípios × 3 arboviroses,
-mais 30 do IBGE).
+devolve exatamente o conteúdo que gerou o arquivo local correspondente. As contagens
+esperadas em `src/vigia/verificar_fontes.py` agora saem de `len(TERRITORIO)`, para o
+verificador acompanhar o território em vez de fossilizar.
 
 > **Nota sobre o SINAN.** O projeto previa microdados do SINAN via DATASUS. Durante a
 > montagem da base o acesso não respondeu — timeout nas portas 21, 80 e 443 do FTP —, e o
@@ -87,6 +82,7 @@ python src/vigia/executar_ingestao.py        # baixa a série 2014-2026 (~5 min)
 python src/vigia/executar_malha.py           # baixa a malha cartográfica
 python src/vigia/executar_analise.py         # base analítica, risco e validação
 python src/vigia/executar_painel_dados.py    # gera os dados do painel
+python src/vigia/executar_dicionario.py      # regenera o dicionário de dados
 
 python app/servidor.py                       # abre o painel em localhost:8000
 python src/vigia/executar_atualizacao.py     # busca, reavalia e avisa se mudou
@@ -162,19 +158,26 @@ expansiva (treina até o ano *t−1*, avalia em *t*), média de 2019 a 2025:
 
 | Modelo | Sensibilidade | Especificidade | VPP | AUC | AUPRC | Brier |
 |---|---|---|---|---|---|---|
-| Referência (persistência) | **0,726** | 0,788 | 0,725 | 0,757 | 0,645 | 0,233 |
-| Interpretável (logística) | 0,719 | 0,730 | 0,677 | 0,803 | 0,775 | 0,183 |
-| Aprendizado (LightGBM) | 0,698 | **0,803** | **0,740** | **0,830** | **0,802** | **0,172** |
+| Referência (persistência) | 0,726 | 0,788 | 0,725 | 0,757 | 0,645 | 0,233 |
+| Interpretável (logística) | 0,707 | 0,781 | 0,710 | 0,814 | 0,778 | 0,173 |
+| Aprendizado (LightGBM) | **0,765** | 0,786 | 0,732 | 0,849 | 0,819 | 0,157 |
+| **Combinado** (0,8·LightGBM + 0,2·persistência) | 0,757 | **0,789** | **0,733** | **0,852** | **0,822** | **0,155** |
 
-Médias calculadas de `saidas/desempenho_modelos.csv`, sobre os 34 municípios — 1.768
-linhas avaliadas por ano, 1.802 nos anos de 53 semanas. Prevalência média do desfecho:
-43,6%.
+Médias calculadas de `saidas/desempenho_modelos.csv`, sobre os 34 municípios. O painel
+opera com o **combinado**. Estes números são da rodada de experimentos de 27/09/2026
+([docs/achados_modelagem.md](docs/achados_modelagem.md), seção 8): o modelo passou de
+41 para 23 variáveis — o bloco climático saiu por medição, e entraram Rt, p_rt1 e os
+indicadores de transmissão do InfoDengue — com hiperparâmetros reajustados para o
+tamanho real da base.
 
-Leitura honesta: a persistência tem sensibilidade ligeiramente maior, porque repetir o
-estado atual já acerta bastante quando a prevalência é alta. O ganho dos modelos está na
-**discriminação e na calibração** — o LightGBM supera a referência em AUC (0,830 contra
-0,757) e reduz o erro de Brier em 26%, e a vantagem é maior nos anos epidêmicos, quando
-o alerta precisa funcionar.
+Leitura honesta: a rodada de 27/09 fez o aprendizado superar a persistência também em
+sensibilidade, o que antes não acontecia. O ganho veio de três mudanças medidas — poda
+do bloco climático, entrada dos indicadores de transmissão do InfoDengue e corte de
+capacidade do LightGBM — mais a combinação com o estado presente. No operacional de
+Brasília, no limiar de 0,80 já em uso, a especificidade foi de 0,58 para **0,75**,
+cruzando o piso de 0,74 da literatura de sistemas de alerta (EWARS), com sensibilidade
+0,77 e VPP 0,90. Dois caminhos testados e **descartados** por medição: calibração
+pós-hoc e pesos de recência — os números estão na seção 8 dos achados.
 
 ## Estrutura
 
@@ -194,7 +197,8 @@ src/vigia/setores_df.py        malha e indicadores por setor censitário
 src/vigia/painel_dados.py      probabilidade de alerta e fatores explicativos
 src/vigia/alerta.py            o ciclo que avisa só quando algo muda
 src/vigia/verificar_fontes.py  reconfere os dados contra as fontes de origem
-docs/dicionario_de_dados.md    as variáveis da base, em oito blocos
+src/vigia/dicionario.py        gera o dicionário da própria base
+docs/dicionario_de_dados_completo.md  todas as colunas, papel e fonte
 docs/achados_modelagem.md      o que foi medido, inclusive o que não funcionou
 testes/test_base.py            testes das regras críticas
 ```
