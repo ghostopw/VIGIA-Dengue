@@ -19,7 +19,13 @@ import pytest
 RAIZ = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(RAIZ / "src"))
 
-from vigia.dicionario import SAIDA_CSV, gerar, sem_descricao  # noqa: E402
+from vigia.dicionario import (  # noqa: E402
+    SAIDA_CSV,
+    SAIDA_GLOSSARIO,
+    gerar,
+    glossario,
+    sem_descricao,
+)
 from vigia.modelagem import VARIAVEIS, VARIAVEIS_ESSENCIAIS  # noqa: E402
 
 CAMINHO_BASE = RAIZ / "dados" / "processado" / "base_com_risco.csv"
@@ -79,3 +85,30 @@ def test_csv_publicado_esta_sincronizado_com_a_base(base):
                "preenchida_pct"}
     assert colunas.issubset(publicado.columns)
     assert publicado["descricao"].notna().all()
+
+
+def test_glossario_explica_todo_tipo_papel_e_fonte_da_tabela(tabela):
+    """Quem le a tabela no site nao pode esbarrar em termo sem explicacao.
+
+    Falhou aqui? Acrescente o termo em GLOSSARIO, em src/vigia/dicionario.py.
+    """
+    termos = set(glossario()["termo"])
+    assert not set(tabela["tipo"]) - termos, "tipo sem explicacao"
+    assert not set(tabela["papel"]) - termos, "papel sem explicacao"
+    fontes_do_glossario = termos & {"InfoDengue", "SINAN", "IBGE",
+                                    "ERA5/Open-Meteo", "Derivada"}
+    for fonte in set(tabela["fonte"]):
+        assert any(f in fonte for f in fontes_do_glossario), (
+            f"fonte sem explicacao no glossario: {fonte}")
+
+
+def test_glossario_publicado_esta_sincronizado():
+    """O CSV que o painel le precisa ser o glossario do gerador.
+
+    Falhou aqui? Rode: python src/vigia/executar_dicionario.py
+    """
+    assert SAIDA_GLOSSARIO.exists(), "docs/glossario.csv nao existe"
+    publicado = pd.read_csv(SAIDA_GLOSSARIO)
+    assert publicado.equals(glossario()), (
+        "docs/glossario.csv esta defasado -- regenere com "
+        "python src/vigia/executar_dicionario.py")

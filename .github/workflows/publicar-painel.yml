@@ -18,6 +18,7 @@ on:
       - "saidas/alarmes.json"
       - "saidas/clima_futuro.json"
       - "docs/dicionario_de_dados.csv"
+      - "docs/glossario.csv"
       - "Dockerfile"
       - ".dockerignore"
       - "requirements-painel.txt"

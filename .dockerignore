@@ -28,3 +28,4 @@ app
 !saidas/alarmes.json
 !saidas/clima_futuro.json
 !docs/dicionario_de_dados.csv
+!docs/glossario.csv

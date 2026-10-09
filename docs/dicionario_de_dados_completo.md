@@ -201,3 +201,54 @@ atraso de digitação. Incidência e risco são calculados sobre `casos_est`, e
 `dado_provisorio` sinaliza a incompletude no painel. Na série histórica fechada os dois
 praticamente coincidem — a correção age nas semanas recentes, onde é decisiva.
 
+
+## Glossário
+
+O que cada termo da tabela significa, para quem não é da área.
+
+
+### Como ler a tabela
+
+- **Coluna** — O nome de uma informação guardada na base. Cada linha da base é um município numa semana; cada coluna é um dado sobre essa linha, como os casos ou a chuva.
+- **Bloco** — O tema a que a coluna pertence: identificação, epidemiológico, climático, precipitação, contextual, vulnerabilidade, risco ou qualidade do dado.
+- **Tipo** — A espécie de dado que a coluna guarda: número inteiro, número com casas decimais ou texto.
+- **Papel** — Como a coluna entra na previsão: se o modelo a usa para calcular o risco ou se ela só sustenta cálculos e o painel.
+- **Preenchida (%)** — De cada 100 linhas da base, em quantas a coluna tem valor. Abaixo de 100% falta valor em parte das linhas, em geral por construção: o primeiro ano da série, por exemplo, não tem anos anteriores para comparar.
+- **Fonte** — De onde o dado vem: de um sistema público ou de um cálculo do próprio projeto.
+
+### Tipos de dado
+
+- **int64** — Número inteiro, sem casas decimais. Exemplo: casos notificados.
+- **float64** — Número com casas decimais. Exemplo: incidência. Aparece também em colunas de contagem quando falta valor em alguma linha, porque o valor vazio só existe entre os números decimais.
+- **object** — Texto. Exemplos: nome do município, nível de risco.
+
+### Papéis na previsão
+
+- **preditor essencial** — Variável sem a qual a previsão não se sustenta. Está sempre disponível na semana mais recente, o que permite ao alerta funcionar sem esperar outras fontes.
+- **preditor** — Variável que o modelo usa para calcular a probabilidade de risco. Inclui as essenciais.
+- **origem do alvo** — Coluna da qual sai o que o modelo tenta prever: o risco alto ou muito alto quatro semanas à frente.
+- **apoio** — Coluna que sustenta cálculos, conferências ou o painel, mas não entra no treino do modelo.
+
+### Fontes
+
+- **InfoDengue** — Sistema da Fiocruz e da FGV que processa as notificações do SINAN e publica, por município e semana, os casos, as estimativas e os indicadores de transmissão.
+- **SINAN** — Sistema de Informação de Agravos de Notificação, do Ministério da Saúde, onde os casos de dengue são registrados.
+- **IBGE** — Instituto Brasileiro de Geografia e Estatística. Fornece a população, os mapas e os indicadores do Censo 2022.
+- **ERA5/Open-Meteo** — Reanálise climática do centro europeu ECMWF, acessada pela plataforma Open-Meteo. Reanálise é um modelo que combina observações para estimar o clima em cada ponto, inclusive onde não há estação meteorológica.
+- **Derivada** — Calculada pelo próprio projeto a partir de outras colunas.
+
+### Termos das descrições
+
+- **Semana epidemiológica** — Semana padronizada da vigilância em saúde, de domingo a sábado, numerada de 1 a 52 ou 53 ao longo do ano.
+- **Incidência por 100 mil** — Casos estimados divididos pela população e multiplicados por 100 mil. Permite comparar municípios de tamanhos diferentes.
+- **Nowcasting** — Técnica que estima quantos casos de uma semana ainda vão ser registrados, corrigindo o atraso de notificação. Os casos estimados vêm dela.
+- **Casos notificados e casos estimados** — Notificados são os registrados até agora; estimados incluem os que ainda vão entrar no sistema. Nas semanas recentes, os estimados são maiores.
+- **Dado provisório** — Semana cuja notificação ainda não terminou de ser registrada. Os números tendem a subir.
+- **Defasagem** — O valor de semanas anteriores. Com defasagem de 4 semanas significa o valor de quatro semanas atrás.
+- **Média móvel** — Média das últimas semanas, que suaviza a oscilação de uma semana para outra. É calculada até a semana anterior, para não usar o próprio dado que se quer prever.
+- **Anomalia** — Diferença entre o valor da semana e a média histórica da mesma época do ano.
+- **Canal endêmico** — Faixa de incidência esperada para cada semana do ano, construída com os anos anteriores do próprio município. Acima do limite superior, a incidência está em zona epidêmica.
+- **Quartil** — Ponto que divide os valores históricos em quatro partes iguais. O terceiro quartil (Q3) é o valor abaixo do qual ficaram 75% das semanas anteriores; a mediana é o do meio.
+- **Rt** — Número reprodutivo efetivo: quantas pessoas, em média, cada caso infecta. Acima de 1 a transmissão cresce; abaixo de 1, diminui.
+- **Probabilidade de Rt acima de 1** — Chance de a transmissão estar crescendo na semana. É a variável do único alarme que se sustentou no histórico do território.
+- **Vazamento temporal** — Erro em que o modelo usa, sem perceber, informação do futuro. Infla o desempenho medido e falha em operação real; o projeto testa sua ausência a cada execução.

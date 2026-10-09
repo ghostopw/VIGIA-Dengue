@@ -36,6 +36,7 @@ COPY saidas/alerta.json                      ./saidas/
 COPY saidas/alarmes.json                     ./saidas/
 COPY saidas/clima_futuro.json                ./saidas/
 COPY docs/dicionario_de_dados.csv            ./docs/
+COPY docs/glossario.csv                      ./docs/
 
 EXPOSE 80
 

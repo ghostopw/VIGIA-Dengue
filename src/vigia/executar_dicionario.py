@@ -13,7 +13,13 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
 import pandas as pd  # noqa: E402
 
-from vigia.dicionario import SAIDA_CSV, SAIDA_MD, salvar, sem_descricao  # noqa: E402
+from vigia.dicionario import (  # noqa: E402
+    SAIDA_CSV,
+    SAIDA_GLOSSARIO,
+    SAIDA_MD,
+    salvar,
+    sem_descricao,
+)
 
 if __name__ == "__main__":
     raiz = Path(__file__).resolve().parents[2]
@@ -22,6 +28,7 @@ if __name__ == "__main__":
     tabela = salvar(base)
     print("gravado:", SAIDA_MD)
     print("gravado:", SAIDA_CSV)
+    print("gravado:", SAIDA_GLOSSARIO)
     print(tabela.groupby("papel").size().to_string())
     faltando = sem_descricao(tabela)
     if faltando:

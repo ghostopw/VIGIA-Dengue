@@ -23,6 +23,7 @@ from vigia.modelagem import VARIAVEIS, VARIAVEIS_ESSENCIAIS
 RAIZ = Path(__file__).resolve().parents[2]
 SAIDA_MD = RAIZ / "docs" / "dicionario_de_dados_completo.md"
 SAIDA_CSV = RAIZ / "docs" / "dicionario_de_dados.csv"
+SAIDA_GLOSSARIO = RAIZ / "docs" / "glossario.csv"
 
 # --------------------------------------------------------------- descricoes
 # Colunas de nome fixo. Defasagens, medias moveis e acumulados sao descritos
@@ -174,6 +175,123 @@ praticamente coincidem — a correção age nas semanas recentes, onde é decisi
 """
 
 
+# Glossario: o que cada termo da tabela significa, para quem nao e da area.
+# Mora aqui, junto do gerador, para que a explicacao acompanhe a tabela. O
+# teste em testes/test_dicionario.py falha se aparecer na tabela um tipo, um
+# papel ou uma fonte que o glossario nao explica.
+GLOSSARIO = [
+    # (grupo, termo, significado)
+    ("Como ler a tabela", "Coluna",
+     "O nome de uma informação guardada na base. Cada linha da base é um "
+     "município numa semana; cada coluna é um dado sobre essa linha, como os "
+     "casos ou a chuva."),
+    ("Como ler a tabela", "Bloco",
+     "O tema a que a coluna pertence: identificação, epidemiológico, "
+     "climático, precipitação, contextual, vulnerabilidade, risco ou qualidade "
+     "do dado."),
+    ("Como ler a tabela", "Tipo",
+     "A espécie de dado que a coluna guarda: número inteiro, número com casas "
+     "decimais ou texto."),
+    ("Como ler a tabela", "Papel",
+     "Como a coluna entra na previsão: se o modelo a usa para calcular o "
+     "risco ou se ela só sustenta cálculos e o painel."),
+    ("Como ler a tabela", "Preenchida (%)",
+     "De cada 100 linhas da base, em quantas a coluna tem valor. Abaixo de "
+     "100% falta valor em parte das linhas, em geral por construção: o "
+     "primeiro ano da série, por exemplo, não tem anos anteriores para "
+     "comparar."),
+    ("Como ler a tabela", "Fonte",
+     "De onde o dado vem: de um sistema público ou de um cálculo do próprio "
+     "projeto."),
+
+    ("Tipos de dado", "int64",
+     "Número inteiro, sem casas decimais. Exemplo: casos notificados."),
+    ("Tipos de dado", "float64",
+     "Número com casas decimais. Exemplo: incidência. Aparece também em "
+     "colunas de contagem quando falta valor em alguma linha, porque o valor "
+     "vazio só existe entre os números decimais."),
+    ("Tipos de dado", "object",
+     "Texto. Exemplos: nome do município, nível de risco."),
+
+    ("Papéis na previsão", "preditor essencial",
+     "Variável sem a qual a previsão não se sustenta. Está sempre disponível "
+     "na semana mais recente, o que permite ao alerta funcionar sem esperar "
+     "outras fontes."),
+    ("Papéis na previsão", "preditor",
+     "Variável que o modelo usa para calcular a probabilidade de risco. "
+     "Inclui as essenciais."),
+    ("Papéis na previsão", "origem do alvo",
+     "Coluna da qual sai o que o modelo tenta prever: o risco alto ou muito "
+     "alto quatro semanas à frente."),
+    ("Papéis na previsão", "apoio",
+     "Coluna que sustenta cálculos, conferências ou o painel, mas não entra "
+     "no treino do modelo."),
+
+    ("Fontes", "InfoDengue",
+     "Sistema da Fiocruz e da FGV que processa as notificações do SINAN e "
+     "publica, por município e semana, os casos, as estimativas e os "
+     "indicadores de transmissão."),
+    ("Fontes", "SINAN",
+     "Sistema de Informação de Agravos de Notificação, do Ministério da "
+     "Saúde, onde os casos de dengue são registrados."),
+    ("Fontes", "IBGE",
+     "Instituto Brasileiro de Geografia e Estatística. Fornece a população, "
+     "os mapas e os indicadores do Censo 2022."),
+    ("Fontes", "ERA5/Open-Meteo",
+     "Reanálise climática do centro europeu ECMWF, acessada pela plataforma "
+     "Open-Meteo. Reanálise é um modelo que combina observações para estimar "
+     "o clima em cada ponto, inclusive onde não há estação meteorológica."),
+    ("Fontes", "Derivada",
+     "Calculada pelo próprio projeto a partir de outras colunas."),
+
+    ("Termos das descrições", "Semana epidemiológica",
+     "Semana padronizada da vigilância em saúde, de domingo a sábado, "
+     "numerada de 1 a 52 ou 53 ao longo do ano."),
+    ("Termos das descrições", "Incidência por 100 mil",
+     "Casos estimados divididos pela população e multiplicados por 100 mil. "
+     "Permite comparar municípios de tamanhos diferentes."),
+    ("Termos das descrições", "Nowcasting",
+     "Técnica que estima quantos casos de uma semana ainda vão ser "
+     "registrados, corrigindo o atraso de notificação. Os casos estimados "
+     "vêm dela."),
+    ("Termos das descrições", "Casos notificados e casos estimados",
+     "Notificados são os registrados até agora; estimados incluem os que "
+     "ainda vão entrar no sistema. Nas semanas recentes, os estimados são "
+     "maiores."),
+    ("Termos das descrições", "Dado provisório",
+     "Semana cuja notificação ainda não terminou de ser registrada. Os "
+     "números tendem a subir."),
+    ("Termos das descrições", "Defasagem",
+     "O valor de semanas anteriores. Com defasagem de 4 semanas significa o "
+     "valor de quatro semanas atrás."),
+    ("Termos das descrições", "Média móvel",
+     "Média das últimas semanas, que suaviza a oscilação de uma semana para "
+     "outra. É calculada até a semana anterior, para não usar o próprio dado "
+     "que se quer prever."),
+    ("Termos das descrições", "Anomalia",
+     "Diferença entre o valor da semana e a média histórica da mesma época "
+     "do ano."),
+    ("Termos das descrições", "Canal endêmico",
+     "Faixa de incidência esperada para cada semana do ano, construída com "
+     "os anos anteriores do próprio município. Acima do limite superior, a "
+     "incidência está em zona epidêmica."),
+    ("Termos das descrições", "Quartil",
+     "Ponto que divide os valores históricos em quatro partes iguais. O "
+     "terceiro quartil (Q3) é o valor abaixo do qual ficaram 75% das semanas "
+     "anteriores; a mediana é o do meio."),
+    ("Termos das descrições", "Rt",
+     "Número reprodutivo efetivo: quantas pessoas, em média, cada caso "
+     "infecta. Acima de 1 a transmissão cresce; abaixo de 1, diminui."),
+    ("Termos das descrições", "Probabilidade de Rt acima de 1",
+     "Chance de a transmissão estar crescendo na semana. É a variável do "
+     "único alarme que se sustentou no histórico do território."),
+    ("Termos das descrições", "Vazamento temporal",
+     "Erro em que o modelo usa, sem perceber, informação do futuro. Infla o "
+     "desempenho medido e falha em operação real; o projeto testa sua "
+     "ausência a cada execução."),
+]
+
+
 def _descrever(coluna: str):
     if coluna in DESCRICOES:
         return DESCRICOES[coluna]
@@ -228,10 +346,18 @@ def sem_descricao(tabela: pd.DataFrame) -> list[str]:
     return tabela.loc[tabela["descricao"] == SEM_DESCRICAO, "coluna"].tolist()
 
 
+def glossario() -> pd.DataFrame:
+    """O glossario como tabela: grupo, termo, significado."""
+    return pd.DataFrame(GLOSSARIO, columns=["grupo", "termo", "significado"])
+
+
 def salvar(base: pd.DataFrame, caminho_md: Path = SAIDA_MD,
-           caminho_csv: Path = SAIDA_CSV) -> pd.DataFrame:
-    """Grava o markdown de leitura e o CSV que a aba do painel consome."""
+           caminho_csv: Path = SAIDA_CSV,
+           caminho_glossario: Path = SAIDA_GLOSSARIO) -> pd.DataFrame:
+    """Grava o markdown de leitura e os CSVs que a aba do painel consome."""
     tabela = gerar(base)
+    glossario().to_csv(caminho_glossario, index=False, encoding="utf-8",
+                       lineterminator="\n")
 
     tabela.to_csv(caminho_csv, index=False, encoding="utf-8",
                   lineterminator="\n")
@@ -262,6 +388,13 @@ def salvar(base: pd.DataFrame, caminho_md: Path = SAIDA_MD,
                 f"{r['preenchida_pct']:.1f}% | {r['fonte']} | {r['descricao']} |")
 
     partes.append(APENDICE)
+
+    partes.append("\n## Glossário\n")
+    partes.append("O que cada termo da tabela significa, para quem não é da área.\n")
+    for grupo, linhas in glossario().groupby("grupo", sort=False):
+        partes.append(f"\n### {grupo}\n")
+        for _, linha in linhas.iterrows():
+            partes.append(f"- **{linha['termo']}** — {linha['significado']}")
     caminho_md.write_text("\n".join(partes) + "\n", encoding="utf-8",
                           newline="\n")
     return tabela
