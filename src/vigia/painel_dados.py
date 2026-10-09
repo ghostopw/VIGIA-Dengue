@@ -12,7 +12,8 @@ from pathlib import Path
 import numpy as np
 import pandas as pd
 
-from .modelagem import (VARIAVEIS, VARIAVEIS_ESSENCIAIS,
+from .modelagem import (PESO_BOOSTING, PESO_PERSISTENCIA,
+                        VARIAVEIS, VARIAVEIS_ESSENCIAIS,
                         modelo_aprendizado, preparar)
 
 COLUNAS_PAINEL = [
@@ -23,7 +24,7 @@ COLUNAS_PAINEL = [
     "tempmed", "umidmed", "tempmed_anomalia", "semanas_favoraveis_8",
     "canal_mediana", "canal_q3", "risco", "risco_codigo", "nivel_canal",
     "nivel_absoluto", "completude", "dado_provisorio", "incerteza_nowcast",
-    "clima_imputado", "porte_populacional", "Rt",
+    "clima_imputado", "porte_populacional", "Rt", "p_rt1",
 ]
 
 
@@ -71,7 +72,13 @@ def gerar(base_com_risco: pd.DataFrame, horizonte: int = 4) -> pd.DataFrame:
     essenciais = [v for v in VARIAVEIS_ESSENCIAIS if v in dados.columns]
     dados = dados.dropna(subset=essenciais).reset_index(drop=True)
 
-    dados["probabilidade_alerta"] = modelo.predict_proba(dados[variaveis])[:, 1]
+    # Probabilidade do alerta e a combinacao medida em validacao: boosting
+    # ponderado com o estado de risco presente (pesos em modelagem.py).
+    risco_atual = (dados["risco_codigo"] >= 2).astype(float).to_numpy()
+    dados["probabilidade_alerta"] = (
+        PESO_BOOSTING * modelo.predict_proba(dados[variaveis])[:, 1]
+        + PESO_PERSISTENCIA * risco_atual
+    )
     dados["fatores_alerta"] = _contribuicoes(modelo, dados[variaveis], variaveis)
     dados["horizonte_semanas"] = horizonte
     # Marca as linhas cujo desfecho ainda nao ocorreu: servem para operar o

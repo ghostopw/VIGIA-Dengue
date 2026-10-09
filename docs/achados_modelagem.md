@@ -238,3 +238,74 @@ risco marca Brasília como alto ou muito alto em metade das semanas do ano. Para
 o alerta ganhar poder de discriminação, o desfecho precisaria ser mais raro —
 por exemplo, exigir crescimento acelerado além do patamar, ou usar percentil
 específico de Brasília em vez do corte regional.
+
+---
+
+## 8. A rodada de 27/09/2026: oito experimentos, quatro mudanças integradas
+
+Oito experimentos independentes, todos no mesmo harness de validação temporal
+(janela expansiva, treino cortado pela data que o alvo observa), cada ganho
+auditado por dois verificadores independentes — um caçando vazamento no código,
+outro reproduzindo o número do zero e testando robustez no recorte 2021–2025.
+Baseline de partida: AUC 0,8308, Brier 0,1715 (LightGBM, 41 variáveis).
+
+### O que entrou em produção
+
+| Mudança | Efeito isolado | Verificação |
+|---|---|---|
+| Poda do bloco climático (12 colunas fora) | AUC +0,0025; Brier −0,0067; melhora em TODAS as médias | reproduzido ao 4º decimal, 2/2 |
+| Rt, p_rt1, receptivo, transmissão, nivel_inc + defasagens de Rt/p_rt1 | Brier −0,0068 na configuração enxuta | reproduzido, 2/2 |
+| Hiperparâmetros: 200 árvores, lr 0,03, 15 folhas, mcs 20 | AUC +0,0107; Brier −0,0072; config antiga era 11ª de 15 | reproduzido, 2/2 |
+| Combinação 0,8·boosting + 0,2·persistência | AUC +0,0132 sobre a baseline; logística zerou no ótimo | reproduzido, 2/2 |
+
+Como os efeitos isolados não se somam, a **composição** foi medida à parte: o
+melhor modelo único é o de **23 variáveis** (14 essenciais + 9 de transmissão,
+sem clima, sem chuva, sem vulnerabilidade) com os hiperparâmetros novos — AUC
+0,8482, Brier 0,1577 —, e a combinação com a persistência leva a **AUC 0,852 e
+Brier 0,155** na validação de produção. A chuva, que pagava ~0,006 de AUC sem o
+bloco de transmissão, deixou de pagar com ele: a versão com chuva perdeu para a
+sem (0,8458 contra 0,8482). Clima, chuva e vulnerabilidade continuam na base
+para o painel e para o motor de alarmes; só não treinam mais o modelo.
+
+**Efeito operacional em Brasília, limiar 0,80 (o que já estava em uso):**
+sensibilidade 0,72 → 0,77, especificidade **0,58 → 0,75**, VPP 0,84 → 0,90,
+com carga de alertas praticamente igual (~34/ano). A especificidade cruzou o
+piso de 0,74 da faixa EWARS sem mexer no limiar — a limitação registrada na
+seção 7 foi resolvida pelo modelo, não pelo corte.
+
+### O que foi testado e não entrou
+
+- **Calibração pós-hoc** (isotônica e sigmóide, calibrando no último ano do
+  treino): piora tudo — AUC −0,018 a −0,021, Brier +0,003 a +0,012. O
+  diagnóstico importa: a perda não vem do mapa de calibração, e sim de doar o
+  ano mais recente de treino ao calibrador. Em dengue, recência vale ~2 pontos
+  de AUC. E a má-calibração dominante é deriva entre anos, que calibração
+  estática não corrige.
+- **Pesos de recência** (decaimento por ano): Brier degrada monotonicamente
+  conforme o decaimento aperta. Com no máximo seis anos de treino, os anos
+  antigos ainda carregam sinal.
+- **Restrição monotônica** na incidência: melhora tudo um pouco (+0,0029 de
+  AUC), mas fica abaixo do critério e é instável ano a ano — ajuda em
+  2020/2021/2023, atrapalha em 2022/2024/2025, incluindo o ano mais recente.
+
+### Análises que ficam de referência
+
+- **Desfecho alternativo para Brasília**: usar só *muito alto* (risco ≥ 3 em
+  t+4) derruba a prevalência de 75% para 49% no teste e entrega especificidade
+  0,77 no limiar 0,75 — era o caminho para resolver a especificidade **antes**
+  da rodada; com o modelo novo cruzando o piso no desfecho oficial, a troca
+  deixou de ser necessária, mas a mesa está medida se a vigilância preferir um
+  alerta mais raro. O desfecho "alto e em subida" destrói a previsibilidade
+  (AUC 0,72) e está descartado.
+- **Custo da antecedência**: AUC 0,865 (h=2) → 0,845 (h=3) → 0,831 (h=4) →
+  0,797 (h=6); ~−0,017 de AUC por semana extra, sem penhasco — h=4 é escolha
+  defensável, não ponto de inflexão. Na antecedência efetiva (Brasília, limiar
+  0,80): 8 de 15 episódios de risco tiveram disparo antes de o episódio
+  começar.
+
+Método da rodada: cada experimento rodou num agente isolado sobre o mesmo
+harness (`avaliar()/resumo()/operacional()`), proibido de tocar o repositório;
+recomendações de integração exigiram delta de AUC ≥ +0,003 ou de Brier ≤
+−0,003 e sobreviver aos dois céticos. Resultado negativo registrado é
+resultado — as duas recusas acima pouparam o projeto de complexidade que não
+paga.

@@ -9,11 +9,12 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
 import pandas as pd  # noqa: E402
 
+from vigia.base_analitica import ler_base  # noqa: E402
 from vigia.painel_dados import salvar  # noqa: E402
 
 if __name__ == "__main__":
     raiz = Path(__file__).resolve().parents[2]
-    base = pd.read_csv(raiz / "dados" / "processado" / "base_com_risco.csv")
+    base = ler_base(raiz / "dados" / "processado" / "base_com_risco.csv")
     painel = salvar(base, raiz / "dados" / "processado" / "painel.csv", horizonte=4)
     print("linhas:", len(painel))
     print(painel[["municipio", "ano", "semana", "risco", "probabilidade_alerta",

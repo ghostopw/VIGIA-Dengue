@@ -74,7 +74,7 @@ malha_ras = json.loads((RAIZ / "dados/externo/malha_ras_df.geojson").read_text(e
 
 desempenho = pd.read_csv(RAIZ / "saidas/desempenho_modelos.csv")
 nomes = {"referencia": "Referencia", "interpretavel": "Logistica",
-         "aprendizado": "LightGBM"}
+         "aprendizado": "LightGBM", "combinado": "Combinado"}
 desempenho["modelo"] = desempenho["modelo"].map(nomes).fillna(desempenho["modelo"])
 por_ano = [{"ano": int(r["ano"]), "modelo": r["modelo"], "auc": round(float(r["auc"]), 3),
             "sens": round(float(r["sensibilidade"]), 3),

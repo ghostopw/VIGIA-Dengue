@@ -92,6 +92,15 @@ def adicionar_epidemiologicas(painel: pd.DataFrame) -> pd.DataFrame:
         dados[f"casos_est_lag{lag}"] = por_municipio["casos_est"].shift(lag)
         dados[f"incidencia_lag{lag}"] = por_municipio["incidencia_100k"].shift(lag)
 
+    # Trajetoria recente dos indicadores de transmissao do InfoDengue. Rt e
+    # p_rt1 sao nowcast da propria semana; as defasagens dao a direcao. O
+    # bloco e condicional porque bases parciais (testes, coletas antigas)
+    # podem nao trazer as colunas -- o modelo tolera a ausencia.
+    for coluna in ("Rt", "p_rt1"):
+        if coluna in dados.columns:
+            for lag in (1, 2):
+                dados[f"{coluna}_lag{lag}"] = por_municipio[coluna].shift(lag)
+
     # Medias moveis calculadas ate a semana anterior (nao usam a semana corrente).
     for janela in (3, 4, 8):
         dados[f"casos_est_mm{janela}"] = por_municipio["casos_est"].transform(
@@ -242,6 +251,19 @@ def adicionar_flags_qualidade(painel: pd.DataFrame) -> pd.DataFrame:
     dados["historico_insuficiente"] = (ordem < 8).astype("int8")
 
     return dados
+
+
+def ler_base(caminho) -> pd.DataFrame:
+    """Le uma base gravada pelo pipeline, com ida-e-volta exata dos floats.
+
+    O leitor padrao do pandas e rapido mas erra nos ultimos bits do float
+    (diferencas da ordem de 1e-13). O LightGBM agrupa cada variavel em faixas,
+    e um valor encostado na fronteira de uma faixa muda de lado com essa
+    diferenca: a probabilidade de Brasilia na SE 33/2026 dava 0,439 com a base
+    em memoria e 0,466 com a mesma base relida do disco. Com round_trip os dois
+    caminhos coincidem, e o alerta deixa de depender de por onde o dado passou.
+    """
+    return pd.read_csv(caminho, float_precision="round_trip", low_memory=False)
 
 
 def construir(bruto: pd.DataFrame, chuva: pd.DataFrame | None = None) -> pd.DataFrame:

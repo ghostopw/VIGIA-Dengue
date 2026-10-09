@@ -33,75 +33,54 @@ from sklearn.preprocessing import StandardScaler
 
 HORIZONTE_PADRAO = 4
 
-VARIAVEIS = [
-    # Epidemiologicas -- o proprio historico de dengue. Concentram 59,6% do
-    # ganho do modelo; a incidencia da semana corrente sozinha responde por 33,7%.
-    "incidencia_100k", "incidencia_lag1", "incidencia_lag2", "incidencia_lag4",
-    "incidencia_mm3", "incidencia_mm8",
-    "casos_est_mm3", "casos_est_mm8", "razao_mm3_mm8", "variacao_semanal",
-    # Climaticas -- condicao ambiental para o vetor, com defasagem compativel
-    # com o ciclo do Aedes aegypti (2 a 8 semanas entre a condicao e o caso).
-    "tempmed", "tempmed_lag2", "tempmed_lag4", "tempmed_lag8",
-    "tempmin_lag4", "tempmax_lag4",
-    "umidmed", "umidmed_lag2", "umidmed_lag4",
-    "tempmed_anomalia", "umidmed_anomalia", "semanas_favoraveis_8",
-    # Contextuais e historicas.
-    "log_pop", "semana", "canal_mediana", "canal_q3",
-    # Vulnerabilidade socioambiental (Censo 2022), fixa no tempo por municipio.
-    "esgoto_inadequado_pct", "sem_agua_rede_pct", "lixo_sem_coleta_pct",
-]
-
-# Bloco de precipitacao. Fica separado porque depende de coleta propria
-# (executar_chuva.py) e nem sempre esta presente: `preparar` so inclui as
-# variaveis que existirem na base, de modo que o pipeline funcione com ou sem
-# ele. A chuva entra em varias leituras porque seu efeito nao e linear --
-# acumulo cria criadouros, torrencial os lava, seca leva a armazenar agua.
-VARIAVEIS_CHUVA = [
-    "chuva_semana_mm", "chuva_lag2", "chuva_lag4", "chuva_lag6", "chuva_lag8",
-    "chuva_acum4", "chuva_acum8", "chuva_acum12",
-    "semanas_secas_8", "semanas_torrenciais_4", "chuva_anomalia",
-    "chuva_dias_com_chuva",
-]
-
-VARIAVEIS = VARIAVEIS + VARIAVEIS_CHUVA
-
-# Variaveis sem as quais uma previsao nao se sustenta: o proprio historico de
-# dengue e o porte do municipio. As demais -- clima e chuva -- sao contexto, e
-# o LightGBM trata valor ausente nativamente, mandando a linha para um dos
-# lados do corte.
+# A lista preditora foi podada por medicao em 27/09/2026: oito experimentos
+# no harness comum (validacao temporal identica a deste modulo), cada ganho
+# verificado por dois ceticos independentes -- vazamento e reproducao. O
+# registro completo esta em docs/achados_modelagem.md, secao 8. Resumo:
 #
-# A distincao existe por causa do alerta ao vivo. A chuva vem do ERA5, que
-# fecha a semana com alguns dias de atraso, enquanto o InfoDengue ja publicou a
-# semana. Exigir a chuva descartaria justamente a semana mais recente -- a
-# unica que o alerta precoce tem para trabalhar --, e por um bloco que a
-# validacao mostrou acrescentar quase nada ao modelo.
+#  - Bloco climatico (12 colunas): remove-lo melhorou TODAS as medias
+#    2019-2025 (AUC 0,8308 -> 0,8333; Brier 0,1715 -> 0,1648). O comentario
+#    antigo deste arquivo estimava o efeito na base de 33 municipios; na de
+#    34 a direcao se confirma com magnitude menor.
+#  - Chuva (12 colunas): pagava ~0,006 de AUC sem o bloco de transmissao;
+#    com Rt/p_rt1 e os hiperparametros novos, a versao com chuva perde para
+#    a sem (AUC 0,8458 contra 0,8482). Saiu do treino.
+#  - Vulnerabilidade (3 colunas): neutra (delta de AUC -0,0005).
+#  - Entraram Rt, p_rt1, receptivo, transmissao e nivel_inc do InfoDengue,
+#    mais as defasagens de Rt e p_rt1: 100% preenchidas e nowcast da propria
+#    semana -- nenhuma informacao futura.
+#
+# As colunas climaticas, de chuva e de vulnerabilidade CONTINUAM na base:
+# alimentam a leitura de receptividade do painel e o motor de alarmes. So
+# nao entram mais no treino.
 VARIAVEIS_ESSENCIAIS = [
+    # O nucleo sem o qual uma previsao nao se sustenta: historico da dengue,
+    # porte, sazonalidade, canal endemico e o estado corrente da transmissao.
+    # Tudo vem do proprio payload do InfoDengue e esta sempre presente na
+    # semana mais recente -- e o que o alerta ao vivo exige.
     "incidencia_100k", "incidencia_lag1", "incidencia_lag2", "incidencia_lag4",
     "incidencia_mm3", "incidencia_mm8",
     "casos_est_mm3", "casos_est_mm8", "razao_mm3_mm8", "variacao_semanal",
     "log_pop", "semana", "canal_mediana", "canal_q3",
+    "Rt", "p_rt1",
 ]
 
-# Nota metodologica sobre o bloco climatico.
-#
-# Medido no territorio da RIDE-DF, o clima praticamente nao agrega poder
-# preditivo: sozinho alcanca AUC de 0,586 (o acaso e 0,50) e sua remocao nao
-# piora o modelo completo (0,829 com clima contra 0,838 sem, media de sete anos
-# de validacao temporal).
-#
-# Isso nao contradiz a literatura, que estabelece o clima como determinante da
-# dengue. A razao e o recorte espacial: os 33 municipios ficam no mesmo bioma e
-# na mesma faixa de altitude, e a temperatura varia apenas 0,68 grau entre eles
-# na mesma semana. O clima explica QUANDO a dengue sobe -- a sazonalidade, que a
-# variavel `semana` ja captura --, mas nao explica ONDE, que e o que a
-# estratificacao espacial precisa distinguir. A correlacao com a incidencia
-# futura confirma: 0,21 para a temperatura defasada contra 0,72 para a propria
-# incidencia atual.
-#
-# O bloco foi mantido por tres motivos: consta do projeto aprovado (item 4.4),
-# nao prejudica o desempenho, e sustenta a leitura de receptividade ambiental no
-# painel. Em um territorio climaticamente heterogeneo -- um estado inteiro, por
-# exemplo -- a conclusao provavelmente seria outra.
+VARIAVEIS = VARIAVEIS_ESSENCIAIS + [
+    # Complementos de transmissao: indicadores categoricos do InfoDengue e a
+    # trajetoria recente de Rt/p_rt1. As defasagens faltam nas duas primeiras
+    # semanas de cada municipio; o LightGBM trata valor ausente nativamente.
+    "receptivo", "transmissao", "nivel_inc",
+    "Rt_lag1", "Rt_lag2", "p_rt1_lag1", "p_rt1_lag2",
+]
+
+# Pesos da combinacao boosting + persistencia usados no painel e no alerta.
+# Medidos em 27/09/2026 numa varredura completa: 0,8/0,2 maximiza AUC (0,8515)
+# e Brier (0,1557) sobre o boosting sozinho (0,8482/0,1577); o peso otimo da
+# logistica na mistura foi zero. Em Brasilia, no limiar 0,80, a combinacao
+# leva a especificidade a 0,747 -- acima do piso de 0,74 da literatura EWARS
+# -- com sensibilidade 0,767 e VPP 0,902.
+PESO_BOOSTING = 0.8
+PESO_PERSISTENCIA = 0.2
 
 
 def preparar(base: pd.DataFrame, horizonte: int = HORIZONTE_PADRAO) -> pd.DataFrame:
@@ -164,11 +143,15 @@ def modelo_aprendizado():
     """Gradient boosting para capturar nao linearidades e interacoes."""
     from lightgbm import LGBMClassifier
 
+    # Hiperparametros medidos em 27/09/2026 (busca em estagios, 15
+    # configuracoes): para ~20 mil linhas de treino, menos capacidade ganha
+    # em todos os eixos -- a config antiga (400 arvores, lr 0,05, 31 folhas)
+    # ficou em 11o de 15. AUC 0,8308 -> 0,8415 so com esta mudanca.
     return LGBMClassifier(
-        n_estimators=400,
-        learning_rate=0.05,
-        num_leaves=31,
-        min_child_samples=40,
+        n_estimators=200,
+        learning_rate=0.03,
+        num_leaves=15,
+        min_child_samples=20,
         subsample=0.8,
         colsample_bytree=0.8,
         class_weight="balanced",
@@ -217,9 +200,20 @@ def validacao_temporal(
         })
 
         boosting = modelo_aprendizado().fit(X_treino, y_treino)
+        prob_boosting = boosting.predict_proba(X_teste)[:, 1]
         linhas.append({
             "ano": ano, "modelo": "aprendizado",
-            **_metricas(y_teste, boosting.predict_proba(X_teste)[:, 1], corte),
+            **_metricas(y_teste, prob_boosting, corte),
+        })
+
+        # Combinado: o boosting ponderado com o estado presente. A persistencia
+        # e quase descorrelacionada dos modelos treinados, e a media com ela
+        # dominou todas as alternativas na varredura de 27/09/2026.
+        prob_combinada = (PESO_BOOSTING * prob_boosting
+                          + PESO_PERSISTENCIA * teste["risco_atual_alto"].to_numpy())
+        linhas.append({
+            "ano": ano, "modelo": "combinado",
+            **_metricas(y_teste, prob_combinada, corte),
         })
 
     return pd.DataFrame(linhas)

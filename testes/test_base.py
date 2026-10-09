@@ -187,3 +187,29 @@ def test_ras_do_df_casam_apesar_do_encoding_corrompido():
     # A soma tem de ficar proxima da populacao do DF (~2,9 milhoes).
     assert 2_500_000 < malha["populacao"].sum() < 3_300_000
     assert "Ceilandia" in set(malha["ra_nome"])
+
+
+def test_ler_base_preserva_os_floats_bit_a_bit(tmp_path):
+    """A base relida do disco precisa ser identica a base em memoria.
+
+    O leitor padrao do pandas erra nos ultimos bits do float, e o LightGBM e
+    sensivel a isso: um valor na fronteira de uma faixa troca de lado e a
+    probabilidade do alerta muda (0,439 contra 0,466 em Brasilia, SE 33/2026).
+    Os executores leem a base por `ler_base` justamente para o alerta nao
+    depender do caminho que o dado percorreu.
+    """
+    from vigia.base_analitica import ler_base
+
+    gerador = np.random.default_rng(7)
+    original = pd.DataFrame({
+        "incidencia_100k": gerador.random(500) * 137.0 / 3.0,
+        "razao_mm3_mm8": gerador.random(500) / 7.0,
+        "log_pop": np.log(gerador.integers(1_000, 3_000_000, 500).astype(float)),
+    })
+    caminho = tmp_path / "base.csv"
+    original.to_csv(caminho, index=False)
+    relida = ler_base(caminho)
+
+    for coluna in original.columns:
+        assert np.array_equal(original[coluna].to_numpy(),
+                              relida[coluna].to_numpy()), coluna
