@@ -8,16 +8,16 @@
     "casos_est": 207.0,
     "incidencia_100k": 7.08,
     "risco": "moderado",
-    "probabilidade_alerta": 0.6179,
+    "probabilidade_alerta": 0.4393,
     "canal_q3": 11.71,
-    "fatores": "casos_est_mm3, umidmed_lag4, canal_q3",
+    "fatores": "casos_est_mm3, canal_q3, semana",
     "dado_provisorio": true,
     "completude": 0.565,
-    "verificado_em": "2026-08-31T04:20:22+00:00"
+    "verificado_em": "2026-10-09T03:46:51+00:00"
   },
   "mensagem": "",
-  "em_alerta": true,
-  "limiar": 0.5,
+  "em_alerta": false,
+  "limiar": 0.8,
   "semana_anterior": 202633,
   "semana_nova": false
 }

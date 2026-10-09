@@ -1,0 +1,1214 @@
+{
+  "gerado_da_semana": 202633,
+  "alarmes": [],
+  "regras": {
+    "gerado_em": "2026-09-27",
+    "base": "dados/processado/base_com_risco.csv (34 municipios, 660 semanas cada, 2014-2026)",
+    "metodo": "Episodio = semana em que a condicao liga (deduplicando semanas consecutivas), por municipio. Lift por episodio = incidencia_100k em t+lag dividida pela mediana sazonal do municipio na semana-alvo (canal_mediana quando disponivel; senao mediana historica por semana-do-ano), com piso de 1,0 caso/100k no denominador. Aprovacao: lift mediano >= 1.3 e n >= 25; R6 exige ainda lift maior no estrato com pior rede de agua.",
+    "regras": [
+      {
+        "n_episodios": 450,
+        "lift_mediano": 0.0,
+        "iqr": [
+          0.0,
+          2.52
+        ],
+        "frac_lift_acima_1": 0.364,
+        "id": "R1",
+        "nome": "Seca prolongada",
+        "condicao": "semanas_secas_8 >= 6",
+        "lag_semanas": 8,
+        "aprovada": false,
+        "frase_evidencia": "Reprovada: lift mediano 0.0 em 450 episodios (minimo 1.3) - sem sustentacao historica para alarme com semanas_secas_8 >= 6."
+      },
+      {
+        "n_episodios": 721,
+        "lift_mediano": 0.86,
+        "iqr": [
+          0.03,
+          4.67
+        ],
+        "frac_lift_acima_1": 0.454,
+        "id": "R2",
+        "nome": "Chuva acumulada alta",
+        "condicao": "chuva_acum8 >= quantil 0,8 do municipio",
+        "lag_semanas": 8,
+        "aprovada": false,
+        "frase_evidencia": "Reprovada: lift mediano 0.86 em 721 episodios (minimo 1.3) - sem sustentacao historica para alarme com chuva_acum8 >= quantil 0,8 do municipio."
+      },
+      {
+        "n_episodios": 633,
+        "lift_mediano": 2.63,
+        "iqr": [
+          0.85,
+          8.5
+        ],
+        "frac_lift_acima_1": 0.709,
+        "id": "R3",
+        "nome": "Transmissao crescendo",
+        "condicao": "p_rt1 >= 0,9 em 2 semanas seguidas",
+        "lag_semanas": 4,
+        "aprovada": true,
+        "frase_evidencia": "No historico 2014-2026, apos p_rt1 >= 0,9 em 2 semanas seguidas, a incidencia 4 semanas depois ficou em mediana 2.6x acima da sazonal do municipio (633 episodios; 71% deles acima do normal)."
+      },
+      {
+        "n_episodios": 1269,
+        "lift_mediano": 1.25,
+        "iqr": [
+          0.17,
+          5.44
+        ],
+        "frac_lift_acima_1": 0.537,
+        "id": "R4",
+        "nome": "Aceleracao epidemica",
+        "condicao": "razao_mm3_mm8 >= 1,2 e incidencia_100k >= 5",
+        "lag_semanas": 4,
+        "frac_risco_alto_t4": 0.444,
+        "taxa_base_risco_alto": 0.335,
+        "risco_relativo_risco_alto": 1.32,
+        "aprovada": false,
+        "frase_evidencia": "Reprovada: lift mediano 1.25 em 1269 episodios (minimo 1.3) - sem sustentacao historica para alarme com razao_mm3_mm8 >= 1,2 e incidencia_100k >= 5. O sinal e real mas fraco: 44% dos episodios chegam a risco alto em 4 semanas (1.32x a taxa base), aquem do exigido para alarme."
+      },
+      {
+        "n_episodios": 789,
+        "lift_mediano": 0.91,
+        "iqr": [
+          0.0,
+          3.31
+        ],
+        "frac_lift_acima_1": 0.458,
+        "id": "R5",
+        "nome": "Janela termica com chuva",
+        "condicao": "semanas_favoraveis_8 >= 6 e chuva_acum4 >= quantil 0,6",
+        "lag_semanas": 8,
+        "aprovada": false,
+        "frase_evidencia": "Reprovada: lift mediano 0.91 em 789 episodios (minimo 1.3) - sem sustentacao historica para alarme com semanas_favoraveis_8 >= 6 e chuva_acum4 >= quantil 0,6."
+      },
+      {
+        "id": "R6",
+        "nome": "Seca x falta de rede de agua",
+        "condicao": "R1 (semanas_secas_8 >= 6) nos municipios com sem_agua_rede_pct > mediana do territorio (5.4%)",
+        "lag_semanas": 8,
+        "n_episodios": 226,
+        "lift_mediano": 0.73,
+        "iqr": [
+          0.0,
+          4.0
+        ],
+        "frac_lift_acima_1": 0.442,
+        "comparacao_baixa_vulnerabilidade": {
+          "n_episodios": 224,
+          "lift_mediano": 0.0,
+          "iqr": [
+            0.0,
+            2.11
+          ],
+          "frac_lift_acima_1": 0.286
+        },
+        "mediana_sem_agua_rede_pct_territorio": 5.41,
+        "aprovada": false,
+        "frase_evidencia": "Reprovada: a direcao prevista pela literatura ate aparece - lift 0.73 onde falta rede de agua contra 0.0 nos municipios melhor servidos (226 vs 224 episodios) - mas nem no pior estrato a seca prolongada atinge o minimo de 1.3 para sustentar um alarme."
+      }
+    ],
+    "por_municipio": {
+      "R1": [
+        {
+          "cod_ibge": 5203203,
+          "municipio": "Barro Alto",
+          "n": 14,
+          "lift": 3.53
+        },
+        {
+          "cod_ibge": 5215231,
+          "municipio": "Novo Gama",
+          "n": 13,
+          "lift": 3.2
+        },
+        {
+          "cod_ibge": 3170404,
+          "municipio": "Unai",
+          "n": 13,
+          "lift": 2.43
+        },
+        {
+          "cod_ibge": 5208004,
+          "municipio": "Formosa",
+          "n": 14,
+          "lift": 2.4
+        },
+        {
+          "cod_ibge": 5300108,
+          "municipio": "Brasilia",
+          "n": 13,
+          "lift": 2.34
+        },
+        {
+          "cod_ibge": 5217302,
+          "municipio": "Pirenopolis",
+          "n": 13,
+          "lift": 2.07
+        },
+        {
+          "cod_ibge": 5212501,
+          "municipio": "Luziania",
+          "n": 13,
+          "lift": 1.82
+        },
+        {
+          "cod_ibge": 5206206,
+          "municipio": "Cristalina",
+          "n": 14,
+          "lift": 1.71
+        },
+        {
+          "cod_ibge": 5200258,
+          "municipio": "Aguas Lindas de Goias",
+          "n": 12,
+          "lift": 1.54
+        },
+        {
+          "cod_ibge": 5205497,
+          "municipio": "Cidade Ocidental",
+          "n": 13,
+          "lift": 1.37
+        },
+        {
+          "cod_ibge": 5205513,
+          "municipio": "Cocalzinho de Goias",
+          "n": 14,
+          "lift": 1.19
+        },
+        {
+          "cod_ibge": 5208608,
+          "municipio": "Goianesia",
+          "n": 14,
+          "lift": 1.01
+        },
+        {
+          "cod_ibge": 5221858,
+          "municipio": "Valparaiso de Goias",
+          "n": 13,
+          "lift": 1.0
+        },
+        {
+          "cod_ibge": 5217609,
+          "municipio": "Planaltina",
+          "n": 14,
+          "lift": 0.74
+        },
+        {
+          "cod_ibge": 5215603,
+          "municipio": "Padre Bernardo",
+          "n": 12,
+          "lift": 0.24
+        },
+        {
+          "cod_ibge": 3104502,
+          "municipio": "Arinos",
+          "n": 13,
+          "lift": 0.0
+        },
+        {
+          "cod_ibge": 3109303,
+          "municipio": "Buritis",
+          "n": 12,
+          "lift": 0.0
+        },
+        {
+          "cod_ibge": 3109451,
+          "municipio": "Cabeceira Grande",
+          "n": 12,
+          "lift": 0.0
+        },
+        {
+          "cod_ibge": 5200100,
+          "municipio": "Abadiania",
+          "n": 13,
+          "lift": 0.0
+        },
+        {
+          "cod_ibge": 5200175,
+          "municipio": "Agua Fria de Goias",
+          "n": 13,
+          "lift": 0.0
+        },
+        {
+          "cod_ibge": 5200308,
+          "municipio": "Alexania",
+          "n": 13,
+          "lift": 0.0
+        },
+        {
+          "cod_ibge": 5200605,
+          "municipio": "Alto Paraiso de Goias",
+          "n": 13,
+          "lift": 0.0
+        },
+        {
+          "cod_ibge": 5200803,
+          "municipio": "Alvorada do Norte",
+          "n": 14,
+          "lift": 0.0
+        },
+        {
+          "cod_ibge": 5204003,
+          "municipio": "Cabeceiras",
+          "n": 15,
+          "lift": 0.0
+        },
+        {
+          "cod_ibge": 5205307,
+          "municipio": "Cavalcante",
+          "n": 13,
+          "lift": 0.0
+        },
+        {
+          "cod_ibge": 5205802,
+          "municipio": "Corumba de Goias",
+          "n": 13,
+          "lift": 0.0
+        },
+        {
+          "cod_ibge": 5207907,
+          "municipio": "Flores de Goias",
+          "n": 14,
+          "lift": 0.0
+        },
+        {
+          "cod_ibge": 5213053,
+          "municipio": "Mimoso de Goias",
+          "n": 13,
+          "lift": 0.0
+        },
+        {
+          "cod_ibge": 5214606,
+          "municipio": "Niquelandia",
+          "n": 12,
+          "lift": 0.0
+        },
+        {
+          "cod_ibge": 5219753,
+          "municipio": "Santo Antonio do Descoberto",
+          "n": 13,
+          "lift": 0.0
+        },
+        {
+          "cod_ibge": 5220009,
+          "municipio": "Sao Joao d'Alianca",
+          "n": 14,
+          "lift": 0.0
+        },
+        {
+          "cod_ibge": 5220686,
+          "municipio": "Simolandia",
+          "n": 14,
+          "lift": 0.0
+        },
+        {
+          "cod_ibge": 5222203,
+          "municipio": "Vila Boa",
+          "n": 13,
+          "lift": 0.0
+        },
+        {
+          "cod_ibge": 5222302,
+          "municipio": "Vila Propicio",
+          "n": 14,
+          "lift": 0.0
+        }
+      ],
+      "R2": [
+        {
+          "cod_ibge": 3109451,
+          "municipio": "Cabeceira Grande",
+          "n": 15,
+          "lift": 11.85
+        },
+        {
+          "cod_ibge": 5200100,
+          "municipio": "Abadiania",
+          "n": 22,
+          "lift": 2.17
+        },
+        {
+          "cod_ibge": 3104502,
+          "municipio": "Arinos",
+          "n": 17,
+          "lift": 1.93
+        },
+        {
+          "cod_ibge": 5219753,
+          "municipio": "Santo Antonio do Descoberto",
+          "n": 22,
+          "lift": 1.93
+        },
+        {
+          "cod_ibge": 5200605,
+          "municipio": "Alto Paraiso de Goias",
+          "n": 22,
+          "lift": 1.89
+        },
+        {
+          "cod_ibge": 5212501,
+          "municipio": "Luziania",
+          "n": 19,
+          "lift": 1.4
+        },
+        {
+          "cod_ibge": 5217609,
+          "municipio": "Planaltina",
+          "n": 23,
+          "lift": 1.29
+        },
+        {
+          "cod_ibge": 5208004,
+          "municipio": "Formosa",
+          "n": 23,
+          "lift": 1.19
+        },
+        {
+          "cod_ibge": 5206206,
+          "municipio": "Cristalina",
+          "n": 19,
+          "lift": 1.12
+        },
+        {
+          "cod_ibge": 3170404,
+          "municipio": "Unai",
+          "n": 16,
+          "lift": 1.06
+        },
+        {
+          "cod_ibge": 5203203,
+          "municipio": "Barro Alto",
+          "n": 20,
+          "lift": 1.0
+        },
+        {
+          "cod_ibge": 5205307,
+          "municipio": "Cavalcante",
+          "n": 17,
+          "lift": 1.0
+        },
+        {
+          "cod_ibge": 5213053,
+          "municipio": "Mimoso de Goias",
+          "n": 20,
+          "lift": 1.0
+        },
+        {
+          "cod_ibge": 5205513,
+          "municipio": "Cocalzinho de Goias",
+          "n": 24,
+          "lift": 0.98
+        },
+        {
+          "cod_ibge": 5217302,
+          "municipio": "Pirenopolis",
+          "n": 22,
+          "lift": 0.95
+        },
+        {
+          "cod_ibge": 5205802,
+          "municipio": "Corumba de Goias",
+          "n": 22,
+          "lift": 0.9
+        },
+        {
+          "cod_ibge": 5300108,
+          "municipio": "Brasilia",
+          "n": 20,
+          "lift": 0.86
+        },
+        {
+          "cod_ibge": 5221858,
+          "municipio": "Valparaiso de Goias",
+          "n": 22,
+          "lift": 0.85
+        },
+        {
+          "cod_ibge": 5215231,
+          "municipio": "Novo Gama",
+          "n": 22,
+          "lift": 0.79
+        },
+        {
+          "cod_ibge": 5200258,
+          "municipio": "Aguas Lindas de Goias",
+          "n": 21,
+          "lift": 0.73
+        },
+        {
+          "cod_ibge": 5208608,
+          "municipio": "Goianesia",
+          "n": 24,
+          "lift": 0.71
+        },
+        {
+          "cod_ibge": 3109303,
+          "municipio": "Buritis",
+          "n": 19,
+          "lift": 0.67
+        },
+        {
+          "cod_ibge": 5214606,
+          "municipio": "Niquelandia",
+          "n": 17,
+          "lift": 0.66
+        },
+        {
+          "cod_ibge": 5200308,
+          "municipio": "Alexania",
+          "n": 22,
+          "lift": 0.6
+        },
+        {
+          "cod_ibge": 5215603,
+          "municipio": "Padre Bernardo",
+          "n": 21,
+          "lift": 0.57
+        },
+        {
+          "cod_ibge": 5205497,
+          "municipio": "Cidade Ocidental",
+          "n": 22,
+          "lift": 0.5
+        },
+        {
+          "cod_ibge": 5220009,
+          "municipio": "Sao Joao d'Alianca",
+          "n": 24,
+          "lift": 0.5
+        },
+        {
+          "cod_ibge": 5222302,
+          "municipio": "Vila Propicio",
+          "n": 20,
+          "lift": 0.48
+        },
+        {
+          "cod_ibge": 5200175,
+          "municipio": "Agua Fria de Goias",
+          "n": 22,
+          "lift": 0.0
+        },
+        {
+          "cod_ibge": 5200803,
+          "municipio": "Alvorada do Norte",
+          "n": 26,
+          "lift": 0.0
+        },
+        {
+          "cod_ibge": 5204003,
+          "municipio": "Cabeceiras",
+          "n": 23,
+          "lift": 0.0
+        },
+        {
+          "cod_ibge": 5207907,
+          "municipio": "Flores de Goias",
+          "n": 26,
+          "lift": 0.0
+        },
+        {
+          "cod_ibge": 5220686,
+          "municipio": "Simolandia",
+          "n": 26,
+          "lift": 0.0
+        },
+        {
+          "cod_ibge": 5222203,
+          "municipio": "Vila Boa",
+          "n": 21,
+          "lift": 0.0
+        }
+      ],
+      "R3": [
+        {
+          "cod_ibge": 5200175,
+          "municipio": "Agua Fria de Goias",
+          "n": 11,
+          "lift": 34.52
+        },
+        {
+          "cod_ibge": 5222203,
+          "municipio": "Vila Boa",
+          "n": 8,
+          "lift": 23.76
+        },
+        {
+          "cod_ibge": 5200100,
+          "municipio": "Abadiania",
+          "n": 18,
+          "lift": 14.13
+        },
+        {
+          "cod_ibge": 3104502,
+          "municipio": "Arinos",
+          "n": 16,
+          "lift": 9.51
+        },
+        {
+          "cod_ibge": 5200605,
+          "municipio": "Alto Paraiso de Goias",
+          "n": 15,
+          "lift": 8.0
+        },
+        {
+          "cod_ibge": 5200258,
+          "municipio": "Aguas Lindas de Goias",
+          "n": 38,
+          "lift": 6.13
+        },
+        {
+          "cod_ibge": 5214606,
+          "municipio": "Niquelandia",
+          "n": 10,
+          "lift": 5.96
+        },
+        {
+          "cod_ibge": 5203203,
+          "municipio": "Barro Alto",
+          "n": 11,
+          "lift": 4.67
+        },
+        {
+          "cod_ibge": 5205497,
+          "municipio": "Cidade Ocidental",
+          "n": 27,
+          "lift": 4.44
+        },
+        {
+          "cod_ibge": 5220009,
+          "municipio": "Sao Joao d'Alianca",
+          "n": 16,
+          "lift": 3.44
+        },
+        {
+          "cod_ibge": 5217609,
+          "municipio": "Planaltina",
+          "n": 25,
+          "lift": 2.9
+        },
+        {
+          "cod_ibge": 5219753,
+          "municipio": "Santo Antonio do Descoberto",
+          "n": 41,
+          "lift": 2.8
+        },
+        {
+          "cod_ibge": 5205513,
+          "municipio": "Cocalzinho de Goias",
+          "n": 16,
+          "lift": 2.79
+        },
+        {
+          "cod_ibge": 3109303,
+          "municipio": "Buritis",
+          "n": 16,
+          "lift": 2.76
+        },
+        {
+          "cod_ibge": 5206206,
+          "municipio": "Cristalina",
+          "n": 27,
+          "lift": 2.47
+        },
+        {
+          "cod_ibge": 5217302,
+          "municipio": "Pirenopolis",
+          "n": 19,
+          "lift": 2.44
+        },
+        {
+          "cod_ibge": 5200308,
+          "municipio": "Alexania",
+          "n": 19,
+          "lift": 2.0
+        },
+        {
+          "cod_ibge": 5300108,
+          "municipio": "Brasilia",
+          "n": 43,
+          "lift": 1.94
+        },
+        {
+          "cod_ibge": 5212501,
+          "municipio": "Luziania",
+          "n": 31,
+          "lift": 1.89
+        },
+        {
+          "cod_ibge": 5205307,
+          "municipio": "Cavalcante",
+          "n": 8,
+          "lift": 1.67
+        },
+        {
+          "cod_ibge": 5215231,
+          "municipio": "Novo Gama",
+          "n": 32,
+          "lift": 1.65
+        },
+        {
+          "cod_ibge": 3170404,
+          "municipio": "Unai",
+          "n": 30,
+          "lift": 1.59
+        },
+        {
+          "cod_ibge": 5215603,
+          "municipio": "Padre Bernardo",
+          "n": 19,
+          "lift": 1.52
+        },
+        {
+          "cod_ibge": 5208004,
+          "municipio": "Formosa",
+          "n": 24,
+          "lift": 1.33
+        },
+        {
+          "cod_ibge": 5208608,
+          "municipio": "Goianesia",
+          "n": 24,
+          "lift": 1.22
+        },
+        {
+          "cod_ibge": 5222302,
+          "municipio": "Vila Propicio",
+          "n": 8,
+          "lift": 0.84
+        },
+        {
+          "cod_ibge": 5205802,
+          "municipio": "Corumba de Goias",
+          "n": 12,
+          "lift": 0.82
+        },
+        {
+          "cod_ibge": 5221858,
+          "municipio": "Valparaiso de Goias",
+          "n": 31,
+          "lift": 0.67
+        }
+      ],
+      "R4": [
+        {
+          "cod_ibge": 5220686,
+          "municipio": "Simolandia",
+          "n": 19,
+          "lift": 14.54
+        },
+        {
+          "cod_ibge": 3109451,
+          "municipio": "Cabeceira Grande",
+          "n": 27,
+          "lift": 10.78
+        },
+        {
+          "cod_ibge": 5200175,
+          "municipio": "Agua Fria de Goias",
+          "n": 39,
+          "lift": 4.0
+        },
+        {
+          "cod_ibge": 5219753,
+          "municipio": "Santo Antonio do Descoberto",
+          "n": 49,
+          "lift": 3.33
+        },
+        {
+          "cod_ibge": 5204003,
+          "municipio": "Cabeceiras",
+          "n": 29,
+          "lift": 3.0
+        },
+        {
+          "cod_ibge": 5300108,
+          "municipio": "Brasilia",
+          "n": 18,
+          "lift": 2.63
+        },
+        {
+          "cod_ibge": 5200100,
+          "municipio": "Abadiania",
+          "n": 35,
+          "lift": 2.25
+        },
+        {
+          "cod_ibge": 5200258,
+          "municipio": "Aguas Lindas de Goias",
+          "n": 36,
+          "lift": 2.17
+        },
+        {
+          "cod_ibge": 5212501,
+          "municipio": "Luziania",
+          "n": 33,
+          "lift": 1.84
+        },
+        {
+          "cod_ibge": 3104502,
+          "municipio": "Arinos",
+          "n": 40,
+          "lift": 1.75
+        },
+        {
+          "cod_ibge": 5217609,
+          "municipio": "Planaltina",
+          "n": 39,
+          "lift": 1.6
+        },
+        {
+          "cod_ibge": 5206206,
+          "municipio": "Cristalina",
+          "n": 42,
+          "lift": 1.58
+        },
+        {
+          "cod_ibge": 5215231,
+          "municipio": "Novo Gama",
+          "n": 36,
+          "lift": 1.51
+        },
+        {
+          "cod_ibge": 5200308,
+          "municipio": "Alexania",
+          "n": 40,
+          "lift": 1.48
+        },
+        {
+          "cod_ibge": 5220009,
+          "municipio": "Sao Joao d'Alianca",
+          "n": 48,
+          "lift": 1.44
+        },
+        {
+          "cod_ibge": 3170404,
+          "municipio": "Unai",
+          "n": 34,
+          "lift": 1.28
+        },
+        {
+          "cod_ibge": 5208004,
+          "municipio": "Formosa",
+          "n": 37,
+          "lift": 1.28
+        },
+        {
+          "cod_ibge": 5214606,
+          "municipio": "Niquelandia",
+          "n": 30,
+          "lift": 1.15
+        },
+        {
+          "cod_ibge": 5215603,
+          "municipio": "Padre Bernardo",
+          "n": 42,
+          "lift": 1.05
+        },
+        {
+          "cod_ibge": 5208608,
+          "municipio": "Goianesia",
+          "n": 39,
+          "lift": 1.02
+        },
+        {
+          "cod_ibge": 3109303,
+          "municipio": "Buritis",
+          "n": 34,
+          "lift": 1.0
+        },
+        {
+          "cod_ibge": 5200605,
+          "municipio": "Alto Paraiso de Goias",
+          "n": 43,
+          "lift": 1.0
+        },
+        {
+          "cod_ibge": 5203203,
+          "municipio": "Barro Alto",
+          "n": 55,
+          "lift": 1.0
+        },
+        {
+          "cod_ibge": 5205513,
+          "municipio": "Cocalzinho de Goias",
+          "n": 47,
+          "lift": 1.0
+        },
+        {
+          "cod_ibge": 5222302,
+          "municipio": "Vila Propicio",
+          "n": 47,
+          "lift": 1.0
+        },
+        {
+          "cod_ibge": 5217302,
+          "municipio": "Pirenopolis",
+          "n": 45,
+          "lift": 0.94
+        },
+        {
+          "cod_ibge": 5221858,
+          "municipio": "Valparaiso de Goias",
+          "n": 34,
+          "lift": 0.82
+        },
+        {
+          "cod_ibge": 5205802,
+          "municipio": "Corumba de Goias",
+          "n": 58,
+          "lift": 0.78
+        },
+        {
+          "cod_ibge": 5205497,
+          "municipio": "Cidade Ocidental",
+          "n": 32,
+          "lift": 0.66
+        },
+        {
+          "cod_ibge": 5222203,
+          "municipio": "Vila Boa",
+          "n": 29,
+          "lift": 0.4
+        },
+        {
+          "cod_ibge": 5200803,
+          "municipio": "Alvorada do Norte",
+          "n": 21,
+          "lift": 0.0
+        },
+        {
+          "cod_ibge": 5205307,
+          "municipio": "Cavalcante",
+          "n": 37,
+          "lift": 0.0
+        },
+        {
+          "cod_ibge": 5207907,
+          "municipio": "Flores de Goias",
+          "n": 44,
+          "lift": 0.0
+        },
+        {
+          "cod_ibge": 5213053,
+          "municipio": "Mimoso de Goias",
+          "n": 31,
+          "lift": 0.0
+        }
+      ],
+      "R5": [
+        {
+          "cod_ibge": 5215231,
+          "municipio": "Novo Gama",
+          "n": 25,
+          "lift": 2.46
+        },
+        {
+          "cod_ibge": 3109303,
+          "municipio": "Buritis",
+          "n": 20,
+          "lift": 2.3
+        },
+        {
+          "cod_ibge": 5200258,
+          "municipio": "Aguas Lindas de Goias",
+          "n": 24,
+          "lift": 2.17
+        },
+        {
+          "cod_ibge": 5219753,
+          "municipio": "Santo Antonio do Descoberto",
+          "n": 25,
+          "lift": 1.86
+        },
+        {
+          "cod_ibge": 5206206,
+          "municipio": "Cristalina",
+          "n": 20,
+          "lift": 1.79
+        },
+        {
+          "cod_ibge": 5200605,
+          "municipio": "Alto Paraiso de Goias",
+          "n": 24,
+          "lift": 1.68
+        },
+        {
+          "cod_ibge": 5217609,
+          "municipio": "Planaltina",
+          "n": 21,
+          "lift": 1.6
+        },
+        {
+          "cod_ibge": 3104502,
+          "municipio": "Arinos",
+          "n": 22,
+          "lift": 1.5
+        },
+        {
+          "cod_ibge": 5300108,
+          "municipio": "Brasilia",
+          "n": 24,
+          "lift": 1.47
+        },
+        {
+          "cod_ibge": 5212501,
+          "municipio": "Luziania",
+          "n": 22,
+          "lift": 1.37
+        },
+        {
+          "cod_ibge": 5208004,
+          "municipio": "Formosa",
+          "n": 21,
+          "lift": 1.32
+        },
+        {
+          "cod_ibge": 3170404,
+          "municipio": "Unai",
+          "n": 25,
+          "lift": 1.14
+        },
+        {
+          "cod_ibge": 5203203,
+          "municipio": "Barro Alto",
+          "n": 23,
+          "lift": 1.13
+        },
+        {
+          "cod_ibge": 5200308,
+          "municipio": "Alexania",
+          "n": 24,
+          "lift": 1.1
+        },
+        {
+          "cod_ibge": 5217302,
+          "municipio": "Pirenopolis",
+          "n": 22,
+          "lift": 1.09
+        },
+        {
+          "cod_ibge": 5214606,
+          "municipio": "Niquelandia",
+          "n": 26,
+          "lift": 1.08
+        },
+        {
+          "cod_ibge": 5200100,
+          "municipio": "Abadiania",
+          "n": 22,
+          "lift": 1.0
+        },
+        {
+          "cod_ibge": 5208608,
+          "municipio": "Goianesia",
+          "n": 24,
+          "lift": 0.89
+        },
+        {
+          "cod_ibge": 5205513,
+          "municipio": "Cocalzinho de Goias",
+          "n": 20,
+          "lift": 0.85
+        },
+        {
+          "cod_ibge": 5205802,
+          "municipio": "Corumba de Goias",
+          "n": 24,
+          "lift": 0.83
+        },
+        {
+          "cod_ibge": 5220009,
+          "municipio": "Sao Joao d'Alianca",
+          "n": 28,
+          "lift": 0.83
+        },
+        {
+          "cod_ibge": 5221858,
+          "municipio": "Valparaiso de Goias",
+          "n": 25,
+          "lift": 0.61
+        },
+        {
+          "cod_ibge": 5215603,
+          "municipio": "Padre Bernardo",
+          "n": 24,
+          "lift": 0.58
+        },
+        {
+          "cod_ibge": 5205497,
+          "municipio": "Cidade Ocidental",
+          "n": 25,
+          "lift": 0.55
+        },
+        {
+          "cod_ibge": 3109451,
+          "municipio": "Cabeceira Grande",
+          "n": 22,
+          "lift": 0.0
+        },
+        {
+          "cod_ibge": 5200175,
+          "municipio": "Agua Fria de Goias",
+          "n": 22,
+          "lift": 0.0
+        },
+        {
+          "cod_ibge": 5200803,
+          "municipio": "Alvorada do Norte",
+          "n": 23,
+          "lift": 0.0
+        },
+        {
+          "cod_ibge": 5204003,
+          "municipio": "Cabeceiras",
+          "n": 20,
+          "lift": 0.0
+        },
+        {
+          "cod_ibge": 5205307,
+          "municipio": "Cavalcante",
+          "n": 27,
+          "lift": 0.0
+        },
+        {
+          "cod_ibge": 5207907,
+          "municipio": "Flores de Goias",
+          "n": 23,
+          "lift": 0.0
+        },
+        {
+          "cod_ibge": 5213053,
+          "municipio": "Mimoso de Goias",
+          "n": 23,
+          "lift": 0.0
+        },
+        {
+          "cod_ibge": 5220686,
+          "municipio": "Simolandia",
+          "n": 23,
+          "lift": 0.0
+        },
+        {
+          "cod_ibge": 5222203,
+          "municipio": "Vila Boa",
+          "n": 23,
+          "lift": 0.0
+        },
+        {
+          "cod_ibge": 5222302,
+          "municipio": "Vila Propicio",
+          "n": 23,
+          "lift": 0.0
+        }
+      ],
+      "R6": [
+        {
+          "cod_ibge": 5203203,
+          "municipio": "Barro Alto",
+          "n": 14,
+          "lift": 3.53
+        },
+        {
+          "cod_ibge": 5215231,
+          "municipio": "Novo Gama",
+          "n": 13,
+          "lift": 3.2
+        },
+        {
+          "cod_ibge": 5217302,
+          "municipio": "Pirenopolis",
+          "n": 13,
+          "lift": 2.07
+        },
+        {
+          "cod_ibge": 5212501,
+          "municipio": "Luziania",
+          "n": 13,
+          "lift": 1.82
+        },
+        {
+          "cod_ibge": 5206206,
+          "municipio": "Cristalina",
+          "n": 14,
+          "lift": 1.71
+        },
+        {
+          "cod_ibge": 5205513,
+          "municipio": "Cocalzinho de Goias",
+          "n": 14,
+          "lift": 1.19
+        },
+        {
+          "cod_ibge": 5208608,
+          "municipio": "Goianesia",
+          "n": 14,
+          "lift": 1.01
+        },
+        {
+          "cod_ibge": 5221858,
+          "municipio": "Valparaiso de Goias",
+          "n": 13,
+          "lift": 1.0
+        },
+        {
+          "cod_ibge": 5217609,
+          "municipio": "Planaltina",
+          "n": 14,
+          "lift": 0.74
+        },
+        {
+          "cod_ibge": 5215603,
+          "municipio": "Padre Bernardo",
+          "n": 12,
+          "lift": 0.24
+        },
+        {
+          "cod_ibge": 3109303,
+          "municipio": "Buritis",
+          "n": 12,
+          "lift": 0.0
+        },
+        {
+          "cod_ibge": 5200100,
+          "municipio": "Abadiania",
+          "n": 13,
+          "lift": 0.0
+        },
+        {
+          "cod_ibge": 5200308,
+          "municipio": "Alexania",
+          "n": 13,
+          "lift": 0.0
+        },
+        {
+          "cod_ibge": 5200605,
+          "municipio": "Alto Paraiso de Goias",
+          "n": 13,
+          "lift": 0.0
+        },
+        {
+          "cod_ibge": 5207907,
+          "municipio": "Flores de Goias",
+          "n": 14,
+          "lift": 0.0
+        },
+        {
+          "cod_ibge": 5219753,
+          "municipio": "Santo Antonio do Descoberto",
+          "n": 13,
+          "lift": 0.0
+        },
+        {
+          "cod_ibge": 5222302,
+          "municipio": "Vila Propicio",
+          "n": 14,
+          "lift": 0.0
+        }
+      ]
+    }
+  }
+}

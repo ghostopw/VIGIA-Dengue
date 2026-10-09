@@ -33,7 +33,7 @@ from pathlib import Path
 
 import pandas as pd
 
-from . import alerta
+from . import alarmes, alerta, clima_futuro
 from .base_analitica import construir
 from .ingestao_infodengue import padronizar
 from .painel_dados import salvar as salvar_painel
@@ -115,6 +115,10 @@ def reconstruir() -> pd.DataFrame:
     com_risco = classificar(base)
     com_risco.to_csv(PROCESSADO / "base_com_risco.csv", index=False, encoding="utf-8")
 
+    # Os alarmes leem a mesma base que acabou de ser reconstruida. Ficar de fora
+    # do ciclo deixava o painel mostrando alarmes de uma base que ja nao existe.
+    alarmes.salvar(com_risco, RAIZ / "saidas" / "alarmes.json")
+
     return salvar_painel(com_risco, PROCESSADO / "painel.csv", horizonte=HORIZONTE)
 
 
@@ -143,6 +147,16 @@ def atualizar(limiar: float = 0.50, buscar: bool = True) -> dict:
     print("reconstruindo...")
     painel = reconstruir()
     print(f"  painel: {len(painel)} linhas")
+
+    # Previsao do tempo dos proximos 14 dias: contexto do painel, nunca
+    # preditora. So com busca, porque exige rede -- e falhar aqui nao pode
+    # derrubar o alerta, que e o que o ciclo existe para entregar.
+    if buscar:
+        try:
+            clima = clima_futuro.salvar()
+            print(f"  previsao do tempo: {len(clima['municipios'])} municipios")
+        except Exception as erro:  # noqa: BLE001 - contexto, nao alerta
+            print(f"  aviso: previsao do tempo indisponivel ({erro})")
 
     resultado = alerta.avaliar(limiar=limiar)
     resultado["semana_anterior"] = antes

@@ -33,6 +33,8 @@ COPY dados/externo/vulnerabilidade_ras.csv   ./dados/externo/
 COPY dados/processado/painel.csv             ./dados/processado/
 COPY saidas/desempenho_modelos.csv           ./saidas/
 COPY saidas/alerta.json                      ./saidas/
+COPY saidas/alarmes.json                     ./saidas/
+COPY saidas/clima_futuro.json                ./saidas/
 COPY docs/dicionario_de_dados.csv            ./docs/
 
 EXPOSE 80
