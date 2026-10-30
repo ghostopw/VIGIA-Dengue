@@ -43,20 +43,20 @@
       "temp_media_14d": 22.7
     },
     {
-      "cod_ibge": 5200308,
-      "municipio": "Alexania",
-      "chuva_7d_mm": 52.3,
-      "chuva_14d_mm": 99.1,
-      "dias_chuva_14d": 14,
-      "temp_media_14d": 22.6
+      "cod_ibge": 5200175,
+      "municipio": "Agua Fria de Goias",
+      "chuva_7d_mm": 46.7,
+      "chuva_14d_mm": 108.7,
+      "dias_chuva_14d": 13,
+      "temp_media_14d": 22.7
     },
     {
-      "cod_ibge": 5200605,
-      "municipio": "Alto Paraiso de Goias",
-      "chuva_7d_mm": 72.8,
-      "chuva_14d_mm": 117.6,
-      "dias_chuva_14d": 13,
-      "temp_media_14d": 21.5
+      "cod_ibge": 5200258,
+      "municipio": "Aguas Lindas de Goias",
+      "chuva_7d_mm": 41.4,
+      "chuva_14d_mm": 100.0,
+      "dias_chuva_14d": 14,
+      "temp_media_14d": 22.0
     },
     {
       "cod_ibge": 5200803,
@@ -91,12 +91,12 @@
       "temp_media_14d": 23.1
     },
     {
-      "cod_ibge": 5205802,
-      "municipio": "Corumba de Goias",
-      "chuva_7d_mm": 47.3,
-      "chuva_14d_mm": 95.3,
+      "cod_ibge": 5205497,
+      "municipio": "Cidade Ocidental",
+      "chuva_7d_mm": 53.9,
+      "chuva_14d_mm": 107.5,
       "dias_chuva_14d": 14,
-      "temp_media_14d": 22.0
+      "temp_media_14d": 22.7
     },
     {
       "cod_ibge": 5206206,
@@ -139,12 +139,12 @@
       "temp_media_14d": 23.8
     },
     {
-      "cod_ibge": 5215231,
-      "municipio": "Novo Gama",
-      "chuva_7d_mm": 72.8,
-      "chuva_14d_mm": 117.0,
-      "dias_chuva_14d": 14,
-      "temp_media_14d": 22.8
+      "cod_ibge": 5213053,
+      "municipio": "Mimoso de Goias",
+      "chuva_7d_mm": 38.9,
+      "chuva_14d_mm": 87.1,
+      "dias_chuva_14d": 13,
+      "temp_media_14d": 24.3
     },
     {
       "cod_ibge": 5215603,
@@ -187,12 +187,12 @@
       "temp_media_14d": 22.2
     },
     {
-      "cod_ibge": 5221858,
-      "municipio": "Valparaiso de Goias",
-      "chuva_7d_mm": 75.8,
-      "chuva_14d_mm": 148.6,
-      "dias_chuva_14d": 14,
-      "temp_media_14d": 22.1
+      "cod_ibge": 5222203,
+      "municipio": "Vila Boa",
+      "chuva_7d_mm": 29.6,
+      "chuva_14d_mm": 84.2,
+      "dias_chuva_14d": 12,
+      "temp_media_14d": 25.9
     },
     {
       "cod_ibge": 5222302,
@@ -213,36 +213,36 @@
   ],
   "faltantes": [
     {
-      "cod_ibge": 5200175,
-      "municipio": "Agua Fria de Goias"
+      "cod_ibge": 5200308,
+      "municipio": "Alexania"
     },
     {
-      "cod_ibge": 5200258,
-      "municipio": "Aguas Lindas de Goias"
-    },
-    {
-      "cod_ibge": 5205497,
-      "municipio": "Cidade Ocidental"
+      "cod_ibge": 5200605,
+      "municipio": "Alto Paraiso de Goias"
     },
     {
       "cod_ibge": 5205513,
       "municipio": "Cocalzinho de Goias"
     },
     {
-      "cod_ibge": 5213053,
-      "municipio": "Mimoso de Goias"
+      "cod_ibge": 5205802,
+      "municipio": "Corumba de Goias"
     },
     {
       "cod_ibge": 5214606,
       "municipio": "Niquelandia"
     },
     {
+      "cod_ibge": 5215231,
+      "municipio": "Novo Gama"
+    },
+    {
       "cod_ibge": 5220686,
       "municipio": "Simolandia"
     },
     {
-      "cod_ibge": 5222203,
-      "municipio": "Vila Boa"
+      "cod_ibge": 5221858,
+      "municipio": "Valparaiso de Goias"
     }
   ]
 }
