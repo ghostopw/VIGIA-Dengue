@@ -5,7 +5,9 @@ __pycache__/
 
 # Intermediarios reproduziveis pelos scripts (o pacote final e versionado).
 dados/bruto/
-dados/processado/
+# Com /*, e nao com a pasta inteira: o git nao reabre arquivo dentro de pasta
+# ignorada, e as excecoes la embaixo ficariam sem efeito.
+dados/processado/*
 dados/vigia_dengue_dados.zip
 saidas/figuras/*.png
 
@@ -25,3 +27,8 @@ dados/externo/DF_setores_CD2022.gpkg
 # construída no GitHub Actions, que só enxerga o que está versionado.
 !dados/processado/painel.csv
 !saidas/alerta.json
+
+# A série bruta do território, que o ciclo diário (atualizar-dados.yml)
+# completa com as semanas recentes. Fica no git porque o GitHub Actions não
+# guarda nada de uma execução para a outra.
+!dados/processado/infodengue_territorio.csv

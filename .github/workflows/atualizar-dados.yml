@@ -1,0 +1,91 @@
+name: Atualizar dados
+
+# O ciclo diario do alerta, rodando aqui e nao num computador que precisa
+# estar ligado. Busca as semanas recentes no InfoDengue, refaz a base e o
+# painel, grava de volta no repositorio o que o painel publicado le e manda
+# republicar.
+#
+# Uma vez por dia basta: a fonte publica uma vez por semana, em dia que varia.
+# O que o ciclo garante e que a semana nova chegue ao painel poucas horas
+# depois de sair, e nao quando alguem lembrar de rodar o pipeline.
+on:
+  schedule:
+    # 11h UTC sao 8h em Brasilia.
+    - cron: "0 11 * * *"
+  workflow_dispatch:
+
+concurrency:
+  group: atualizar-dados
+  cancel-in-progress: false
+
+permissions:
+  contents: write   # gravar os dados novos
+  actions: write    # disparar a publicacao do painel
+
+jobs:
+  atualizar:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+
+      - name: Instalar o pipeline
+        run: pip install -r requirements.txt
+
+      - name: Recuperar o estado do ultimo alerta
+        # O estado fica em dados/processado/ultimo_alerta.json, fora do git.
+        # Sem ele, toda execucao seria a primeira, e a primeira nunca avisa.
+        # O saidas/alerta.json versionado guarda o mesmo retrato da ultima
+        # verificacao, entao serve de ponto de partida.
+        run: |
+          python -c "
+          import json
+          estado = json.load(open('saidas/alerta.json', encoding='utf-8'))['estado']
+          json.dump(estado, open('dados/processado/ultimo_alerta.json', 'w', encoding='utf-8'))
+          "
+
+      - name: Rodar o ciclo
+        env:
+          # Opcional: sem o segredo, o aviso fica so no alerta.json.
+          VIGIA_WEBHOOK: ${{ secrets.VIGIA_WEBHOOK }}
+        run: python src/vigia/executar_atualizacao.py
+
+      - name: Gravar os dados novos
+        id: gravar
+        # A serie bruta volta para o git junto com o painel: e ela que a
+        # proxima execucao completa com as semanas recentes. Sem isso, cada
+        # dia partiria do pacote original e, quando a janela de dois anos
+        # passasse dele, as semanas do meio sumiriam.
+        run: |
+          git add dados/processado/infodengue_territorio.csv \
+                  dados/processado/painel.csv \
+                  saidas/alerta.json saidas/alarmes.json saidas/clima_futuro.json
+          if git diff --cached --quiet; then
+            echo "Nada mudou."
+            echo "mudou=false" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          semana=$(python -c "
+          import json
+          s = json.load(open('saidas/alerta.json', encoding='utf-8'))['estado']['semana']
+          print(f'{s % 100:02d}/{s // 100}')
+          ")
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git commit -m "Atualiza os dados do painel (SE $semana)"
+          git push
+          echo "mudou=true" >> "$GITHUB_OUTPUT"
+
+      - name: Publicar o painel
+        # Um push feito com o GITHUB_TOKEN nao dispara outros workflows: o
+        # GitHub evita lacos assim. O disparo manual e a excecao, e roda a
+        # publicacao sobre o commit que acabou de entrar.
+        if: steps.gravar.outputs.mudou == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh workflow run publicar-painel.yml --ref "${{ github.ref_name }}"

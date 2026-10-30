@@ -124,8 +124,14 @@ mudou deixa de ser lido.
 Canais: `saidas/alerta.json` (sempre, e publicado pelo servidor em `/alerta.json`),
 notificação nativa do Windows, e um POST para a URL em `VIGIA_WEBHOOK`, se definida.
 
-Para agendar uma vez por dia no Windows — a fonte publica uma vez por semana, em dia
-que varia:
+**Todo dia às 8h de Brasília, no GitHub.** O workflow
+[`atualizar-dados.yml`](.github/workflows/atualizar-dados.yml) roda o ciclo, grava no
+repositório a série bruta e os arquivos que o painel lê, e dispara a republicação do
+painel em vigia.guimm.site. Não depende de nenhum computador ligado. Para rodar fora de
+hora: aba **Actions** → *Atualizar dados* → *Run workflow*. Para receber os avisos fora
+do arquivo, cadastre a URL do webhook como segredo `VIGIA_WEBHOOK` do repositório.
+
+Para rodar localmente, na mesma frequência, pelo agendador do Windows:
 
 ```
 schtasks /create /tn "VIGIA-Dengue" ^
