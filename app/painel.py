@@ -89,27 +89,105 @@ CORES_TENDENCIA = {"▲": "#b25a33", "▼": ACENTO, "▬": NEUTRO_600}
 # quarto modelo voltava a primeira e o combinado -- o modelo em operacao --
 # saia no mesmo cinza da referencia.
 NOMES_MODELO = {
-    "referencia": "Referencia (persistencia)",
-    "interpretavel": "Interpretavel (logistica)",
+    "referencia": "Referência (persistência)",
+    "interpretavel": "Interpretável (logística)",
     "aprendizado": "Aprendizado (LightGBM)",
-    "combinado": "Combinado (em operacao)",
+    "combinado": "Combinado (em operação)",
 }
 CORES_MODELO = {
-    "Referencia (persistencia)": "#b7b7ba",
-    "Interpretavel (logistica)": "#9fb8d0",
+    "Referência (persistência)": "#b7b7ba",
+    "Interpretável (logística)": "#9fb8d0",
     "Aprendizado (LightGBM)": "#5980a6",
-    "Combinado (em operacao)": "#1d2d3d",
+    "Combinado (em operação)": "#1d2d3d",
 }
 TRACO_MODELO = {
-    "Referencia (persistencia)": "dot",
-    "Interpretavel (logistica)": "dash",
+    "Referência (persistência)": "dot",
+    "Interpretável (logística)": "dash",
     "Aprendizado (LightGBM)": "dash",
-    "Combinado (em operacao)": "solid",
+    "Combinado (em operação)": "solid",
 }
 
 # Municipio foco do projeto. A RIDE-DF entra como territorio de comparacao.
-FOCO = "Brasilia"
+FOCO = "Brasília"
 COD_FOCO = 5300108
+
+# Os nomes chegam sem acento da base (o pipeline grava ASCII de proposito, para
+# nao quebrar arquivo nem chave). A tela fala portugues: a grafia oficial entra
+# so na exibicao, e quem nao esta aqui passa como veio.
+MUNICIPIOS_COM_ACENTO = {
+    "Brasilia": "Brasília", "Abadiania": "Abadiânia",
+    "Agua Fria de Goias": "Água Fria de Goiás",
+    "Aguas Lindas de Goias": "Águas Lindas de Goiás", "Alexania": "Alexânia",
+    "Alto Paraiso de Goias": "Alto Paraíso de Goiás",
+    "Cocalzinho de Goias": "Cocalzinho de Goiás",
+    "Corumba de Goias": "Corumbá de Goiás", "Flores de Goias": "Flores de Goiás",
+    "Goianesia": "Goianésia", "Luziania": "Luziânia",
+    "Mimoso de Goias": "Mimoso de Goiás", "Niquelandia": "Niquelândia",
+    "Pirenopolis": "Pirenópolis",
+    "Santo Antonio do Descoberto": "Santo Antônio do Descoberto",
+    "Sao Joao d'Alianca": "São João d'Aliança", "Simolandia": "Simolândia",
+    "Unai": "Unaí", "Valparaiso de Goias": "Valparaíso de Goiás",
+    "Vila Propicio": "Vila Propício",
+}
+RAS_COM_ACENTO = {
+    "Aguas Claras": "Águas Claras", "Brazlandia": "Brazlândia",
+    "Candangolandia": "Candangolândia", "Ceilandia": "Ceilândia",
+    "Guara": "Guará", "Itapoa": "Itapoã", "Jardim Botanico": "Jardim Botânico",
+    "Nucleo Bandeirante": "Núcleo Bandeirante", "Paranoa": "Paranoá",
+    "Sao Sebastiao": "São Sebastião", "Varjao": "Varjão",
+}
+# Nomes das regras de alarme, gravados em ASCII por alarmes.py. Aparecem na
+# linha de estado do Monitor e no titulo do cartao de alarme.
+REGRAS_COM_ACENTO = {
+    "Transmissao crescendo": "Transmissão crescendo",
+    "Aceleracao epidemica": "Aceleração epidêmica",
+    "Janela termica com chuva": "Janela térmica com chuva",
+    "Seca x falta de rede de agua": "Seca x falta de rede de água",
+}
+GRAFIA = {**MUNICIPIOS_COM_ACENTO, **RAS_COM_ACENTO, **REGRAS_COM_ACENTO}
+
+
+def acentuar(nome: str) -> str:
+    """Grafia com acento de um municipio, RA ou regra, para exibicao."""
+    return GRAFIA.get(nome, nome)
+
+
+# As variaveis que mais pesaram na previsao chegam pelo nome da coluna. Para
+# quem le o painel, `casos_est_mm3` nao diz nada; a descricao curta diz.
+FATORES_LEGIVEIS = {
+    "incidencia_100k": "incidência da semana",
+    "incidencia_lag1": "incidência de 1 semana atrás",
+    "incidencia_lag2": "incidência de 2 semanas atrás",
+    "incidencia_lag4": "incidência de 4 semanas atrás",
+    "incidencia_mm3": "incidência média de 3 semanas",
+    "incidencia_mm8": "incidência média de 8 semanas",
+    "casos_est_mm3": "casos das últimas 3 semanas",
+    "casos_est_mm8": "casos das últimas 8 semanas",
+    "razao_mm3_mm8": "aceleração da curva",
+    "variacao_semanal": "variação semanal",
+    "log_pop": "porte do município",
+    "semana": "época do ano",
+    "canal_mediana": "padrão histórico da época",
+    "canal_q3": "limite esperado da época",
+    "Rt": "ritmo de transmissão (Rt)",
+    "p_rt1": "chance de transmissão crescente",
+    "receptivo": "clima receptivo ao mosquito",
+    "transmissao": "transmissão sustentada",
+    "nivel_inc": "nível de incidência",
+    "Rt_lag1": "Rt de 1 semana atrás",
+    "Rt_lag2": "Rt de 2 semanas atrás",
+    "p_rt1_lag1": "chance de transmissão crescente 1 semana atrás",
+    "p_rt1_lag2": "chance de transmissão crescente 2 semanas atrás",
+    "sem fator dominante": "sem fator dominante",
+}
+
+
+def fatores_legiveis(texto: str) -> str:
+    """Troca os nomes de coluna da explicacao do modelo por descricoes."""
+    if not isinstance(texto, str) or not texto:
+        return "sem fator dominante"
+    return ", ".join(FATORES_LEGIVEIS.get(f.strip(), f.strip())
+                     for f in texto.split(","))
 
 # Indices da semana, no formato de cartao de previsao do tempo. Cada cartao
 # fala pelo nivel escrito e pela bolinha -- nunca so pela cor. As cores sao
@@ -144,11 +222,23 @@ LIMIAR_DO_VPP = 0.80
 # Sala de situacao nao tem barra de ferramentas flutuando sobre o grafico.
 CONFIG_GRAFICO = {"displayModeBar": False}
 
+# Eixo de datas sem nome de mes: o Plotly so escreve "Jan", "Apr" em ingles.
+# Em janela curta vai mes/ano; em janela de anos, so o ano.
+EIXO_DATAS = {
+    "tickformatstops": [
+        {"dtickrange": [None, "M11"], "value": "%m/%Y"},
+        {"dtickrange": ["M12", None], "value": "%Y"},
+    ],
+    "hoverformat": "semana de %d/%m/%Y",
+}
+
 st.set_page_config(page_title="VIGIA-Dengue", page_icon="\U0001F99F", layout="wide")
 
 # Um gabarito unico evita repetir fonte e fundo em cada figura. O fundo
-# transparente deixa o grafico assentar sobre a superficie do tema.
+# transparente deixa o grafico assentar sobre a superficie do tema. Os
+# separadores sao os brasileiros: virgula decimal, ponto de milhar.
 pio.templates["vigia"] = go.layout.Template(layout={
+    "separators": ",.",
     "font": {"family": FONTE_CORPO, "color": TEXTO, "size": 13},
     "paper_bgcolor": "rgba(0,0,0,0)",
     "plot_bgcolor": "rgba(0,0,0,0)",
@@ -191,8 +281,10 @@ st.markdown(
         padding: 0.65rem 0.9rem 0.55rem;
       }
 
-      /* Abas em caixa alta condensada, como rotulos de bancada. */
-      button[data-baseweb="tab"] p {
+      /* Abas em caixa alta condensada, como rotulos de bancada. O seletor e
+         pelo papel da aba: o botao com data-baseweb virou uma div numa versao
+         do Streamlit, e a regra deixou de pegar sem ninguem perceber. */
+      [role="tab"] p {
         font-family: "Barlow Condensed", "Arial Narrow", sans-serif;
         text-transform: uppercase;
         letter-spacing: 0.6px;
@@ -380,6 +472,7 @@ def carregar_clima_futuro() -> dict | None:
 def carregar_painel() -> pd.DataFrame:
     dados = pd.read_csv(CAMINHO_PAINEL, parse_dates=["data_ini_se"])
     dados["risco"] = pd.Categorical(dados["risco"], categories=ORDEM_RISCO, ordered=True)
+    dados["municipio"] = dados["municipio"].map(acentuar)
 
     # O InfoDengue deixa o limite do nowcasting vazio em algumas semanas. Sem
     # esse tratamento o preenchimento entre as duas curvas atravessa a lacuna
@@ -481,7 +574,7 @@ def semana_epidemiologica(data: pd.Timestamp) -> int:
     """
     def inicio_da_se1(ano: int) -> pd.Timestamp:
         dia = pd.Timestamp(ano, 1, 4)
-        while dia.dayofweek != 5:  # 5 = sabado
+        while dia.day_of_week != 5:  # 5 = sabado
             dia += pd.Timedelta(days=1)
         return dia - pd.Timedelta(days=6)
 
@@ -503,11 +596,12 @@ def seta_tendencia(razao: float) -> str:
     """
     if pd.isna(razao):
         return ""
+    numero = _decimal(razao, 2)
     if razao >= 1.1:
-        return f"▲ {razao:.2f}"
+        return f"▲ {numero}"
     if razao <= 0.9:
-        return f"▼ {razao:.2f}"
-    return f"▬ {razao:.2f}"
+        return f"▼ {numero}"
+    return f"▬ {numero}"
 
 
 def chip(texto: str, fundo: str, cor_texto: str) -> str:
@@ -519,6 +613,29 @@ def chip(texto: str, fundo: str, cor_texto: str) -> str:
 
 def _milhar(valor: float) -> str:
     return f"{valor:,.0f}".replace(",", ".")
+
+
+def _decimal(valor: float, casas: int = 1) -> str:
+    """Numero com virgula decimal e ponto de milhar, como se le no Brasil."""
+    return (f"{valor:,.{casas}f}".replace(",", "\x00").replace(".", ",")
+            .replace("\x00", "."))
+
+
+def _sinal(valor: float, casas: int = 1) -> str:
+    """Diferenca com sinal explicito; o Streamlit le o "-" para a seta."""
+    return ("+" if valor >= 0 else "-") + _decimal(abs(valor), casas)
+
+
+def formato_br(tabela: pd.DataFrame, casas: dict[str, int]):
+    """Styler que exibe as colunas numericas no formato brasileiro.
+
+    O valor por baixo continua numerico, entao ordenar pela coluna segue
+    ordenando por numero, e nao pelo texto "12,4".
+    """
+    return tabela.style.format(
+        {coluna: (lambda v, c=c: "" if pd.isna(v) else _decimal(v, c))
+         for coluna, c in casas.items() if coluna in tabela.columns}
+    )
 
 
 def cartao_indice(titulo: str, estado: str, nivel: str, leitura: str,
@@ -550,19 +667,21 @@ def cartao_indice(titulo: str, estado: str, nivel: str, leitura: str,
 def indice_risco(linha: pd.Series, limiar: float, horizonte: int,
                  auc_territorio: float | None, eh_foco: bool) -> str:
     """Probabilidade do modelo combinado para o horizonte do alerta."""
-    titulo = f"Risco em {horizonte} semanas"
+    # "Previsao", e nao "risco": ao lado do chip com o risco de hoje, um
+    # cartao chamado "Risco em 4 semanas: baixo" parecia contradize-lo.
+    titulo = f"Previsão para {horizonte} semanas"
     prob = linha.get("probabilidade_alerta")
     if prob is None or pd.isna(prob):
         return cartao_indice(
-            titulo, "sem_dado", "Sem previsao",
-            "A semana mais recente nao tem os preditores essenciais.", "")
+            titulo, "sem_dado", "Sem previsão",
+            "A semana mais recente não tem os preditores essenciais.", "")
 
     if prob >= limiar:
         estado, nivel = "alerta", "Alerta"
     elif prob >= 0.5:
-        estado, nivel = "atencao", "Atencao"
+        estado, nivel = "atencao", "Atenção"
     else:
-        estado, nivel = "calmo", "Baixo"
+        estado, nivel = "calmo", "Sem alerta"
     leitura = (f"{prob:.0%} de chance de risco alto ou muito alto em "
                f"{horizonte} semanas.")
 
@@ -570,13 +689,13 @@ def indice_risco(linha: pd.Series, limiar: float, horizonte: int,
     # controle do limiar troca a evidencia pela AUC do territorio.
     if eh_foco and abs(limiar - LIMIAR_DO_VPP) < 1e-9:
         evidencia = (
-            f"Validado em 2019-2025: em Brasilia, no limiar de "
+            f"Validado em 2019-2025: em Brasília, no limiar de "
             f"{LIMIAR_DO_VPP:.0%}, {VPP_BRASILIA_LIMIAR_080:.0%} dos alertas "
             "se confirmaram.")
     elif auc_territorio is not None:
         evidencia = (
-            "Validacao temporal 2019-2025 nos 34 municipios: AUC de "
-            f"{auc_territorio:.3f}.".replace(".", ",", 1))
+            "Validação temporal 2019-2025 nos 34 municípios: AUC de "
+            f"{_decimal(auc_territorio, 3)}.")
     else:
         evidencia = ""
     return cartao_indice(titulo, estado, nivel, leitura, evidencia)
@@ -585,11 +704,11 @@ def indice_risco(linha: pd.Series, limiar: float, horizonte: int,
 def indice_transmissao(serie: pd.DataFrame, regra: dict | None,
                        lift_municipal: float | None) -> str:
     """p(Rt>1) das duas ultimas semanas -- a variavel da regra R3."""
-    titulo = "Transmissao"
+    titulo = "Transmissão"
     if "p_rt1" not in serie.columns or serie["p_rt1"].dropna().empty:
         return cartao_indice(
             titulo, "sem_dado", "Sem dado",
-            "Probabilidade de Rt acima de 1 indisponivel nesta base.", "")
+            "Probabilidade de Rt acima de 1 indisponível nesta base.", "")
 
     ultimos = serie["p_rt1"].dropna().iloc[-2:]
     agora = float(ultimos.iloc[-1])
@@ -600,7 +719,7 @@ def indice_transmissao(serie: pd.DataFrame, regra: dict | None,
     elif agora >= 0.9:
         estado, nivel = "atencao", "Subindo"
     else:
-        estado, nivel = "calmo", "Estavel"
+        estado, nivel = "calmo", "Estável"
 
     leitura = f"Probabilidade de Rt acima de 1: {agora:.0%} nesta semana"
     leitura += f", {antes:.0%} na anterior." if antes is not None else "."
@@ -609,27 +728,26 @@ def indice_transmissao(serie: pd.DataFrame, regra: dict | None,
         evidencia = ""
     elif lift_municipal is not None:
         evidencia = (
-            "Aqui, quando passou de 90% por duas semanas, a incidencia "
+            "Aqui, quando passou de 90% por duas semanas, a incidência "
             f"{regra.get('lag_semanas', 4)} semanas depois foi "
-            f"{lift_municipal:.1f}x a normal da epoca.".replace(".", ",", 1))
+            f"{_decimal(lift_municipal)}x a normal da época.")
     else:
         evidencia = (
-            "No territorio, acima de 90% por duas semanas antecedeu incidencia "
-            f"{regra['lift_mediano']:.1f}x a normal da epoca, em "
-            f"{_milhar(regra['n_episodios'])} episodios desde 2014."
-            .replace(".", ",", 1))
+            "No território, acima de 90% por duas semanas antecedeu incidência "
+            f"{_decimal(regra['lift_mediano'])}x a normal da época, em "
+            f"{_milhar(regra['n_episodios'])} episódios desde 2014.")
     return cartao_indice(titulo, estado, nivel, leitura, evidencia)
 
 
 def indice_clima(clima_municipio: dict | None, clima_atual: bool) -> str:
     """Receptividade climatica dos proximos 14 dias -- contexto, nao previsao."""
     titulo = "Clima para o Aedes (14 dias)"
-    contexto = ("Contexto, nao previsao: no historico do territorio, gatilhos "
-                "climaticos sozinhos nao anteciparam dengue.")
+    contexto = ("Contexto, não previsão: no histórico do território, gatilhos "
+                "climáticos sozinhos não anteciparam dengue.")
     if clima_municipio is None:
         return cartao_indice(
-            titulo, "sem_dado", "Sem previsao",
-            "Previsao do tempo indisponivel para este municipio.", contexto)
+            titulo, "sem_dado", "Sem previsão",
+            "Previsão do tempo indisponível para este município.", contexto)
 
     temp = clima_municipio.get("temp_media_14d")
     dias = int(clima_municipio.get("dias_chuva_14d") or 0)
@@ -638,17 +756,17 @@ def indice_clima(clima_municipio: dict | None, clima_atual: bool) -> str:
                 and FAIXA_TERMICA_AEDES[0] <= temp <= FAIXA_TERMICA_AEDES[1])
 
     if not na_faixa or dias == 0:
-        estado, nivel = "calmo", "Pouco favoravel"
+        estado, nivel = "calmo", "Pouco favorável"
     elif dias >= DIAS_CHUVA_FREQUENTE:
-        estado, nivel = "elevado", "Muito favoravel"
+        estado, nivel = "elevado", "Muito favorável"
     else:
-        estado, nivel = "atencao", "Favoravel"
+        estado, nivel = "atencao", "Favorável"
 
-    temp_txt = ("temperatura indisponivel" if temp is None
-                else f"media de {temp:.0f} °C")
+    temp_txt = ("temperatura indisponível" if temp is None
+                else f"média de {temp:.0f} °C")
     leitura = f"{chuva:.0f} mm em {dias} dias de chuva; {temp_txt}."
     if not clima_atual:
-        contexto = "Previsao coletada em semana anterior. " + contexto
+        contexto = "Previsão coletada em semana anterior. " + contexto
     return cartao_indice(titulo, estado, nivel, leitura, contexto)
 
 
@@ -662,15 +780,15 @@ def indice_dado(linha: pd.Series) -> str:
     if not provisorio or (tem_completude and completude >= 0.9):
         estado, nivel = "calmo", "Consolidado"
     elif tem_completude and completude >= 0.6:
-        estado, nivel = "atencao", "Em consolidacao"
+        estado, nivel = "atencao", "Em consolidação"
     else:
-        estado, nivel = "elevado", "Provisorio"
+        estado, nivel = "elevado", "Provisório"
 
     leitura = (f"{_milhar(linha['casos'])} casos notificados de "
                f"{_milhar(linha['casos_est'])} estimados")
     leitura += f" ({completude:.0%} digitado)." if tem_completude else "."
-    evidencia = ("A notificacao chega com atraso; o nowcasting do InfoDengue "
-                 "estima os casos que ainda vao entrar.")
+    evidencia = ("A notificação chega com atraso; o nowcasting do InfoDengue "
+                 "estima os casos que ainda vão entrar.")
     return cartao_indice(titulo, estado, nivel, leitura, evidencia)
 
 
@@ -752,13 +870,13 @@ def desenhar_mapa_setores(setores: dict, coluna: str, rotulo: str) -> None:
     }
     coluna = EQUIVALENTE.get(coluna, coluna)
     if coluna == "domicilios":
-        rotulo = "domicilios no setor"
+        rotulo = "domicílios no setor"
 
     if coluna not in registros or registros[coluna].isna().all():
         disponiveis = [c for c in registros.columns
                        if c.endswith("_pct") or c == "indice_criadouro"]
         st.warning(
-            "Este indicador nao existe na escala da quadra. Disponiveis: "
+            "Este indicador não existe na escala da quadra. Disponíveis: "
             + ", ".join(disponiveis) + "."
         )
         return
@@ -787,22 +905,25 @@ def desenhar_mapa_setores(setores: dict, coluna: str, rotulo: str) -> None:
     st.plotly_chart(mapa, width="stretch", config=CONFIG_GRAFICO)
 
     st.caption(
-        f"{len(registros):,} setores censitarios urbanos. ".replace(",", ".")
-        + "O setor e a menor unidade que o IBGE publica -- algumas quadras, "
-        "cerca de trezentos domicilios. Aproxime para o mapa base nomear as ruas. "
+        f"{_milhar(len(registros))} setores censitários urbanos. "
+        "O setor é a menor unidade que o IBGE publica -- algumas quadras, "
+        "cerca de trezentos domicílios. Aproxime para o mapa base nomear as ruas. "
         "O risco de dengue continua sendo municipal: esta camada mostra onde a "
-        "condicao local favorece o criadouro, nao onde ha caso."
+        "condição local favorece o criadouro, não onde há caso."
     )
 
+    # dict.fromkeys tira a coluna repetida quando o indicador ja e "domicilios";
+    # o Styler nao aceita nome de coluna duplicado.
     piores = registros.nlargest(12, coluna)[
-        [c for c in ("NM_SUBDIST", "CD_SETOR", coluna, "domicilios") if c in registros]
-    ]
-    st.markdown("**As doze quadras em pior situacao neste indicador**")
+        list(dict.fromkeys(c for c in ("NM_SUBDIST", "CD_SETOR", coluna, "domicilios")
+                           if c in registros))
+    ].rename(columns={
+        "NM_SUBDIST": "Região Administrativa", "CD_SETOR": "Setor",
+        coluna: rotulo, "domicilios": "Domicílios",
+    })
+    st.markdown("**As doze quadras em pior situação neste indicador**")
     st.dataframe(
-        piores.rename(columns={
-            "NM_SUBDIST": "Regiao Administrativa", "CD_SETOR": "Setor",
-            coluna: rotulo, "domicilios": "Domicilios",
-        }),
+        formato_br(piores, {rotulo: 1, "Domicílios": 0}),
         hide_index=True, width="stretch",
     )
 
@@ -815,10 +936,10 @@ st.markdown(
     '<div class="vigia-cabecalho">'
     '<div>'
     '<div class="vigia-cabecalho-nome">Vigia-Dengue</div>'
-    '<div class="vigia-cabecalho-sub">Sala de situacao -- alerta precoce do '
-    'risco de dengue em Brasilia e na RIDE-DF</div>'
+    '<div class="vigia-cabecalho-sub">Sala de situação -- alerta precoce do '
+    'risco de dengue em Brasília e na RIDE-DF</div>'
     '</div>'
-    f'<div class="vigia-cabecalho-tag">DF + RIDE<br>{n_municipios} municipios</div>'
+    f'<div class="vigia-cabecalho-tag">DF + RIDE<br>{n_municipios} municípios</div>'
     '</div>',
     unsafe_allow_html=True,
 )
@@ -831,18 +952,18 @@ ultima_semana = int(painel[painel["cod_ibge"] == COD_FOCO]["se_codigo"].max())
 
 if estado_alerta is None:
     st.warning(
-        f"Dado ate a semana **{formatar_semana(ultima_semana)}**. O ciclo de "
-        "atualizacao nunca rodou: execute `python src/vigia/executar_atualizacao.py` "
+        f"Dado até a semana **{formatar_semana(ultima_semana)}**. O ciclo de "
+        "atualização nunca rodou: execute `python src/vigia/executar_atualizacao.py` "
         "para o painel passar a acompanhar o InfoDengue sozinho."
     )
 else:
     verificado = pd.to_datetime(estado_alerta["estado"]["verificado_em"])
     horas = (pd.Timestamp.now(tz="UTC") - verificado).total_seconds() / 3600
-    quando = (f"ha {horas * 60:.0f} min" if horas < 1
-              else f"ha {horas:.0f} h" if horas < 48
+    quando = (f"há {horas * 60:.0f} min" if horas < 1
+              else f"há {horas:.0f} h" if horas < 48
               else f"em {verificado.tz_convert(None):%d/%m}")
     recado = (
-        f"Dado do InfoDengue ate a semana **{formatar_semana(ultima_semana)}** - "
+        f"Dado do InfoDengue até a semana **{formatar_semana(ultima_semana)}** -- "
         f"fonte verificada {quando}."
     )
     # Mais de tres dias sem verificar ja e sinal de que o agendamento parou.
@@ -854,7 +975,7 @@ with st.sidebar:
 
     semanas = sorted(painel["se_codigo"].unique())
     semana_escolhida = st.select_slider(
-        "Semana epidemiologica",
+        "Semana epidemiológica",
         options=semanas,
         value=semanas[-1],
         format_func=formatar_semana,
@@ -869,16 +990,18 @@ with st.sidebar:
     # e reconhece 67% das semanas calmas, ao custo de perder os surtos mais
     # fracos -- 29 alertas por ano em vez de 47. Medido em 209 semanas de
     # Brasilia, 2021 a 2025.
+    # Em pontos percentuais, e nao de 0 a 1: o controle mostra "80%", como o
+    # resto da tela, em vez de "0.80" com ponto decimal americano.
     limiar = st.slider(
         "Limiar de probabilidade para o alerta",
-        min_value=0.05, max_value=0.95, value=0.80, step=0.05,
-        help="Probabilidade acima da qual Brasilia entra em alerta. Em 0,80 o "
-             "alerta acerta 3 de cada 4 disparos; em 0,50 dispararia em quase "
+        min_value=5, max_value=95, value=80, step=5, format="%d%%",
+        help="Probabilidade acima da qual Brasília entra em alerta. Em 80% o "
+             "alerta acerta 3 de cada 4 disparos; em 50% dispararia em quase "
              "toda semana.",
-    )
+    ) / 100
 
     sinalizar_provisorio = st.checkbox(
-        "Sinalizar semanas com notificacao incompleta", value=True
+        "Sinalizar semanas com notificação incompleta", value=True
     )
 
     st.caption(
@@ -889,8 +1012,8 @@ with st.sidebar:
     st.divider()
     horizonte = int(painel["horizonte_semanas"].iloc[0])
     st.info(
-        f"O alerta projeta o risco **{horizonte} semanas a frente**. "
-        "Os casos estimados corrigem o atraso de notificacao."
+        f"O alerta projeta o risco **{horizonte} semanas à frente**. "
+        "Os casos estimados corrigem o atraso de notificação."
     )
 
 semana_atual = painel[painel["se_codigo"] == semana_escolhida].copy()
@@ -902,8 +1025,8 @@ foco = semana_atual[semana_atual["cod_ibge"] == COD_FOCO]
 
 (aba_monitor, aba_mapa, aba_serie, aba_relatorio, aba_modelo,
  aba_dicionario) = st.tabs(
-    ["Monitor", "Brasilia por Regiao Administrativa", "Series temporais",
-     "Relatorio da semana", "Desempenho do modelo", "Dicionario de dados"]
+    ["Monitor", "Brasília por Região Administrativa", "Séries temporais",
+     "Relatório da semana", "Desempenho do modelo", "Dicionário de dados"]
 )
 
 # ----------------------------------------------------------------- monitor
@@ -921,28 +1044,28 @@ with aba_monitor:
 
     col1, col2, col3, col4 = st.columns(4)
     col1.metric(
-        "Semana epidemiologica",
+        "Semana epidemiológica",
         formatar_semana(semana_monitor),
-        help="Ultima semana consolidada na base. A fonte (InfoDengue) publica "
+        help="Última semana consolidada na base. A fonte (InfoDengue) publica "
              "semanalmente.",
     )
     col2.metric(
-        "Casos estimados em Brasilia",
-        f"{atual['casos_est']:,.0f}".replace(",", "."),
+        "Casos estimados em Brasília",
+        _milhar(atual["casos_est"]),
         delta=None if variacao is None else f"{variacao:+.0f}% vs semana anterior",
         delta_color="inverse",
-        help="Nowcasting do InfoDengue: corrige o atraso de notificacao.",
+        help="Nowcasting do InfoDengue: corrige o atraso de notificação.",
     )
     canal_q3 = atual["canal_q3"]
     col3.metric(
-        "Incidencia / 100 mil",
-        f"{atual['incidencia_100k']:.1f}",
+        "Incidência / 100 mil",
+        _decimal(atual["incidencia_100k"]),
         delta=(None if pd.isna(canal_q3)
-               else f"{atual['incidencia_100k'] - canal_q3:+.1f} vs canal endemico"),
+               else f"{_sinal(atual['incidencia_100k'] - canal_q3)} vs canal endêmico"),
         delta_color="inverse",
         help=(None if pd.isna(canal_q3)
-              else f"Limite esperado para esta semana do ano (Q3 historico): "
-                   f"{canal_q3:.1f} por 100 mil."),
+              else f"Limite esperado para esta semana do ano (Q3 histórico): "
+                   f"{_decimal(canal_q3)} por 100 mil."),
     )
     col4.metric(
         f"Prob. de alerta em {horizonte} semanas",
@@ -959,12 +1082,12 @@ with aba_monitor:
     risco_atual = str(atual["risco"])
     if risco_atual in CORES_RISCO:
         selos.append(chip(
-            f"risco {risco_atual}",
+            f"risco hoje: {risco_atual}",
             CORES_RISCO[risco_atual], TEXTO_SOBRE_RISCO[risco_atual],
         ))
     if sinalizar_provisorio and atual["dado_provisorio"] == 1:
         selos.append(chip(
-            f"dado provisorio -- {atual['completude']:.0%} digitado; os casos "
+            f"dado provisório -- {atual['completude']:.0%} digitado; os casos "
             "tendem a subir",
             "#dcc7b6", TEXTO,
         ))
@@ -972,20 +1095,20 @@ with aba_monitor:
 
     if atual["probabilidade_alerta"] >= limiar:
         st.error(
-            f"**Brasilia em alerta.** Probabilidade de "
+            f"**Brasília em alerta.** Probabilidade de "
             f"{atual['probabilidade_alerta']:.0%} de risco alto ou muito alto "
-            f"em {horizonte} semanas. Principais fatores: "
-            f"{atual['fatores_alerta']}."
+            f"em {horizonte} semanas. O que mais pesou: "
+            f"{fatores_legiveis(atual['fatores_alerta'])}."
         )
 
     # ---- indices da semana ----------------------------------------------
-    st.subheader("Indices da semana")
+    st.subheader("Índices da semana")
     municipios_idx = (painel[["cod_ibge", "municipio"]].drop_duplicates()
                       .sort_values("municipio"))
     opcoes_idx = [int(c) for c in municipios_idx["cod_ibge"]]
     rotulos_idx = dict(zip(opcoes_idx, municipios_idx["municipio"]))
     cod_idx = st.selectbox(
-        "Municipio", opcoes_idx,
+        "Município", opcoes_idx,
         index=opcoes_idx.index(COD_FOCO) if COD_FOCO in opcoes_idx else 0,
         format_func=lambda codigo: rotulos_idx.get(codigo, str(codigo)),
         key="municipio_indices",
@@ -993,8 +1116,8 @@ with aba_monitor:
     serie_idx = painel[painel["cod_ibge"] == cod_idx].sort_values("se_codigo")
     linha_idx = serie_idx.iloc[-1]
     st.caption(
-        f"Semana {formatar_semana(int(linha_idx['se_codigo']))}. Cada indice "
-        "traz embaixo a evidencia medida que o sustenta."
+        f"Semana {formatar_semana(int(linha_idx['se_codigo']))}. Cada índice "
+        "traz embaixo a evidência medida que o sustenta."
     )
 
     # Evidencia da regra de transmissao: a medicao do territorio e, quando o
@@ -1037,12 +1160,7 @@ with aba_monitor:
         coluna_idx.markdown(cartao_html, unsafe_allow_html=True)
 
     # ---- quadro dos 34 municipios ---------------------------------------
-    st.subheader("O territorio agora")
-    st.caption(
-        f"Os {n_municipios} municipios ordenados pela probabilidade de alerta, "
-        "cada um na sua semana mais recente -- series municipais podem fechar "
-        "antes da de Brasilia."
-    )
+    st.subheader("O território agora")
 
     # Uma linha por municipio: a mais recente de cada serie, porque municipio
     # pequeno as vezes fecha a semana antes do foco.
@@ -1050,15 +1168,29 @@ with aba_monitor:
     quadro = recorte.sort_values("probabilidade_alerta", ascending=False).copy()
     quadro["tendencia"] = quadro["razao_mm3_mm8"].map(seta_tendencia)
 
-    tabela = pd.DataFrame({
-        "Municipio": quadro["municipio"].values,
-        "Semana": [formatar_semana(s) for s in quadro["se_codigo"]],
-        "Casos est.": quadro["casos_est"].values,
-        "Incidencia /100 mil": quadro["incidencia_100k"].values,
+    # Risco e probabilidade logo depois do nome: no celular a tabela mostra
+    # tres colunas antes de rolar, e eram as que ficavam escondidas. A semana
+    # so vira coluna quando nem todos os municipios estao na mesma; quando
+    # estao, ela repetia o mesmo valor em todas as linhas e vai para a legenda.
+    semanas_quadro = quadro["se_codigo"].unique()
+    st.caption(
+        f"Os {n_municipios} municípios ordenados pela probabilidade de alerta"
+        + (f", todos na semana {formatar_semana(semanas_quadro[0])}."
+           if len(semanas_quadro) == 1 else
+           ", cada um na sua semana mais recente -- séries municipais podem "
+           "fechar antes da de Brasília.")
+    )
+    colunas_quadro = {
+        "Município": quadro["municipio"].values,
         "Risco": quadro["risco"].astype(str).values,
         "Prob. de alerta": (quadro["probabilidade_alerta"] * 100).values,
-        "Tendencia": quadro["tendencia"].values,
-    })
+        "Casos est.": quadro["casos_est"].values,
+        "Incidência /100 mil": quadro["incidencia_100k"].values,
+        "Tendência recente": quadro["tendencia"].values,
+    }
+    if len(semanas_quadro) > 1:
+        colunas_quadro["Semana"] = [formatar_semana(s) for s in quadro["se_codigo"]]
+    tabela = pd.DataFrame(colunas_quadro)
 
     def _pintar_risco(coluna: pd.Series) -> list[str]:
         estilos = []
@@ -1080,38 +1212,46 @@ with aba_monitor:
             estilos.append(f"color:{cor};font-weight:600")
         return estilos
 
+    # As larguras de risco e probabilidade sao as que cabem, junto do nome,
+    # numa tela de 390 px. O nome nao fica preso a esquerda (`pinned`): o
+    # Streamlit pinta coluna presa de cinza e ignora a cor do Styler.
     st.dataframe(
-        tabela.style
+        formato_br(tabela, {"Casos est.": 0, "Incidência /100 mil": 1})
         .apply(_pintar_risco, subset=["Risco"])
-        .apply(_pintar_tendencia, subset=["Tendencia"]),
+        .apply(_pintar_tendencia, subset=["Tendência recente"]),
         hide_index=True, width="stretch", height=520,
         column_config={
+            "Risco": st.column_config.TextColumn(
+                width=85,
+                help="Nível de risco na semana mais recente, pela incidência "
+                     "e pelo canal endêmico.",
+            ),
             "Casos est.": st.column_config.NumberColumn(
-                format="%.0f",
-                help="Nowcasting da semana mais recente do municipio.",
+                help="Nowcasting da semana mais recente do município.",
             ),
-            "Incidencia /100 mil": st.column_config.NumberColumn(format="%.1f"),
             "Prob. de alerta": st.column_config.ProgressColumn(
-                format="%.0f%%", min_value=0, max_value=100,
-                help=f"Probabilidade de risco alto ou muito alto em "
-                     f"{horizonte} semanas.",
+                format="%.0f%%", min_value=0, max_value=100, width=125,
+                help=f"A previsão do modelo: probabilidade de risco alto ou "
+                     f"muito alto daqui a {horizonte} semanas.",
             ),
-            "Tendencia": st.column_config.TextColumn(
-                help="Razao entre as medias moveis de 3 e 8 semanas da "
-                     "incidencia: acima de 1,1 sobe, abaixo de 0,9 cai.",
+            "Tendência recente": st.column_config.TextColumn(
+                help="Não é previsão: compara a média de casos das últimas 3 "
+                     "semanas com a das últimas 8. Acima de 1,1 a curva está "
+                     "subindo; abaixo de 0,9, caindo. Entra no modelo como "
+                     "uma das variáveis.",
             ),
         },
     )
 
     # ---- alarmes de variaveis -------------------------------------------
-    st.subheader("Alarmes de variaveis")
+    st.subheader("Alarmes de variáveis")
     alarmes_estado = carregar_alarmes()
 
     if alarmes_estado is None:
         st.info(
-            "`saidas/alarmes.json` nao encontrado. Gere-o com "
+            "`saidas/alarmes.json` não encontrado. Gere-o com "
             "`python src/vigia/executar_alarmes.py`: ele mede cada regra "
-            "contra o historico 2014-2026 e grava os alarmes da semana."
+            "contra o histórico 2014-2026 e grava os alarmes da semana."
         )
     else:
         ativos = alarmes_estado.get("alarmes", [])
@@ -1124,57 +1264,59 @@ with aba_monitor:
             # Ja chegam ordenados por lift historico decrescente: o alarme com
             # mais sustentacao no passado abre a lista.
             for alarme in ativos:
-                nome_regra = catalogo.get(alarme["id"], {}).get("nome", alarme["id"])
+                nome_regra = acentuar(catalogo.get(alarme["id"], {}).get("nome", alarme["id"]))
                 st.markdown(
                     '<div class="vigia-alarme">'
                     '<div class="vigia-alarme-titulo">'
-                    f'{html.escape(alarme["municipio"])} -- {html.escape(nome_regra)}'
+                    f'{html.escape(acentuar(alarme["municipio"]))} -- '
+                    f'{html.escape(nome_regra)}'
                     '</div>'
                     f'<div class="vigia-alarme-frase">{html.escape(alarme["frase"])}</div>'
                     '<div class="vigia-alarme-meta">'
                     f'Regra {html.escape(alarme["id"])} · gatilho p_rt1 '
-                    f'{alarme["valor_gatilho"]:.2f} · olhe {alarme["lag_semanas"]} '
-                    f'semanas a frente · lift historico {alarme["lift_historico"]:.1f}x '
+                    f'{_decimal(alarme["valor_gatilho"], 2)} · olhe '
+                    f'{alarme["lag_semanas"]} semanas à frente · lift histórico '
+                    f'{_decimal(alarme["lift_historico"])}x '
                     f'· SE {formatar_semana(alarme["semana"])}'
                     '</div></div>',
                     unsafe_allow_html=True,
                 )
         else:
             vigiadas = ", ".join(
-                f"{r['id']} ({r['nome'].lower()})" for r in aprovadas
+                f"{r['id']} ({acentuar(r['nome']).lower()})" for r in aprovadas
             )
             complemento = (
-                f" As regras com evidencia historica seguem vigiadas: {vigiadas}."
+                f" As regras com evidência histórica seguem vigiadas: {vigiadas}."
                 if vigiadas else ""
             )
             st.markdown(
-                '<div class="vigia-sem-alarme">Nenhum alarme de variavel '
+                '<div class="vigia-sem-alarme">Nenhum alarme de variável '
                 "ligado nesta semana (medido na SE "
                 f'{formatar_semana(alarmes_estado["gerado_da_semana"])}).'
                 f"{html.escape(complemento)}</div>",
                 unsafe_allow_html=True,
             )
 
-        with st.expander("Metodologia: todas as regras medidas, aprovadas ou nao"):
+        with st.expander("Metodologia: todas as regras medidas, aprovadas ou não"):
             st.caption(
                 f"Base: {regras_info.get('base', '?')}. Medido em "
                 f"{regras_info.get('gerado_em', '?')}. Regras reprovadas "
-                "aparecem aqui por transparencia e nunca disparam alarme."
+                "aparecem aqui por transparência e nunca disparam alarme."
             )
             st.caption(regras_info.get("metodo", ""))
 
             if todas_regras:
                 medicao = pd.DataFrame({
                     "Regra": [r["id"] for r in todas_regras],
-                    "Nome": [r["nome"] for r in todas_regras],
-                    "Condicao": [r["condicao"] for r in todas_regras],
+                    "Nome": [acentuar(r["nome"]) for r in todas_regras],
+                    "Condição": [r["condicao"] for r in todas_regras],
                     "Horizonte (sem.)": [r["lag_semanas"] for r in todas_regras],
-                    "Episodios": [r["n_episodios"] for r in todas_regras],
+                    "Episódios": [r["n_episodios"] for r in todas_regras],
                     "Lift mediano": [r["lift_mediano"] for r in todas_regras],
                     "Acima do normal (%)": [
                         r["frac_lift_acima_1"] * 100 for r in todas_regras
                     ],
-                    "Situacao": [
+                    "Situação": [
                         "aprovada" if r["aprovada"] else "reprovada"
                         for r in todas_regras
                     ],
@@ -1188,19 +1330,15 @@ with aba_monitor:
                     ]
 
                 st.dataframe(
-                    medicao.style.apply(_pintar_situacao, subset=["Situacao"]),
+                    formato_br(medicao, {"Lift mediano": 2,
+                                         "Acima do normal (%)": 0})
+                    .apply(_pintar_situacao, subset=["Situação"]),
                     hide_index=True, width="stretch",
-                    column_config={
-                        "Lift mediano": st.column_config.NumberColumn(format="%.2f"),
-                        "Acima do normal (%)": st.column_config.NumberColumn(
-                            format="%.0f%%"
-                        ),
-                    },
                 )
 
                 for regra in todas_regras:
                     st.markdown(
-                        f"- **{regra['id']} -- {regra['nome']}:** "
+                        f"- **{regra['id']} -- {acentuar(regra['nome'])}:** "
                         f"{regra['frase_evidencia']}"
                     )
 
@@ -1210,40 +1348,38 @@ with aba_monitor:
                 if not medidas:
                     continue
                 st.markdown(
-                    f"**Onde {regra['id']} ({regra['nome'].lower()}) mais se "
-                    "confirmou** -- lift historico por municipio, so quem tem "
-                    "8 ou mais episodios:"
+                    f"**Onde {regra['id']} ({acentuar(regra['nome']).lower()}) mais se "
+                    "confirmou** -- lift histórico por município, só quem tem "
+                    "8 ou mais episódios:"
                 )
+                lift_por_municipio = pd.DataFrame(medidas).assign(
+                    municipio=lambda d: d["municipio"].map(acentuar)
+                ).rename(columns={
+                    "municipio": "Município", "n": "Episódios",
+                    "lift": "Lift histórico", "cod_ibge": "Código IBGE",
+                })[["Município", "Episódios", "Lift histórico"]]
                 st.dataframe(
-                    pd.DataFrame(medidas).rename(columns={
-                        "municipio": "Municipio", "n": "Episodios",
-                        "lift": "Lift historico", "cod_ibge": "Codigo IBGE",
-                    })[["Municipio", "Episodios", "Lift historico"]],
+                    formato_br(lift_por_municipio, {"Lift histórico": 2}),
                     hide_index=True, width="stretch", height=280,
-                    column_config={
-                        "Lift historico": st.column_config.NumberColumn(
-                            format="%.2f"
-                        ),
-                    },
                 )
 
     # ---- clima dos proximos 14 dias --------------------------------------
-    st.subheader("Clima dos proximos 14 dias")
+    st.subheader("Clima dos próximos 14 dias")
     clima = carregar_clima_futuro()
 
     if clima is None:
         st.caption(
-            "`saidas/clima_futuro.json` nao encontrado. Gere-o com "
-            "`python src/vigia/executar_clima_futuro.py` (previsao Open-Meteo "
-            "para os municipios do territorio)."
+            "`saidas/clima_futuro.json` não encontrado. Gere-o com "
+            "`python src/vigia/executar_clima_futuro.py` (previsão Open-Meteo "
+            "para os municípios do território)."
         )
     else:
         se_corrente = semana_epidemiologica(pd.Timestamp.today())
         coletado = int(clima.get("coletado_para_semana", 0))
         if coletado != se_corrente:
             st.caption(
-                f"Previsao coletada na SE {formatar_semana(coletado)}; a "
-                f"semana corrente e {formatar_semana(se_corrente)}. Rode "
+                f"Previsão coletada na SE {formatar_semana(coletado)}; a "
+                f"semana corrente é {formatar_semana(se_corrente)}. Rode "
                 "`python src/vigia/executar_clima_futuro.py` para atualizar."
             )
 
@@ -1260,51 +1396,46 @@ with aba_monitor:
             if municipio_clima is None:
                 continue
             linhas_clima.append({
-                "Municipio": municipio_clima["municipio"],
+                "Município": acentuar(municipio_clima["municipio"]),
                 "Chuva 7 dias (mm)": municipio_clima["chuva_7d_mm"],
                 "Chuva 14 dias (mm)": municipio_clima["chuva_14d_mm"],
                 "Dias de chuva (14 d)": municipio_clima["dias_chuva_14d"],
-                "Temp. media (C)": municipio_clima["temp_media_14d"],
+                "Temp. média (°C)": municipio_clima["temp_media_14d"],
             })
 
         if not linhas_clima:
             st.caption(
-                "A previsao coletada nao cobre os municipios em foco nesta "
+                "A previsão coletada não cobre os municípios em foco nesta "
                 "semana."
             )
         else:
             st.dataframe(
-                pd.DataFrame(linhas_clima),
+                formato_br(pd.DataFrame(linhas_clima), {
+                    "Chuva 7 dias (mm)": 1, "Chuva 14 dias (mm)": 1,
+                    "Dias de chuva (14 d)": 0, "Temp. média (°C)": 1,
+                }),
                 hide_index=True, width="stretch",
                 column_config={
-                    "Chuva 7 dias (mm)": st.column_config.NumberColumn(
-                        format="%.1f"
-                    ),
-                    "Chuva 14 dias (mm)": st.column_config.NumberColumn(
-                        format="%.1f"
-                    ),
                     "Dias de chuva (14 d)": st.column_config.NumberColumn(
-                        format="%d",
-                        help="Dias com 1 mm ou mais, o mesmo criterio da "
-                             "serie observada.",
-                    ),
-                    "Temp. media (C)": st.column_config.NumberColumn(
-                        format="%.1f"
+                        help="Dias com 1 mm ou mais, o mesmo critério da "
+                             "série observada.",
                     ),
                 },
             )
             st.caption(
-                "Previsao Open-Meteo para Brasilia e os cinco municipios com "
+                "Previsão Open-Meteo para Brasília e os cinco municípios com "
                 "maior probabilidade de alerta. Leitura honesta: chuva e "
-                "temperatura a frente dizem se o territorio fica receptivo ao "
-                "mosquito nas proximas semanas -- **nao entram no modelo**, "
-                "que preve com o clima ja observado. Dias sem previsao ficam "
-                "fora das somas e da media."
+                "temperatura à frente dizem se o território fica receptivo ao "
+                "mosquito nas próximas semanas -- **não entram no modelo**, "
+                "que prevê com o clima já observado. Dias sem previsão ficam "
+                "fora das somas e da média."
             )
         faltantes = clima.get("faltantes", [])
         if faltantes:
             st.caption(
-                f"Sem previsao para {len(faltantes)} municipio(s) nesta coleta."
+                f"Sem previsão para {len(faltantes)} "
+                + ("município" if len(faltantes) == 1 else "municípios")
+                + " nesta coleta."
             )
 
 # ------------------------------------------- Brasilia por Regiao Administrativa
@@ -1313,21 +1444,23 @@ with aba_mapa:
 
     if malha_ras is None:
         st.warning(
-            "Malha das Regioes Administrativas ausente. "
-            "Execute `python src/vigia/executar_ras.py` para gera-la."
+            "Malha das Regiões Administrativas ausente. "
+            "Execute `python src/vigia/executar_ras.py` para gerá-la."
         )
     else:
         st.subheader("Estrutura territorial do Distrito Federal")
         st.caption(
-            "As 31 Regioes Administrativas com geometria disponivel. Brasilia e um "
-            "unico municipio na malha do IBGE, e esta camada mostra a divisao "
-            "intraurbana que o dado municipal nao alcanca."
+            "As 31 Regiões Administrativas com geometria disponível. Brasília é um "
+            "único município na malha do IBGE, e esta camada mostra a divisão "
+            "intraurbana que o dado municipal não alcança."
         )
 
         regioes = pd.DataFrame([
             feicao["properties"] for feicao in malha_ras["features"]
         ])
         regioes["populacao"] = pd.to_numeric(regioes["populacao"], errors="coerce")
+        # `ra_nome` e a chave da malha e fica como esta; o acento so no que se le.
+        regioes["ra_exibicao"] = regioes["ra_nome"].map(acentuar)
 
         # Indicadores do Censo 2022 por RA. Sao eles que dao conteudo proprio a
         # cada area: sem eles o mapa so sabe repetir o tamanho da populacao.
@@ -1339,29 +1472,29 @@ with aba_mapa:
             )
 
         indicadores = {
-            "Populacao": ("populacao", "habitantes"),
-            "Densidade": ("densidade_hab_km2", "hab./km2"),
+            "População": ("populacao", "habitantes"),
+            "Densidade": ("densidade_hab_km2", "hab./km²"),
         }
         if vulnerabilidade is not None:
             indicadores.update({
-                "Vulnerabilidade": ("indice_vulnerabilidade", "indice (0 a 100)"),
-                "Esgoto inadequado": ("esgoto_inadequado_pct", "% dos domicilios"),
-                "Sem agua de rede": ("sem_agua_rede_pct", "% dos domicilios"),
-                "Lixo sem coleta": ("lixo_sem_coleta_pct", "% dos domicilios"),
-                "Sem bueiro": ("sem_bueiro_pct", "% dos domicilios"),
-                "Rua sem pavimento": ("sem_pavimento_pct", "% dos domicilios"),
+                "Vulnerabilidade": ("indice_vulnerabilidade", "índice (0 a 100)"),
+                "Esgoto inadequado": ("esgoto_inadequado_pct", "% dos domicílios"),
+                "Sem água de rede": ("sem_agua_rede_pct", "% dos domicílios"),
+                "Lixo sem coleta": ("lixo_sem_coleta_pct", "% dos domicílios"),
+                "Sem bueiro": ("sem_bueiro_pct", "% dos domicílios"),
+                "Rua sem pavimento": ("sem_pavimento_pct", "% dos domicílios"),
             })
 
         setores = carregar_setores()
-        escala = "Regiao Administrativa"
+        escala = "Região Administrativa"
         if setores is not None:
             escala = st.radio(
                 "Escala do mapa",
-                ["Regiao Administrativa", "Quadra (setor censitario)"],
+                ["Região Administrativa", "Quadra (setor censitário)"],
                 horizontal=True,
                 index=1,
-                help="O setor censitario e a menor unidade que o IBGE publica: "
-                     "algumas quadras, cerca de trezentos domicilios.",
+                help="O setor censitário é a menor unidade que o IBGE publica: "
+                     "algumas quadras, cerca de trezentos domicílios.",
             )
 
         escolhido = st.radio(
@@ -1376,31 +1509,31 @@ with aba_mapa:
 
         explicacao = {
             "indice_vulnerabilidade":
-                "Media das tres dimensoes abaixo, cada uma como distancia relativa "
-                "dentro do proprio DF. Ordena as RAs numa leitura so; nao pondera as "
-                "dimensoes, porque nao ha estudo local que sustente pesos diferentes.",
+                "Média das três dimensões abaixo, cada uma como distância relativa "
+                "dentro do próprio DF. Ordena as RAs numa leitura só; não pondera as "
+                "dimensões, porque não há estudo local que sustente pesos diferentes.",
             "esgoto_inadequado_pct":
-                "Domicilios com esgoto em fossa rudimentar, vala ou outra forma -- "
-                "agua parada exposta.",
+                "Domicílios com esgoto em fossa rudimentar, vala ou outra forma -- "
+                "água parada exposta.",
             "sem_agua_rede_pct":
-                "Domicilios sem ligacao a rede geral. Levam ao armazenamento em "
-                "caixas e toneis, criadouro classico do Aedes aegypti.",
+                "Domicílios sem ligação à rede geral. Levam ao armazenamento em "
+                "caixas e tonéis, criadouro clássico do Aedes aegypti.",
             "lixo_sem_coleta_pct":
                 "Lixo queimado, enterrado ou com outro destino, que acumula "
-                "recipientes com agua parada.",
+                "recipientes com água parada.",
             "sem_bueiro_pct":
-                "Domicilios em face de rua sem boca de lobo. E a drenagem que "
-                "decide se a chuva escoa ou empoca, e o Aedes se cria em agua "
-                "parada, nao corrente -- por isso este e o indicador de fluxo "
-                "das aguas na escala em que o mosquito vive.",
+                "Domicílios em face de rua sem boca de lobo. É a drenagem que "
+                "decide se a chuva escoa ou empoça, e o Aedes se cria em água "
+                "parada, não corrente -- por isso este é o indicador de fluxo "
+                "das águas na escala em que o mosquito vive.",
             "sem_pavimento_pct":
-                "Domicilios em face de rua sem pavimento, onde a agua empoca "
+                "Domicílios em face de rua sem pavimento, onde a água empoça "
                 "mesmo havendo drenagem.",
         }
         if coluna in explicacao:
             st.caption(
                 explicacao[coluna] + " Fonte: Censo 2022 (IBGE), agregados por "
-                "subdistrito -- no DF, o subdistrito e a Regiao Administrativa."
+                "subdistrito -- no DF, o subdistrito é a Região Administrativa."
             )
 
         if escala.startswith("Quadra"):
@@ -1440,8 +1573,8 @@ with aba_mapa:
                 zoom=8.55,
                 center={"lat": -15.79, "lon": -47.87},
                 opacity=0.88,
-                hover_name="ra_nome",
-                hover_data={"faixa": False, coluna: ":,.0f"},
+                hover_name="ra_exibicao",
+                hover_data={"faixa": False, "ra_nome": False, coluna: ":,.0f"},
                 labels={coluna: rotulo, "faixa": rotulo.capitalize()},
             )
             # Borda clara: sem ela duas RAs vizinhas da mesma faixa viram uma mancha.
@@ -1473,7 +1606,7 @@ with aba_mapa:
                     lat=[centros[n][0] for n in grupo["ra_nome"]],
                     lon=[centros[n][1] for n in grupo["ra_nome"]],
                     mode="text",
-                    text=list(grupo["ra_nome"]),
+                    text=list(grupo["ra_exibicao"]),
                     textfont={"size": 10, "family": FONTE_CORPO, "color": cor},
                     hoverinfo="skip",
                     showlegend=False,
@@ -1487,34 +1620,35 @@ with aba_mapa:
             )
             st.plotly_chart(mapa_ras, width="stretch", config=CONFIG_GRAFICO)
             st.caption(
-                f"Nomeadas no mapa {len(cabe_rotulo)} das 31 RAs: onde varias se "
+                f"Nomeadas no mapa {len(cabe_rotulo)} das 31 RAs: onde várias se "
                 "aglomeram, fica o nome da maior, e as demais aparecem ao passar o "
                 "cursor e na tabela abaixo -- uma pilha de nomes sobrepostos seria "
-                "pior do que nome nenhum. As faixas sao quartis, com cerca de oito "
+                "pior do que nome nenhum. As faixas são quartis, com cerca de oito "
                 "RAs cada; numa escala linear, 18 das 31 cairiam no mesmo tom claro."
             )
 
+        tabela_ras = regioes.sort_values("populacao", ascending=False)[
+            [c for c in ("ra_exibicao", "populacao", "cod_subdistrito") if c in regioes]
+        ].rename(columns={
+            "ra_exibicao": "Região Administrativa",
+            "populacao": "População (PDAD 2021)",
+            "cod_subdistrito": "Código IBGE (subdistrito)",
+        })
         st.dataframe(
-            regioes.sort_values("populacao", ascending=False)[
-                [c for c in ("ra_nome", "populacao", "cod_subdistrito") if c in regioes]
-            ].rename(columns={
-                "ra_nome": "Regiao Administrativa",
-                "populacao": "Populacao (PDAD 2021)",
-                "cod_subdistrito": "Codigo IBGE (subdistrito)",
-            }),
+            formato_br(tabela_ras, {"População (PDAD 2021)": 0}),
             hide_index=True, width="stretch", height=320,
         )
 
         st.info(
-            "**Por que este mapa nao mostra casos de dengue.** Nao ha fonte publica "
-            "com serie semanal de casos por Regiao Administrativa: o InfoDengue opera "
-            "apenas no nivel municipal, o painel de incidencia da SES-DF nao expoe "
-            "dados de forma programatica, o LIRAa e publicado como relatorio fechado "
+            "**Por que este mapa não mostra casos de dengue.** Não há fonte pública "
+            "com série semanal de casos por Região Administrativa: o InfoDengue opera "
+            "apenas no nível municipal, o painel de incidência da SES-DF não expõe "
+            "dados de forma programática, o LIRAa é publicado como relatório fechado "
             "e os microdados do SINAN dependem do FTP do DATASUS. Repartir os casos do "
-            "DF entre as RAs na proporcao da populacao produziria um mapa apenas "
+            "DF entre as RAs na proporção da população produziria um mapa apenas "
             "aparentemente informativo, que reproduziria o mapa populacional e "
-            "esconderia a desigualdade intraurbana real. Obtida a serie por RA junto "
-            "a SES-DF, ela se acopla a esta malha pelo nome da regiao."
+            "esconderia a desigualdade intraurbana real. Obtida a série por RA junto "
+            "à SES-DF, ela se acopla a esta malha pelo nome da região."
         )
 
 
@@ -1522,10 +1656,24 @@ with aba_mapa:
 with aba_serie:
     serie = painel[painel["cod_ibge"] == COD_FOCO].sort_values("data_ini_se")
     st.caption(
-        "Serie de **Brasilia**. O InfoDengue publica casos no nivel municipal, "
-        "e o Distrito Federal e um unico municipio: esta e a serie do territorio "
-        "inteiro, cidades satelites incluidas."
+        "Série de **Brasília**. O InfoDengue publica casos no nível municipal, "
+        "e o Distrito Federal é um único município: esta é a série do território "
+        "inteiro, cidades-satélite incluídas."
     )
+
+    # A serie inteira, de 2015 para ca, e dominada pelo pico de 2024 (25 mil
+    # casos numa semana): a situacao de agora vira uma linha rente ao chao.
+    # O padrao e olhar os dois ultimos anos; o eixo vertical se ajusta ao
+    # periodo, o que um zoom no proprio grafico nao faz.
+    periodos = {"1 ano": 1, "2 anos": 2, "5 anos": 5, "Tudo": None}
+    periodo = st.segmented_control(
+        "Período", list(periodos), default="2 anos",
+        key="periodo_series",
+    ) or "2 anos"
+    anos = periodos[periodo]
+    if anos is not None:
+        inicio = serie["data_ini_se"].max() - pd.DateOffset(years=anos)
+        serie = serie[serie["data_ini_se"] >= inicio]
 
     figura = go.Figure()
     figura.add_trace(go.Scatter(
@@ -1549,9 +1697,12 @@ with aba_serie:
     marcador = serie.loc[serie["se_codigo"] == semana_escolhida, "data_ini_se"]
     if not marcador.empty:
         figura.add_vline(x=marcador.iloc[0], line_dash="dash", line_color=ACENTO)
+    # Eixo em "25.000", e nao no "25k" do padrao do Plotly; o hover mostra a
+    # semana pela data de inicio, no formato brasileiro.
     figura.update_layout(
         height=380, margin={"t": 30},
         yaxis_title="Casos por semana", xaxis_title=None,
+        yaxis_tickformat=",d", hovermode="x unified", xaxis=EIXO_DATAS,
         legend={"orientation": "h", "y": 1.12},
     )
     st.plotly_chart(figura, width="stretch", config=CONFIG_GRAFICO)
@@ -1559,57 +1710,61 @@ with aba_serie:
     canal = go.Figure()
     canal.add_trace(go.Scatter(
         x=serie["data_ini_se"], y=serie["canal_q3"],
-        name="Limite esperado (Q3 historico)",
+        name="Limite esperado (Q3 histórico)",
         line={"color": NEUTRO_500, "dash": "dash"},
     ))
     canal.add_trace(go.Scatter(
         x=serie["data_ini_se"], y=serie["incidencia_100k"],
-        name="Incidencia por 100 mil", line={"color": ACENTO_800, "width": 2},
+        name="Incidência por 100 mil", line={"color": ACENTO_800, "width": 2},
     ))
     canal.update_layout(
         height=300, margin={"t": 30},
-        yaxis_title="Incidencia / 100 mil hab.",
+        yaxis_title="Incidência / 100 mil hab.",
+        hovermode="x unified", xaxis=EIXO_DATAS,
         legend={"orientation": "h", "y": 1.15},
     )
     st.plotly_chart(canal, width="stretch", config=CONFIG_GRAFICO)
     st.caption(
-        "Incidencia acima do limite esperado indica atividade acima do padrao "
-        "historico daquela semana do ano no municipio (canal endemico)."
+        "Incidência acima do limite esperado indica atividade acima do padrão "
+        "histórico daquela semana do ano no município (canal endêmico)."
     )
 
 # ----------------------------------------------------------- relatorio da semana
 with aba_relatorio:
     if foco.empty:
-        st.warning("Sem dado de Brasilia nesta semana.")
+        st.warning("Sem dado de Brasília nesta semana.")
     else:
         r = foco.iloc[0]
-        st.subheader(f"Brasilia -- semana {formatar_semana(semana_escolhida)}")
+        st.subheader(f"Brasília -- semana {formatar_semana(semana_escolhida)}")
 
         resumo = pd.DataFrame({
             "Indicador": [
                 "Casos notificados",
                 "Casos estimados",
-                "Incidencia / 100 mil",
-                "Nivel de risco",
+                "Incidência / 100 mil",
+                "Nível de risco",
                 f"Probabilidade de alerta ({horizonte} semanas)",
-                "Principais fatores",
-                "Notificacao completa",
+                "Notificação completa",
             ],
             "Valor": [
-                f"{r['casos']:,.0f}".replace(",", "."),
-                f"{r['casos_est']:,.0f}".replace(",", "."),
-                f"{r['incidencia_100k']:.1f}",
+                _milhar(r["casos"]),
+                _milhar(r["casos_est"]),
+                _decimal(r["incidencia_100k"]),
                 str(r["risco"]).capitalize(),
                 f"{r['probabilidade_alerta']:.0%}",
-                r["fatores_alerta"],
-                "nao" if r["dado_provisorio"] == 1 else "sim",
+                "não" if r["dado_provisorio"] == 1 else "sim",
             ],
         })
         st.dataframe(resumo, hide_index=True, width="stretch")
+        # Fora da tabela: e a linha mais longa, e numa celula ela era cortada.
+        st.markdown(
+            f"**O que mais pesou na previsão:** "
+            f"{fatores_legiveis(r['fatores_alerta'])}."
+        )
 
         if sinalizar_provisorio and r["dado_provisorio"] == 1:
             st.warning(
-                f"Notificacao ainda incompleta em Brasilia nesta semana "
+                f"Notificação ainda incompleta em Brasília nesta semana "
                 f"({r['completude']:.0%} digitado). Os casos observados tendem a subir."
             )
 
@@ -1620,7 +1775,7 @@ with aba_relatorio:
          "risco", "probabilidade_alerta", "fatores_alerta", "dado_provisorio"]
     ]
     st.download_button(
-        "Baixar a serie completa de Brasilia (CSV)",
+        "Baixar a série completa de Brasília (CSV)",
         data=serie_bsb.to_csv(index=False).encode("utf-8"),
         file_name="vigia_dengue_brasilia.csv",
         mime="text/csv",
@@ -1634,12 +1789,12 @@ with aba_relatorio:
 with aba_modelo:
     desempenho = carregar_desempenho()
     if desempenho is None:
-        st.info("Execute a validacao temporal para preencher esta aba.")
+        st.info("Execute a validação temporal para preencher esta aba.")
     else:
-        st.subheader("Validacao temporal em janela expansiva")
+        st.subheader("Validação temporal em janela expansiva")
         st.caption(
-            "Cada ano e previsto por um modelo treinado apenas com os anos "
-            "anteriores. Nenhuma informacao do futuro entra no treino."
+            "Cada ano é previsto por um modelo treinado apenas com os anos "
+            "anteriores. Nenhuma informação do futuro entra no treino."
         )
         desempenho = desempenho.assign(
             modelo=desempenho["modelo"].map(NOMES_MODELO)
@@ -1648,12 +1803,13 @@ with aba_modelo:
         medias = (desempenho.groupby("modelo")[
             ["sensibilidade", "especificidade", "vpp", "auc", "auprc", "brier"]
         ].mean().round(3).reindex(ordem_modelos).reset_index())
+        metricas = ["Sensibilidade", "Especificidade", "VPP", "AUC", "AUPRC", "Brier"]
         st.dataframe(
-            medias.rename(columns={
+            formato_br(medias.rename(columns={
                 "modelo": "Modelo", "sensibilidade": "Sensibilidade",
                 "especificidade": "Especificidade", "vpp": "VPP",
                 "auc": "AUC", "auprc": "AUPRC", "brier": "Brier",
-            }),
+            }), dict.fromkeys(metricas, 3)),
             hide_index=True, width="stretch",
         )
 
@@ -1677,17 +1833,17 @@ with aba_dicionario:
 
     if dicionario is None:
         st.warning(
-            "Dicionario nao encontrado. Gere-o com `executar_dicionario.py` para "
+            "Dicionário não encontrado. Gere-o com `executar_dicionario.py` para "
             "que esta aba mostre as colunas da base."
         )
     else:
-        st.subheader("As colunas da base analitica")
+        st.subheader("As colunas da base analítica")
         st.markdown(
-            "Cada linha e uma coluna da base municipio-semana que sustenta a "
-            "previsao. O campo **papel** diz como ela entra: *preditor "
-            "essencial* e o que a previsao nao dispensa, *preditor* e tudo que "
-            "o modelo usa, *origem do alvo* e a coluna de onde sai o desfecho, "
-            "e *apoio* sustenta calculo, conferencia e painel sem entrar no "
+            "Cada linha é uma coluna da base município-semana que sustenta a "
+            "previsão. O campo **papel** diz como ela entra: *preditor "
+            "essencial* é o que a previsão não dispensa, *preditor* é tudo que "
+            "o modelo usa, *origem do alvo* é a coluna de onde sai o desfecho, "
+            "e *apoio* sustenta cálculo, conferência e painel sem entrar no "
             "treino."
         )
 
@@ -1702,9 +1858,9 @@ with aba_dicionario:
         blocos = ["todos"] + sorted(dicionario["bloco"].unique())
         papeis = ["todos"] + sorted(dicionario["papel"].unique())
         bloco_escolhido = filtro_a.selectbox("Bloco", blocos)
-        papel_escolhido = filtro_b.selectbox("Papel na previsao", papeis)
+        papel_escolhido = filtro_b.selectbox("Papel na previsão", papeis)
         busca = st.text_input(
-            "Buscar", placeholder="nome da coluna, descricao ou fonte",
+            "Buscar", placeholder="nome da coluna, descrição ou fonte",
             label_visibility="collapsed",
         )
 
@@ -1723,33 +1879,30 @@ with aba_dicionario:
             if len(visivel) != len(dicionario) else f"{len(dicionario)} colunas"
         )
         st.dataframe(
-            visivel.rename(columns={
+            formato_br(visivel.rename(columns={
                 "coluna": "Coluna", "bloco": "Bloco", "tipo": "Tipo",
                 "papel": "Papel", "preenchida_pct": "Preenchida (%)",
-                "fonte": "Fonte", "descricao": "Descricao",
-            }),
+                "fonte": "Fonte", "descricao": "Descrição",
+            }), {"Preenchida (%)": 1}),
             hide_index=True, width="stretch", height=520,
-            column_config={
-                "Preenchida (%)": st.column_config.NumberColumn(format="%.1f%%"),
-            },
         )
 
         st.download_button(
-            "Baixar o dicionario completo (CSV)",
+            "Baixar o dicionário completo (CSV)",
             data=dicionario.to_csv(index=False).encode("utf-8"),
             file_name="dicionario_de_dados_vigia.csv",
             mime="text/csv",
-            help="As 124 colunas com bloco, papel, fonte e descricao -- "
-                 "o arquivo inteiro, sem os filtros da tela.",
+            help=f"As {len(dicionario)} colunas com bloco, papel, fonte e "
+                 "descrição -- o arquivo inteiro, sem os filtros da tela.",
         )
 
         st.caption(
-            "Nenhuma variavel enxerga o futuro: medias moveis sao deslocadas em "
-            "uma semana, as anomalias sazonais e o canal endemico usam apenas "
-            "anos anteriores, e a dobra de validacao corta pela data que o alvo "
+            "Nenhuma variável enxerga o futuro: médias móveis são deslocadas em "
+            "uma semana, as anomalias sazonais e o canal endêmico usam apenas "
+            "anos anteriores, e a dobra de validação corta pela data que o alvo "
             "observa. As colunas abaixo de 100% de preenchimento faltam por "
-            "construcao -- o canal endemico exige anos anteriores, e o primeiro "
-            "ano da serie nao os tem."
+            "construção -- o canal endêmico exige anos anteriores, e o primeiro "
+            "ano da série não os tem."
         )
 
         # ---- glossario: o que cada termo da tabela significa ----------
@@ -1757,9 +1910,9 @@ with aba_dicionario:
         if glossario_tab is not None:
             st.subheader("O que cada termo significa")
             st.caption(
-                "Para quem nao e da area: as colunas da tabela, os tipos de "
-                "dado, os papeis na previsao, as fontes e os termos que "
-                "aparecem nas descricoes."
+                "Para quem não é da área: as colunas da tabela, os tipos de "
+                "dado, os papéis na previsão, as fontes e os termos que "
+                "aparecem nas descrições."
             )
             def _itens(linhas: pd.DataFrame) -> str:
                 return "\n".join(
@@ -1798,7 +1951,7 @@ with aba_dicionario:
 st.divider()
 st.caption(
     "Fontes: InfoDengue (Fiocruz/FGV) para casos e clima observado; Open-Meteo "
-    "para a previsao de clima; IBGE para populacao e malha municipal. "
-    "Ferramenta de apoio a vigilancia -- nao substitui a analise da equipe de "
-    "vigilancia epidemiologica local."
+    "para a previsão de clima; IBGE para população e malha municipal. "
+    "Ferramenta de apoio à vigilância -- não substitui a análise da equipe de "
+    "vigilância epidemiológica local."
 )
