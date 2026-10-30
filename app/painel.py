@@ -407,6 +407,29 @@ st.markdown(
         border-radius: 50%;
         flex: none;
       }
+      /* Corpo no formato do cartao de previsao do tempo: icone a esquerda,
+         nivel em destaque e, embaixo dele, o que o numero quer dizer e o que
+         fazer a respeito. */
+      .vigia-indice-corpo {
+        display: flex;
+        gap: 0.75rem;
+        align-items: flex-start;
+      }
+      .vigia-indice-icone {
+        width: 2.2rem;
+        height: 2.2rem;
+        flex: none;
+        color: #2c455d;
+        margin-top: 0.1rem;
+      }
+      .vigia-indice-icone svg { width: 100%; height: 100%; display: block; }
+
+      /* Botoes de medida do grafico semanal: no celular os quatro nao cabem
+         numa linha, e sem quebra o ultimo sumia cortado na borda. */
+      [data-testid="stButtonGroup"] [role="radiogroup"] {
+        flex-wrap: wrap;
+        row-gap: 0.35rem;
+      }
       .vigia-indice-nivel {
         font-family: "Barlow Condensed", "Arial Narrow", sans-serif;
         font-size: 1.55rem;
@@ -418,6 +441,12 @@ st.markdown(
         font-size: 0.9rem;
         line-height: 1.35;
         font-variant-numeric: tabular-nums;
+      }
+      .vigia-indice-conselho {
+        color: #55595c;
+        font-size: 0.9rem;
+        line-height: 1.35;
+        margin-top: 0.2rem;
       }
       .vigia-indice-evidencia {
         color: #7a7a7d;
@@ -638,18 +667,52 @@ def formato_br(tabela: pd.DataFrame, casas: dict[str, int]):
     )
 
 
+def _svg(corpo: str) -> str:
+    """Icone de traco, na cor do texto ao redor, como os de previsao do tempo."""
+    return ('<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" '
+            'stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" '
+            f'aria-hidden="true">{corpo}</svg>')
+
+
+# Um icone por indice. Desenhados aqui, em SVG inline: o painel nao depende de
+# fonte de icones nem de imagem externa.
+ICONES = {
+    "mosquito": _svg(
+        '<circle cx="12" cy="5" r="1.6"/><path d="M12 3.4 10.6 1.5"/>'
+        '<path d="M12 6.6v10.4"/>'
+        '<path d="M12 9c-2.5-3.6-6.4-4-8-2.4 1.2 2 4.6 3.4 8 3.4"/>'
+        '<path d="M12 9c2.5-3.6 6.4-4 8-2.4-1.2 2-4.6 3.4-8 3.4"/>'
+        '<path d="M11.2 12.5 7.5 14l-2 3.5M12.8 12.5l3.7 1.5 2 3.5"/>'
+        '<path d="M11.4 15 8.6 18l-.8 3.5M12.6 15l2.8 3 .8 3.5"/>'),
+    "transmissao": _svg(
+        '<path d="M3 17l5.5-5.5 4 4L21 7"/><path d="M15 7h6v6"/>'),
+    "clima": _svg(
+        '<path d="M7 15.5a4 4 0 1 1 .9-7.9A5.2 5.2 0 0 1 17.6 9a3.3 3.3 0 0 1 '
+        '.4 6.5H7z"/><path d="M8.5 18.5 7.5 21M12.5 18.5l-1 2.5M16.5 18.5l-1 2.5"/>'),
+    "dado": _svg(
+        '<rect x="5" y="4" width="14" height="17" rx="2"/>'
+        '<path d="M9 4V2.8h6V4"/><path d="M8.5 10h7M8.5 13.5h7M8.5 17h4"/>'),
+}
+
+
 def cartao_indice(titulo: str, estado: str, nivel: str, leitura: str,
-                  evidencia: str) -> str:
-    """Um indice da semana em cartao.
+                  evidencia: str, icone: str = "", conselho: str = "") -> str:
+    """Um indice da semana em cartao, no formato de previsao do tempo.
 
     Todo texto passa por escape: nome de municipio e frase de evidencia vem de
-    dado e entram em HTML cru.
+    dado e entram em HTML cru. O icone nao: e o SVG fixo de ICONES.
     """
     cor = COR_INDICE.get(estado, COR_INDICE["sem_dado"])
     evidencia_html = (
         f'<div class="vigia-indice-evidencia">{html.escape(evidencia)}</div>'
         if evidencia else ""
     )
+    conselho_html = (
+        f'<div class="vigia-indice-conselho">{html.escape(conselho)}</div>'
+        if conselho else ""
+    )
+    icone_html = (f'<div class="vigia-indice-icone">{ICONES[icone]}</div>'
+                  if icone in ICONES else "")
     return (
         '<div class="vigia-indice">'
         '<div class="vigia-indice-topo">'
@@ -657,8 +720,13 @@ def cartao_indice(titulo: str, estado: str, nivel: str, leitura: str,
         f'<span class="vigia-indice-ponto" style="background:{cor}" '
         f'title="{html.escape(nivel)}"></span>'
         '</div>'
+        '<div class="vigia-indice-corpo">'
+        f'{icone_html}'
+        '<div>'
         f'<div class="vigia-indice-nivel">{html.escape(nivel)}</div>'
         f'<div class="vigia-indice-leitura">{html.escape(leitura)}</div>'
+        f'{conselho_html}'
+        '</div></div>'
         f'{evidencia_html}'
         '</div>'
     )
@@ -674,14 +742,21 @@ def indice_risco(linha: pd.Series, limiar: float, horizonte: int,
     if prob is None or pd.isna(prob):
         return cartao_indice(
             titulo, "sem_dado", "Sem previsão",
-            "A semana mais recente não tem os preditores essenciais.", "")
+            "A semana mais recente não tem os preditores essenciais.", "",
+            icone="mosquito")
 
+    # O conselho segue o que o Ministerio da Saude repete em toda campanha:
+    # o criadouro e a acao de cada um, e febre e motivo de procurar a rede.
     if prob >= limiar:
         estado, nivel = "alerta", "Alerta"
+        conselho = ("Intensifique o combate aos criadouros. Com febre, procure "
+                    "uma unidade de saúde.")
     elif prob >= 0.5:
         estado, nivel = "atencao", "Atenção"
+        conselho = "Reforce a busca por água parada e o uso de repelente."
     else:
         estado, nivel = "calmo", "Sem alerta"
+        conselho = "Mantenha a rotina: elimine água parada uma vez por semana."
     leitura = (f"{prob:.0%} de chance de risco alto ou muito alto em "
                f"{horizonte} semanas.")
 
@@ -698,7 +773,8 @@ def indice_risco(linha: pd.Series, limiar: float, horizonte: int,
             f"{_decimal(auc_territorio, 3)}.")
     else:
         evidencia = ""
-    return cartao_indice(titulo, estado, nivel, leitura, evidencia)
+    return cartao_indice(titulo, estado, nivel, leitura, evidencia,
+                         icone="mosquito", conselho=conselho)
 
 
 def indice_transmissao(serie: pd.DataFrame, regra: dict | None,
@@ -708,7 +784,8 @@ def indice_transmissao(serie: pd.DataFrame, regra: dict | None,
     if "p_rt1" not in serie.columns or serie["p_rt1"].dropna().empty:
         return cartao_indice(
             titulo, "sem_dado", "Sem dado",
-            "Probabilidade de Rt acima de 1 indisponível nesta base.", "")
+            "Probabilidade de Rt acima de 1 indisponível nesta base.", "",
+            icone="transmissao")
 
     ultimos = serie["p_rt1"].dropna().iloc[-2:]
     agora = float(ultimos.iloc[-1])
@@ -716,10 +793,14 @@ def indice_transmissao(serie: pd.DataFrame, regra: dict | None,
 
     if antes is not None and agora >= 0.9 and antes >= 0.9:
         estado, nivel = "alerta", "Crescendo"
+        conselho = ("Duas semanas seguidas em alta: costuma anteceder aumento "
+                    "de casos.")
     elif agora >= 0.9:
         estado, nivel = "atencao", "Subindo"
+        conselho = "Cada caso começa a gerar mais de um. Vale acompanhar."
     else:
         estado, nivel = "calmo", "Estável"
+        conselho = "O ritmo de novos casos não está acelerando."
 
     leitura = f"Probabilidade de Rt acima de 1: {agora:.0%} nesta semana"
     leitura += f", {antes:.0%} na anterior." if antes is not None else "."
@@ -736,7 +817,8 @@ def indice_transmissao(serie: pd.DataFrame, regra: dict | None,
             "No território, acima de 90% por duas semanas antecedeu incidência "
             f"{_decimal(regra['lift_mediano'])}x a normal da época, em "
             f"{_milhar(regra['n_episodios'])} episódios desde 2014.")
-    return cartao_indice(titulo, estado, nivel, leitura, evidencia)
+    return cartao_indice(titulo, estado, nivel, leitura, evidencia,
+                         icone="transmissao", conselho=conselho)
 
 
 def indice_clima(clima_municipio: dict | None, clima_atual: bool) -> str:
@@ -747,7 +829,8 @@ def indice_clima(clima_municipio: dict | None, clima_atual: bool) -> str:
     if clima_municipio is None:
         return cartao_indice(
             titulo, "sem_dado", "Sem previsão",
-            "Previsão do tempo indisponível para este município.", contexto)
+            "Previsão do tempo indisponível para este município.", contexto,
+            icone="clima")
 
     temp = clima_municipio.get("temp_media_14d")
     dias = int(clima_municipio.get("dias_chuva_14d") or 0)
@@ -757,17 +840,22 @@ def indice_clima(clima_municipio: dict | None, clima_atual: bool) -> str:
 
     if not na_faixa or dias == 0:
         estado, nivel = "calmo", "Pouco favorável"
+        conselho = "Tempo desfavorável ao mosquito nos próximos dias."
     elif dias >= DIAS_CHUVA_FREQUENTE:
         estado, nivel = "elevado", "Muito favorável"
+        conselho = ("Esvazie pratos de planta, calhas e pneus depois de cada "
+                    "chuva.")
     else:
         estado, nivel = "atencao", "Favorável"
+        conselho = "Chuva e calor ajudam o mosquito: olho em recipientes com água."
 
     temp_txt = ("temperatura indisponível" if temp is None
                 else f"média de {temp:.0f} °C")
     leitura = f"{chuva:.0f} mm em {dias} dias de chuva; {temp_txt}."
     if not clima_atual:
         contexto = "Previsão coletada em semana anterior. " + contexto
-    return cartao_indice(titulo, estado, nivel, leitura, contexto)
+    return cartao_indice(titulo, estado, nivel, leitura, contexto,
+                         icone="clima", conselho=conselho)
 
 
 def indice_dado(linha: pd.Series) -> str:
@@ -779,17 +867,124 @@ def indice_dado(linha: pd.Series) -> str:
 
     if not provisorio or (tem_completude and completude >= 0.9):
         estado, nivel = "calmo", "Consolidado"
+        conselho = "Os números da semana já estão praticamente completos."
     elif tem_completude and completude >= 0.6:
         estado, nivel = "atencao", "Em consolidação"
+        conselho = "Os números ainda podem subir um pouco."
     else:
         estado, nivel = "elevado", "Provisório"
+        conselho = "Os números da semana ainda vão subir: leia como estimativa."
 
     leitura = (f"{_milhar(linha['casos'])} casos notificados de "
                f"{_milhar(linha['casos_est'])} estimados")
     leitura += f" ({completude:.0%} digitado)." if tem_completude else "."
     evidencia = ("A notificação chega com atraso; o nowcasting do InfoDengue "
                  "estima os casos que ainda vão entrar.")
-    return cartao_indice(titulo, estado, nivel, leitura, evidencia)
+    return cartao_indice(titulo, estado, nivel, leitura, evidencia,
+                         icone="dado", conselho=conselho)
+
+
+# O grafico semana a semana, no formato da previsao do tempo hora a hora:
+# uma medida por vez, o valor escrito em cada ponto e a semana atual marcada.
+# A cor de cada medida vem da paleta do sistema.
+MEDIDAS_SEMANA = {
+    "Casos": ("casos_est", ACENTO_800, lambda v: _milhar(v)),
+    "Risco à frente": ("probabilidade_alerta", "#b25a33", lambda v: f"{v:.0%}"),
+    # "26°", e nao "26°C": no celular doze rotulos com a unidade inteira
+    # encostavam uns nos outros, e o botao ja diz que e temperatura.
+    "Temperatura": ("tempmed", "#a2402f", lambda v: f"{v:.0f}°"),
+    "Umidade": ("umidmed", ACENTO, lambda v: f"{v:.0f}%"),
+}
+
+
+def _transparente(cor: str, alfa: float) -> str:
+    cor = cor.lstrip("#")
+    r, g, b = (int(cor[i:i + 2], 16) for i in (0, 2, 4))
+    return f"rgba({r},{g},{b},{alfa})"
+
+
+def grafico_semanal(serie: pd.DataFrame, medida: str, limiar: float,
+                    horizonte: int, semanas: int = 12) -> go.Figure:
+    """Ultimas semanas de uma medida, com o valor escrito em cada ponto.
+
+    Em "Risco a frente" o eixo e a semana PREVISTA, e nao a semana em que a
+    previsao foi feita: a probabilidade calculada na semana t fala do risco em
+    t + horizonte. Por isso esse grafico avanca `horizonte` semanas alem do
+    dado, e esse trecho sai tracejado, sobre um fundo que o marca como
+    previsao.
+    """
+    coluna, cor, formatar = MEDIDAS_SEMANA[medida]
+    recente = serie.sort_values("data_ini_se").tail(semanas).copy()
+    ultima_data = recente["data_ini_se"].iloc[-1]
+    deslocamento = horizonte if coluna == "probabilidade_alerta" else 0
+    recente["alvo"] = recente["data_ini_se"] + pd.Timedelta(weeks=deslocamento)
+    recente = recente.dropna(subset=[coluna])
+
+    # So o numero da semana, com o nome no titulo do eixo: "SE 42" doze vezes
+    # nao cabe no celular, e o Plotly inclinava os rotulos uns sobre os outros.
+    rotulos = [f"{semana_epidemiologica(d) % 100:02d}" for d in recente["alvo"]]
+    posicoes = list(range(len(recente)))
+    valores = recente[coluna].astype(float).tolist()
+    texto = [formatar(v) for v in valores]
+    futuro = [d > ultima_data for d in recente["alvo"]]
+    atual = next((i for i, d in enumerate(recente["alvo"]) if d == ultima_data),
+                 len(posicoes) - 1)
+
+    figura = go.Figure()
+    # Passado solido e futuro tracejado; os dois dividem o ponto da semana
+    # atual, para a linha nao abrir um buraco na emenda.
+    corte = atual + 1
+    for trecho, tracejado in ((slice(0, corte), False), (slice(atual, None), True)):
+        xs, ys, ts = posicoes[trecho], valores[trecho], texto[trecho]
+        if len(xs) < 2 and tracejado:
+            continue
+        figura.add_trace(go.Scatter(
+            x=xs, y=ys, text=ts if not tracejado else [""] + ts[1:],
+            mode="lines+markers+text", textposition="top center",
+            textfont={"color": cor, "size": 12, "family": FONTE_CORPO},
+            # Suavizacao contida: a curva cheia passava abaixo dos pontos
+            # entre duas semanas, como se tivesse havido um vale que nao houve.
+            line={"color": cor, "width": 2.4, "shape": "spline", "smoothing": 0.6,
+                  "dash": "dash" if tracejado else "solid"},
+            marker={"size": 5, "color": cor},
+            fill="tozeroy", fillcolor=_transparente(cor, 0.07),
+            hoverinfo="skip", showlegend=False,
+        ))
+    # A semana atual em circulo vazado, como a hora atual na previsao do tempo.
+    figura.add_trace(go.Scatter(
+        x=[posicoes[atual]], y=[valores[atual]], mode="markers",
+        marker={"size": 13, "color": "#ffffff", "line": {"color": cor, "width": 2.5}},
+        hoverinfo="skip", showlegend=False,
+    ))
+
+    if any(futuro):
+        figura.add_vrect(
+            x0=futuro.index(True) - 0.5, x1=posicoes[-1] + 0.5,
+            fillcolor=_transparente(cor, 0.06), line_width=0, layer="below",
+            annotation_text="previsão", annotation_position="top left",
+            annotation_font={"color": NEUTRO_600, "size": 11},
+        )
+    if coluna == "probabilidade_alerta":
+        figura.add_hline(
+            y=limiar, line_dash="dot", line_color=NEUTRO_500, line_width=1,
+            annotation_text=f"limiar {limiar:.0%}", annotation_position="bottom right",
+            annotation_font={"color": NEUTRO_600, "size": 11},
+        )
+
+    topo = max(valores + ([limiar] if coluna == "probabilidade_alerta" else []))
+    # Meia semana de folga em cada ponta: sem ela o primeiro e o ultimo ponto
+    # encostavam na borda e o valor escrito saia cortado.
+    figura.update_layout(
+        height=300, margin={"t": 20, "b": 10, "l": 10, "r": 10},
+        xaxis={"tickmode": "array", "tickvals": posicoes, "ticktext": rotulos,
+               "tickangle": 0, "range": [-0.6, posicoes[-1] + 0.6],
+               "title": {"text": "semana epidemiológica",
+                         "font": {"size": 11, "color": NEUTRO_600}},
+               "showgrid": False, "fixedrange": True},
+        yaxis={"range": [0, topo * 1.28 if topo else 1], "showgrid": False,
+               "showticklabels": False, "fixedrange": True},
+    )
+    return figura
 
 
 def _aneis(geometria: dict) -> list[list]:
@@ -1115,6 +1310,33 @@ with aba_monitor:
     )
     serie_idx = painel[painel["cod_ibge"] == cod_idx].sort_values("se_codigo")
     linha_idx = serie_idx.iloc[-1]
+
+    # ---- semana a semana: o "hora a hora" da previsao do tempo -----------
+    with st.container(border=True):
+        titulo_semana, botoes_semana = st.columns([1, 1.6], vertical_alignment="center")
+        titulo_semana.markdown(
+            f"#### Semana a semana em {rotulos_idx.get(cod_idx, '')}"
+        )
+        medida = botoes_semana.segmented_control(
+            "Medida", list(MEDIDAS_SEMANA), default="Casos",
+            label_visibility="collapsed", key="medida_semana",
+        ) or "Casos"
+        st.plotly_chart(
+            grafico_semanal(serie_idx, medida, limiar, horizonte),
+            width="stretch", config={**CONFIG_GRAFICO, "staticPlot": True},
+        )
+        legenda_medida = {
+            "Casos": "Casos estimados por semana, já corrigidos do atraso de "
+                     "notificação. O círculo é a semana mais recente.",
+            "Risco à frente": f"Chance de risco alto ou muito alto em cada "
+                              f"semana, calculada {horizonte} semanas antes. "
+                              "O trecho tracejado é a previsão para as próximas "
+                              "semanas.",
+            "Temperatura": "Temperatura média da semana, observada.",
+            "Umidade": "Umidade relativa média da semana, observada.",
+        }
+        st.caption(legenda_medida[medida])
+
     st.caption(
         f"Semana {formatar_semana(int(linha_idx['se_codigo']))}. Cada índice "
         "traz embaixo a evidência medida que o sustenta."
