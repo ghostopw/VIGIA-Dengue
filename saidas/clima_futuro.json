@@ -1,248 +1,244 @@
 {
-  "coletado_para_semana": 202643,
+  "coletado_para_semana": 202644,
   "fonte": "Open-Meteo forecast",
   "municipios": [
     {
       "cod_ibge": 3104502,
       "municipio": "Arinos",
-      "chuva_7d_mm": 37.7,
-      "chuva_14d_mm": 74.1,
-      "dias_chuva_14d": 12,
-      "temp_media_14d": 26.0
+      "chuva_7d_mm": 16.7,
+      "chuva_14d_mm": 81.7,
+      "dias_chuva_14d": 11,
+      "temp_media_14d": 26.6
     },
     {
       "cod_ibge": 3109303,
       "municipio": "Buritis",
-      "chuva_7d_mm": 44.6,
-      "chuva_14d_mm": 93.8,
-      "dias_chuva_14d": 14,
-      "temp_media_14d": 23.9
+      "chuva_7d_mm": 25.4,
+      "chuva_14d_mm": 102.6,
+      "dias_chuva_14d": 13,
+      "temp_media_14d": 23.8
     },
     {
       "cod_ibge": 3109451,
       "municipio": "Cabeceira Grande",
-      "chuva_7d_mm": 44.1,
-      "chuva_14d_mm": 91.7,
-      "dias_chuva_14d": 13,
-      "temp_media_14d": 23.7
+      "chuva_7d_mm": 37.5,
+      "chuva_14d_mm": 87.9,
+      "dias_chuva_14d": 14,
+      "temp_media_14d": 23.8
     },
     {
       "cod_ibge": 3170404,
       "municipio": "Unai",
-      "chuva_7d_mm": 35.5,
-      "chuva_14d_mm": 96.1,
-      "dias_chuva_14d": 13,
-      "temp_media_14d": 24.8
+      "chuva_7d_mm": 25.6,
+      "chuva_14d_mm": 78.6,
+      "dias_chuva_14d": 14,
+      "temp_media_14d": 24.9
     },
     {
       "cod_ibge": 5200100,
       "municipio": "Abadiania",
-      "chuva_7d_mm": 42.8,
-      "chuva_14d_mm": 79.4,
+      "chuva_7d_mm": 23.2,
+      "chuva_14d_mm": 64.0,
       "dias_chuva_14d": 14,
-      "temp_media_14d": 22.9
-    },
-    {
-      "cod_ibge": 5200175,
-      "municipio": "Agua Fria de Goias",
-      "chuva_7d_mm": 44.1,
-      "chuva_14d_mm": 107.3,
-      "dias_chuva_14d": 14,
-      "temp_media_14d": 22.7
+      "temp_media_14d": 23.0
     },
     {
       "cod_ibge": 5200308,
       "municipio": "Alexania",
-      "chuva_7d_mm": 65.5,
-      "chuva_14d_mm": 100.1,
+      "chuva_7d_mm": 27.4,
+      "chuva_14d_mm": 92.8,
       "dias_chuva_14d": 13,
-      "temp_media_14d": 22.9
+      "temp_media_14d": 22.8
     },
     {
       "cod_ibge": 5200605,
       "municipio": "Alto Paraiso de Goias",
-      "chuva_7d_mm": 58.3,
-      "chuva_14d_mm": 120.9,
-      "dias_chuva_14d": 14,
-      "temp_media_14d": 21.7
+      "chuva_7d_mm": 51.8,
+      "chuva_14d_mm": 106.4,
+      "dias_chuva_14d": 13,
+      "temp_media_14d": 21.1
     },
     {
       "cod_ibge": 5200803,
       "municipio": "Alvorada do Norte",
-      "chuva_7d_mm": 32.7,
-      "chuva_14d_mm": 81.3,
+      "chuva_7d_mm": 34.5,
+      "chuva_14d_mm": 88.9,
       "dias_chuva_14d": 13,
-      "temp_media_14d": 26.5
+      "temp_media_14d": 26.7
+    },
+    {
+      "cod_ibge": 5203203,
+      "municipio": "Barro Alto",
+      "chuva_7d_mm": 22.3,
+      "chuva_14d_mm": 81.7,
+      "dias_chuva_14d": 14,
+      "temp_media_14d": 24.7
+    },
+    {
+      "cod_ibge": 5204003,
+      "municipio": "Cabeceiras",
+      "chuva_7d_mm": 30.6,
+      "chuva_14d_mm": 80.8,
+      "dias_chuva_14d": 13,
+      "temp_media_14d": 23.8
     },
     {
       "cod_ibge": 5205307,
       "municipio": "Cavalcante",
-      "chuva_7d_mm": 117.2,
-      "chuva_14d_mm": 178.6,
-      "dias_chuva_14d": 13,
-      "temp_media_14d": 23.3
-    },
-    {
-      "cod_ibge": 5205497,
-      "municipio": "Cidade Ocidental",
-      "chuva_7d_mm": 51.8,
-      "chuva_14d_mm": 119.2,
-      "dias_chuva_14d": 14,
-      "temp_media_14d": 23.1
-    },
-    {
-      "cod_ibge": 5205513,
-      "municipio": "Cocalzinho de Goias",
-      "chuva_7d_mm": 46.9,
-      "chuva_14d_mm": 85.3,
-      "dias_chuva_14d": 13,
-      "temp_media_14d": 24.6
+      "chuva_7d_mm": 43.6,
+      "chuva_14d_mm": 92.0,
+      "dias_chuva_14d": 12,
+      "temp_media_14d": 23.6
     },
     {
       "cod_ibge": 5205802,
       "municipio": "Corumba de Goias",
-      "chuva_7d_mm": 57.5,
-      "chuva_14d_mm": 95.5,
-      "dias_chuva_14d": 13,
+      "chuva_7d_mm": 39.8,
+      "chuva_14d_mm": 75.8,
+      "dias_chuva_14d": 12,
       "temp_media_14d": 22.3
     },
     {
       "cod_ibge": 5206206,
       "municipio": "Cristalina",
-      "chuva_7d_mm": 44.3,
-      "chuva_14d_mm": 89.3,
+      "chuva_7d_mm": 27.2,
+      "chuva_14d_mm": 86.8,
       "dias_chuva_14d": 14,
-      "temp_media_14d": 22.8
+      "temp_media_14d": 22.6
+    },
+    {
+      "cod_ibge": 5207907,
+      "municipio": "Flores de Goias",
+      "chuva_7d_mm": 24.6,
+      "chuva_14d_mm": 87.0,
+      "dias_chuva_14d": 12,
+      "temp_media_14d": 26.1
+    },
+    {
+      "cod_ibge": 5208004,
+      "municipio": "Formosa",
+      "chuva_7d_mm": 31.3,
+      "chuva_14d_mm": 94.3,
+      "dias_chuva_14d": 13,
+      "temp_media_14d": 23.1
     },
     {
       "cod_ibge": 5208608,
       "municipio": "Goianesia",
-      "chuva_7d_mm": 43.6,
-      "chuva_14d_mm": 90.0,
+      "chuva_7d_mm": 32.6,
+      "chuva_14d_mm": 117.8,
       "dias_chuva_14d": 14,
-      "temp_media_14d": 24.3
-    },
-    {
-      "cod_ibge": 5212501,
-      "municipio": "Luziania",
-      "chuva_7d_mm": 37.2,
-      "chuva_14d_mm": 94.6,
-      "dias_chuva_14d": 14,
-      "temp_media_14d": 24.3
+      "temp_media_14d": 23.9
     },
     {
       "cod_ibge": 5213053,
       "municipio": "Mimoso de Goias",
-      "chuva_7d_mm": 50.9,
-      "chuva_14d_mm": 104.1,
+      "chuva_7d_mm": 36.1,
+      "chuva_14d_mm": 85.3,
+      "dias_chuva_14d": 12,
+      "temp_media_14d": 24.1
+    },
+    {
+      "cod_ibge": 5215603,
+      "municipio": "Padre Bernardo",
+      "chuva_7d_mm": 24.1,
+      "chuva_14d_mm": 73.9,
+      "dias_chuva_14d": 12,
+      "temp_media_14d": 23.3
+    },
+    {
+      "cod_ibge": 5217302,
+      "municipio": "Pirenopolis",
+      "chuva_7d_mm": 36.1,
+      "chuva_14d_mm": 78.1,
       "dias_chuva_14d": 14,
       "temp_media_14d": 24.2
     },
     {
-      "cod_ibge": 5214606,
-      "municipio": "Niquelandia",
-      "chuva_7d_mm": 35.6,
-      "chuva_14d_mm": 87.2,
-      "dias_chuva_14d": 13,
-      "temp_media_14d": 24.9
-    },
-    {
-      "cod_ibge": 5215231,
-      "municipio": "Novo Gama",
-      "chuva_7d_mm": 42.3,
-      "chuva_14d_mm": 113.5,
-      "dias_chuva_14d": 14,
-      "temp_media_14d": 23.3
-    },
-    {
       "cod_ibge": 5217609,
       "municipio": "Planaltina",
-      "chuva_7d_mm": 30.2,
-      "chuva_14d_mm": 65.8,
-      "dias_chuva_14d": 13,
+      "chuva_7d_mm": 35.0,
+      "chuva_14d_mm": 69.8,
+      "dias_chuva_14d": 12,
       "temp_media_14d": 23.8
     },
     {
       "cod_ibge": 5219753,
       "municipio": "Santo Antonio do Descoberto",
-      "chuva_7d_mm": 44.3,
-      "chuva_14d_mm": 96.5,
+      "chuva_7d_mm": 49.9,
+      "chuva_14d_mm": 118.9,
       "dias_chuva_14d": 14,
-      "temp_media_14d": 22.9
+      "temp_media_14d": 22.8
     },
     {
       "cod_ibge": 5220009,
       "municipio": "Sao Joao d'Alianca",
-      "chuva_7d_mm": 38.5,
-      "chuva_14d_mm": 75.1,
-      "dias_chuva_14d": 13,
-      "temp_media_14d": 22.5
-    },
-    {
-      "cod_ibge": 5220686,
-      "municipio": "Simolandia",
-      "chuva_7d_mm": 38.9,
-      "chuva_14d_mm": 120.3,
-      "dias_chuva_14d": 13,
-      "temp_media_14d": 26.2
-    },
-    {
-      "cod_ibge": 5221858,
-      "municipio": "Valparaiso de Goias",
-      "chuva_7d_mm": 42.4,
-      "chuva_14d_mm": 92.6,
+      "chuva_7d_mm": 40.3,
+      "chuva_14d_mm": 77.1,
       "dias_chuva_14d": 14,
-      "temp_media_14d": 22.6
+      "temp_media_14d": 22.1
     },
     {
       "cod_ibge": 5222203,
       "municipio": "Vila Boa",
-      "chuva_7d_mm": 20.8,
-      "chuva_14d_mm": 67.4,
-      "dias_chuva_14d": 14,
-      "temp_media_14d": 25.9
+      "chuva_7d_mm": 32.0,
+      "chuva_14d_mm": 77.8,
+      "dias_chuva_14d": 13,
+      "temp_media_14d": 26.0
     },
     {
       "cod_ibge": 5222302,
       "municipio": "Vila Propicio",
-      "chuva_7d_mm": 35.2,
-      "chuva_14d_mm": 78.0,
+      "chuva_7d_mm": 31.0,
+      "chuva_14d_mm": 87.4,
       "dias_chuva_14d": 14,
-      "temp_media_14d": 25.0
+      "temp_media_14d": 24.9
+    },
+    {
+      "cod_ibge": 5300108,
+      "municipio": "Brasilia",
+      "chuva_7d_mm": 25.4,
+      "chuva_14d_mm": 81.2,
+      "dias_chuva_14d": 14,
+      "temp_media_14d": 22.8
     }
   ],
   "faltantes": [
+    {
+      "cod_ibge": 5200175,
+      "municipio": "Agua Fria de Goias"
+    },
     {
       "cod_ibge": 5200258,
       "municipio": "Aguas Lindas de Goias"
     },
     {
-      "cod_ibge": 5203203,
-      "municipio": "Barro Alto"
+      "cod_ibge": 5205497,
+      "municipio": "Cidade Ocidental"
     },
     {
-      "cod_ibge": 5204003,
-      "municipio": "Cabeceiras"
+      "cod_ibge": 5205513,
+      "municipio": "Cocalzinho de Goias"
     },
     {
-      "cod_ibge": 5207907,
-      "municipio": "Flores de Goias"
+      "cod_ibge": 5212501,
+      "municipio": "Luziania"
     },
     {
-      "cod_ibge": 5208004,
-      "municipio": "Formosa"
+      "cod_ibge": 5214606,
+      "municipio": "Niquelandia"
     },
     {
-      "cod_ibge": 5215603,
-      "municipio": "Padre Bernardo"
+      "cod_ibge": 5215231,
+      "municipio": "Novo Gama"
     },
     {
-      "cod_ibge": 5217302,
-      "municipio": "Pirenopolis"
+      "cod_ibge": 5220686,
+      "municipio": "Simolandia"
     },
     {
-      "cod_ibge": 5300108,
-      "municipio": "Brasilia"
+      "cod_ibge": 5221858,
+      "municipio": "Valparaiso de Goias"
     }
   ]
 }
