@@ -19,7 +19,7 @@ Projeto PIBITI 2026 — Iniciação em Desenvolvimento Tecnológico e Inovação
 | 2 — Base analítica | 22.440 linhas município-semana, 2014–2026 | `src/vigia/ingestao_infodengue.py`, `src/vigia/base_analitica.py` |
 | 3 — Análise espaço-temporal | Canal endêmico e estratificação em 4 níveis | `src/vigia/risco.py` |
 | 4 — Modelagem de alerta | 4 modelos com validação temporal, mais uma rede neural avaliada e descartada | `src/vigia/modelagem.py`, `src/vigia/rede_neural.py` |
-| 5 — Dashboard | Painel web com mapa 3D, séries e relatórios | `Painel VIGIA-Dengue (offline).html`, `app/servidor.py` |
+| 5 — Dashboard | Site com 8 seções, atualizado todo dia, em [vigia.guimm.site](https://vigia.guimm.site) | `site/`, `src/vigia/exportar_site.py` |
 | 6 — Avaliação e documentação | Métricas apuradas; manual e relatório pendentes | `saidas/desempenho_modelos.csv` |
 
 ## Território piloto
@@ -84,34 +84,49 @@ python src/vigia/executar_analise.py         # base analítica, risco e validaç
 python src/vigia/executar_painel_dados.py    # gera os dados do painel
 python src/vigia/executar_dicionario.py      # regenera o dicionário de dados
 
-python app/servidor.py                       # abre o painel em localhost:8000
+python app/servidor.py                       # gera os dados do site e abre em localhost:8000
 python src/vigia/executar_atualizacao.py     # busca, reavalia e avisa se mudou
 python -m pytest testes -q                   # roda os testes
 ```
 
-## O painel
+## O site
 
-O painel é inteiramente **Brasília e suas cidades satélites**. Os municípios vizinhos
-não aparecem na tela: entram apenas como massa de treino do modelo, que precisa da
-variação espacial para estratificar risco (ver *Modelagem*).
+[vigia.guimm.site](https://vigia.guimm.site) é um boletim semanal, no formato de um
+jornal: uma página estática (`site/`), sem servidor de aplicação. No build da imagem,
+`src/vigia/exportar_site.py` lê o que o repositório versiona e gera um único
+`dados/painel.json`; o navegador desenha tudo a partir dele. **Nenhum número do texto é
+fixo**: uma frase como "Brasília ocupa a posição N de 34 em chance de alerta" sai da semana
+corrente.
 
-No topo, um bloco fixo com a situação de **Brasília**: casos estimados (com variação
-frente à semana anterior), incidência, nível de risco e probabilidade de alerta.
+O foco é **Brasília**; os 33 municípios do Entorno aparecem como contexto e comparação.
+A semana mostrada é a última com todos os municípios do território (a mais recente
+costuma chegar parcial). O limiar do alerta é **80%**, o mesmo do ciclo diário; um teste
+garante que os dois não divergem.
 
-- **Brasília por Região Administrativa** — as 31 RAs por população, densidade ou
-  vulnerabilidade socioambiental do Censo 2022 (esgoto inadequado, sem água de rede,
-  lixo sem coleta). Não há *casos* por RA — o InfoDengue opera no nível municipal e o
-  DF é um único município —, mas há condição: 0,12% de esgotamento inadequado no Plano
-  Piloto contra 30,5% na Fercal. A correlação entre o índice e a população é de −0,141
-  (Spearman, p = 0,45): o mapa não é o mapa populacional repintado.
-- **Séries temporais** — casos notificados × estimados com faixa de incerteza do
-  *nowcasting*, e incidência contra o canal endêmico.
-- **Relatório da semana** — os indicadores de Brasília na semana escolhida, com os
-  fatores que pesaram na previsão, e a série completa em CSV.
-- **Desempenho do modelo** — métricas da validação temporal, ano a ano.
+| Seção | O que mostra |
+|---|---|
+| I · Panorama | Brasília na semana: casos estimados, incidência, nível de risco, chance de alerta em 4 semanas, o que mais pesou na previsão e a série de 52 semanas ou 3 anos |
+| II · Mapa e municípios | Os 34 municípios por nível de risco. Clicar abre a ficha do município, os **índices da semana** (previsão, transmissão, clima para o *Aedes* e qualidade do dado) e o gráfico **semana a semana** (casos, risco à frente, temperatura, umidade) |
+| III · Séries temporais | Brasília × Entorno por 100 mil habitantes, e notificado × estimado nas últimas 16 semanas |
+| IV · Ranking | Os 34 municípios ordenados por chance de alerta, incidência ou casos, com busca e download em CSV |
+| V · Desempenho | AUC ano a ano dos quatro modelos e as médias da validação temporal |
+| VI · Por RA | As 31 Regiões Administrativas por vulnerabilidade, população ou densidade |
+| VII · Alarmes e clima | As regras de alarme testadas no histórico e a previsão de chuva de 14 dias |
+| VIII · Dicionário | Todas as colunas da base, com busca e filtros, e o glossário dos termos |
 
-Controles: semana epidemiológica, limiar de probabilidade do alerta e sinalização de
-semanas com notificação incompleta.
+Sobre as RAs: não há *casos* por RA — o InfoDengue opera no nível municipal e o DF é um
+único município —, mas há condição: 0,12% de esgotamento inadequado no Plano Piloto
+contra 30,5% na Fercal. A correlação entre o índice e a população é de −0,141
+(Spearman, p = 0,45): o mapa não é o mapa populacional repintado.
+
+Tema claro e escuro (segue o sistema, com botão para trocar), endereço por seção
+(`#mapa`, `#ranking`…) e layout próprio para celular.
+
+**Publicação.** A imagem `ghcr.io/ghostopw/vigia-dengue` é construída pelo workflow
+[`publicar-painel.yml`](.github/workflows/publicar-painel.yml) em dois estágios: Python
+gera os dados, e o nginx serve a página na porta 80, atrás do Cloudflare Tunnel. Todo
+arquivo que a imagem lê precisa estar no `Dockerfile`, no `.dockerignore` e nos `paths`
+do workflow; `testes/test_site.py` falha se faltar algum dos três.
 
 ## Alerta ao vivo
 
@@ -121,7 +136,7 @@ quando algo muda** — semana nova, risco subindo, cruzamento do limiar de proba
 ou incidência acima do canal endêmico. Um alerta que chega toda hora dizendo que nada
 mudou deixa de ser lido.
 
-Canais: `saidas/alerta.json` (sempre, e publicado pelo servidor em `/alerta.json`),
+Canais: `saidas/alerta.json` (sempre, e publicado no site em `/dados/alerta.json`),
 notificação nativa do Windows, e um POST para a URL em `VIGIA_WEBHOOK`, se definida.
 
 **Todo dia às 8h de Brasília, no GitHub.** O workflow
@@ -188,11 +203,12 @@ pós-hoc e pesos de recência — os números estão na seção 8 dos achados.
 ## Estrutura
 
 ```
-Painel VIGIA-Dengue (offline).html  o painel: canvas do Claude Design,
-                               autocontido (desenho, dados e fontes)
-app/servidor.py                serve o painel em localhost
-app/artifact/corpo.html        gabarito de uma versão anterior do painel
-app/painel.py                  dashboard Streamlit (versão anterior)
+site/                          o site: index.html, estilo.css e app.js
+src/vigia/exportar_site.py     gera site/dados/painel.json a partir do repositório
+nginx.conf, Dockerfile         a imagem publicada em vigia.guimm.site
+app/servidor.py                gera os dados e serve o site em localhost
+app/painel.py                  dashboard Streamlit (versão anterior, fora do ar)
+Painel VIGIA-Dengue (offline).html  exportação antiga do design (versão anterior)
 src/vigia/territorio.py        os 34 municípios da RIDE-DF, com a regra validada
 src/vigia/ingestao_infodengue.py  download da série município-semana
 src/vigia/base_analitica.py    incidência, médias móveis, defasagens, flags

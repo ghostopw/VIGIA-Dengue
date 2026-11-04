@@ -32,3 +32,7 @@ dados/externo/DF_setores_CD2022.gpkg
 # completa com as semanas recentes. Fica no git porque o GitHub Actions não
 # guarda nada de uma execução para a outra.
 !dados/processado/infodengue_territorio.csv
+
+# Dados do site, gerados por src/vigia/exportar_site.py no build da imagem
+# (e pelo app/servidor.py na maquina local). Nunca editar a mao.
+site/dados/

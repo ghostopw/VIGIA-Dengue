@@ -1,0 +1,4 @@
+# Só o que o build do site precisa: o exportador (src/vigia/exportar_site.py)
+# usa pandas para montar o painel.json. A imagem final é um nginx, sem Python.
+# O requirements.txt completo é do pipeline de análise e não entra aqui.
+pandas>=2.2

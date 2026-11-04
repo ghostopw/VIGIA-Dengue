@@ -14,18 +14,22 @@ testes
 docs
 src
 app
+site
 *.html
 *.md
 
 # Reabre o que o Dockerfile realmente copia.
-!app/painel.py
-!dados/externo/malha_ras_df.geojson
-!dados/externo/setores_df.geojson
-!dados/externo/vulnerabilidade_ras.csv
+!site/index.html
+!site/estilo.css
+!site/app.js
+!src/vigia/exportar_site.py
 !dados/processado/painel.csv
+!dados/externo/malha_ride_df.geojson
+!dados/externo/malha_ras_df.geojson
+!dados/externo/vulnerabilidade_ras.csv
 !saidas/desempenho_modelos.csv
-!saidas/alerta.json
 !saidas/alarmes.json
 !saidas/clima_futuro.json
+!saidas/alerta.json
 !docs/dicionario_de_dados.csv
 !docs/glossario.csv

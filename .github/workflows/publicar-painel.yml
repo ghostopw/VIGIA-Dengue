@@ -1,18 +1,26 @@
 name: Publicar painel
 
-# O painel é servido em vigia.guimm.site como aplicativo Streamlit. A imagem
-# é construída aqui, e não no repositório do site, porque é aqui que o código
-# do painel vive: assim o que está no ar acompanha a pesquisa sem cópia manual.
+# O site vigia.guimm.site e uma pagina estatica servida pelo nginx. A imagem e
+# construida aqui, e nao no repositorio do site, porque e aqui que o codigo e
+# os dados vivem: o build gera o painel.json a partir do que esta versionado
+# (src/vigia/exportar_site.py), e o que esta no ar acompanha a pesquisa sem
+# copia manual.
+#
+# A lista de caminhos e a mesma do Dockerfile: todo arquivo que a imagem
+# copia precisa aparecer aqui, no Dockerfile e no .dockerignore.
 on:
   push:
     branches: [master, main]
     paths:
-      - "app/painel.py"
-      - ".streamlit/**"
-      - "dados/externo/malha_ras_df.geojson"
-      - "dados/externo/setores_df.geojson"
-      - "dados/externo/vulnerabilidade_ras.csv"
+      - "site/index.html"
+      - "site/estilo.css"
+      - "site/app.js"
+      - "src/vigia/exportar_site.py"
+      - "nginx.conf"
       - "dados/processado/painel.csv"
+      - "dados/externo/malha_ride_df.geojson"
+      - "dados/externo/malha_ras_df.geojson"
+      - "dados/externo/vulnerabilidade_ras.csv"
       - "saidas/desempenho_modelos.csv"
       - "saidas/alerta.json"
       - "saidas/alarmes.json"
@@ -21,7 +29,7 @@ on:
       - "docs/glossario.csv"
       - "Dockerfile"
       - ".dockerignore"
-      - "requirements-painel.txt"
+      - "requirements-site.txt"
       - ".github/workflows/publicar-painel.yml"
   workflow_dispatch:
 

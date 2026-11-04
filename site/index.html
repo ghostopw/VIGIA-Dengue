@@ -1,0 +1,57 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>VIGIA-Dengue</title>
+<meta name="description" content="Boletim semanal de alerta precoce de dengue para Brasília e os municípios da RIDE-DF.">
+<meta name="theme-color" content="#f3f2f2" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#171615" media="(prefers-color-scheme: dark)">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='8' fill='%23201f1d'/%3E%3Ctext x='32' y='43' text-anchor='middle' font-family='Georgia,serif' font-size='30' fill='%23e1ad66'%3EVD%3C/text%3E%3C/svg%3E">
+<script>
+  // Tema antes do primeiro desenho, para não piscar: a escolha salva vence,
+  // senão segue o sistema.
+  (function () {
+    var t = null;
+    try { t = localStorage.getItem("vigia-tema"); } catch (e) {}
+    if (t !== "claro" && t !== "escuro") {
+      t = window.matchMedia && matchMedia("(prefers-color-scheme: dark)").matches ? "escuro" : "claro";
+    }
+    document.documentElement.setAttribute("data-tema", t);
+  })();
+</script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;600&family=Lora:ital,wght@0,400;0,600;1,400&display=swap">
+<link rel="stylesheet" href="estilo.css">
+</head>
+<body>
+<header class="topo">
+  <div class="faixa-topo">
+    <span>Boletim semanal de alerta precoce</span>
+    <span class="num" id="topo-semana">Carregando a semana…</span>
+    <button class="btn btn-ghost" id="botao-tema" type="button">Modo escuro</button>
+  </div>
+  <div class="marca">
+    <p class="marca-nome">VIGIA-Dengue</p>
+    <p class="marca-sub">O risco de dengue em Brasília e na RIDE-DF, semana a semana</p>
+  </div>
+  <nav class="abas" id="abas" aria-label="Seções do boletim"></nav>
+</header>
+
+<main class="conteudo" id="conteudo">
+  <p class="carregando">Carregando os dados da semana…</p>
+</main>
+
+<footer class="rodape">
+  <div>
+    <p><strong>Fontes:</strong> InfoDengue (Fiocruz/FGV), que processa o SINAN e corrige o atraso de notificação; IBGE (população, malha cartográfica e Censo 2022); Open-Meteo (previsão do tempo).</p>
+    <p>Ferramenta de apoio à vigilância epidemiológica. Não substitui a análise da equipe de vigilância local nem orienta conduta clínica individual.</p>
+    <p id="rodape-gerado"></p>
+  </div>
+</footer>
+
+<noscript><p style="max-width:700px;margin:24px auto;padding:0 16px">O boletim precisa de JavaScript para desenhar os gráficos e mapas.</p></noscript>
+<script src="app.js" defer></script>
+</body>
+</html>
