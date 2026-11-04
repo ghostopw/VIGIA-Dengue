@@ -46,6 +46,17 @@ RAIZ = Path(__file__).resolve().parents[2]
 ARQUIVO_PADRAO = RAIZ / "saidas" / "clima_futuro.json"
 FONTE = "Open-Meteo forecast"
 
+# A API gratuita as vezes demora a responder: em 04/11/2026, 8 dos 34 pedidos
+# do ciclo diario esgotaram o limite de 60 s de leitura (Brasilia entre eles),
+# e o painel ficou sem previsao para eles. Lentidao passageira se resolve
+# tentando de novo, e nao esperando mais: cada tentativa espera ate 30 s, e
+# quem falhar tenta outra vez apos 5 e 15 pausas. No fim, os que ainda faltam
+# ganham uma segunda rodada, depois de 30 pausas -- se a API ficou fora por
+# alguns minutos, ela costuma ja ter voltado.
+TEMPO_LIMITE = (10, 30)          # conexao, leitura (s)
+ESPERAS_ENTRE_TENTATIVAS = (5, 15)  # em multiplos de `pausa`
+ESPERA_SEGUNDA_RODADA = 30          # em multiplos de `pausa`
+
 
 def _se_codigo(dia: date) -> int:
     """Codigo AAAASS da semana epidemiologica brasileira de uma data.
@@ -73,9 +84,27 @@ def _baixar_previsao(latitude: float, longitude: float) -> dict:
         "forecast_days": DIAS_DE_PREVISAO,
         "timezone": "America/Sao_Paulo",
     }
-    resposta = requests.get(PREVISAO, params=parametros, timeout=60)
+    resposta = requests.get(PREVISAO, params=parametros, timeout=TEMPO_LIMITE)
     resposta.raise_for_status()
     return resposta.json()["daily"]
+
+
+def _resumo_com_retentativa(ponto: tuple[float, float], pausa: float) -> dict:
+    """Baixa e resume a previsao de um ponto, tentando de novo se falhar.
+
+    Faz 1 + len(ESPERAS_ENTRE_TENTATIVAS) tentativas; se todas falharem,
+    levanta o ultimo erro para quem chamou registrar o faltante.
+    """
+    erro: Exception | None = None
+    for espera in (*ESPERAS_ENTRE_TENTATIVAS, None):
+        try:
+            return resumir(_baixar_previsao(*ponto))
+        except Exception as falha:  # rede, cota, resposta sem `daily`
+            erro = falha
+            if espera is not None:
+                time.sleep(espera * pausa)
+    assert erro is not None
+    raise erro
 
 
 def resumir(diario: dict) -> dict:
@@ -117,31 +146,49 @@ def coletar(pausa: float = 1.0) -> dict:
     """
     pontos = centroides(sorted(TERRITORIO))
 
-    municipios: list[dict] = []
-    faltantes: list[dict] = []
+    resumos: dict[int, dict] = {}
+    sem_centroide: list[int] = []
+    falharam: list[int] = []
     for indice, codigo in enumerate(sorted(TERRITORIO), start=1):
         nome = TERRITORIO[codigo]
         ponto = pontos.get(codigo)
         if ponto is None:
-            faltantes.append({"cod_ibge": codigo, "municipio": nome})
+            sem_centroide.append(codigo)
             print(f"[{indice:2d}/{len(TERRITORIO)}] {nome:28s} sem centroide na malha")
             continue
 
         try:
-            resumo = resumir(_baixar_previsao(*ponto))
+            resumo = _resumo_com_retentativa(ponto, pausa)
         except Exception as erro:
-            # Previsao e contexto: quem nao responder fica registrado e a
-            # coleta segue para o proximo municipio.
-            faltantes.append({"cod_ibge": codigo, "municipio": nome})
+            # Previsao e contexto: quem nao responder fica para a segunda
+            # rodada e a coleta segue para o proximo municipio.
+            falharam.append(codigo)
             print(f"[{indice:2d}/{len(TERRITORIO)}] {nome:28s} falhou: {erro}")
         else:
-            municipios.append({"cod_ibge": codigo, "municipio": nome, **resumo})
+            resumos[codigo] = resumo
             print(
                 f"[{indice:2d}/{len(TERRITORIO)}] {nome:28s} "
                 f"chuva 14d {resumo['chuva_14d_mm']:6.1f} mm"
             )
         time.sleep(pausa)
 
+    if falharam:
+        print(f"segunda rodada para {len(falharam)} municipio(s)")
+        time.sleep(ESPERA_SEGUNDA_RODADA * pausa)
+        for codigo in list(falharam):
+            try:
+                resumos[codigo] = _resumo_com_retentativa(pontos[codigo], pausa)
+            except Exception as erro:
+                print(f"      {TERRITORIO[codigo]:28s} falhou de novo: {erro}")
+            else:
+                falharam.remove(codigo)
+                print(f"      {TERRITORIO[codigo]:28s} recuperado")
+            time.sleep(pausa)
+
+    municipios = [{"cod_ibge": c, "municipio": TERRITORIO[c], **resumos[c]}
+                  for c in sorted(resumos)]
+    faltantes = [{"cod_ibge": c, "municipio": TERRITORIO[c]}
+                 for c in sorted(sem_centroide + falharam)]
     return {
         "coletado_para_semana": _se_codigo(date.today()),
         "fonte": FONTE,

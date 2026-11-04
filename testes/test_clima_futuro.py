@@ -111,20 +111,46 @@ def test_contrato_do_json_que_o_painel_le(monkeypatch, tmp_path):
 
 
 def test_falha_num_municipio_nao_derruba_a_coleta(monkeypatch):
-    """Previsao e contexto: quem falhar vai para faltantes e a coleta segue."""
+    """Previsao e contexto: quem falhar sempre vai para faltantes e a coleta
+    segue -- depois de todas as tentativas e da segunda rodada."""
+    codigos = sorted(TERRITORIO)
+    pontos = {c: (-15.8, -47.9) for c in codigos}
+    pontos[codigos[0]] = (-99.0, -99.0)          # o ponto que nunca responde
+    monkeypatch.setattr(clima_futuro, "centroides", lambda cs: pontos)
     chamadas = {"n": 0}
 
-    def baixar_com_uma_falha(latitude, longitude):
-        chamadas["n"] += 1
-        if chamadas["n"] == 1:
+    def baixar(latitude, longitude):
+        if latitude == -99.0:
+            chamadas["n"] += 1
             raise RuntimeError("falha simulada")
         return resposta_simulada()
 
-    _fingir_rede(monkeypatch, baixar=baixar_com_uma_falha)
+    monkeypatch.setattr(clima_futuro, "_baixar_previsao", baixar)
     payload = clima_futuro.coletar(pausa=0)
     assert len(payload["municipios"]) == len(TERRITORIO) - 1
-    assert len(payload["faltantes"]) == 1
-    assert set(payload["faltantes"][0]) == {"cod_ibge", "municipio"}
+    assert payload["faltantes"] == [{"cod_ibge": codigos[0],
+                                     "municipio": TERRITORIO[codigos[0]]}]
+    # Tres tentativas na primeira passada e tres na segunda rodada.
+    tentativas = 1 + len(clima_futuro.ESPERAS_ENTRE_TENTATIVAS)
+    assert chamadas["n"] == 2 * tentativas
+
+
+def test_lentidao_passageira_se_recupera_tentando_de_novo(monkeypatch):
+    """Foi o que deixou Brasilia sem previsao em 04/11/2026: a API demorou
+    a responder uma vez. Com nova tentativa, ninguem fica de fora."""
+    chamadas = {"n": 0}
+
+    def baixar_que_falha_uma_vez(latitude, longitude):
+        chamadas["n"] += 1
+        if chamadas["n"] == 1:
+            raise RuntimeError("Read timed out (simulado)")
+        return resposta_simulada()
+
+    _fingir_rede(monkeypatch, baixar=baixar_que_falha_uma_vez)
+    payload = clima_futuro.coletar(pausa=0)
+    assert payload["faltantes"] == []
+    assert len(payload["municipios"]) == len(TERRITORIO)
+    assert chamadas["n"] == len(TERRITORIO) + 1
 
 
 def test_municipio_sem_centroide_vira_faltante(monkeypatch):
