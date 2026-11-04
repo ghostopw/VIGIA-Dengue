@@ -244,6 +244,7 @@ a:hover { color: var(--color-accent-600); }
 .g-rot.y { transform: translate(-100%, -50%); }
 .g-rot.x { transform: translate(-50%, -75%); }
 .g-rot.valor { transform: translate(-50%, -150%); color: var(--color-text); font-size: 12px; }
+.g-rot.previsao { font-style: italic; color: var(--color-accent-700); }
 .g-guia { position: absolute; width: 1px; background: var(--color-text); opacity: .35; pointer-events: none; display: none; }
 .g-dica, .dica-mapa {
   position: absolute; pointer-events: none; display: none; z-index: 5;
@@ -261,8 +262,41 @@ a:hover { color: var(--color-accent-600); }
 .mapa-ras path:hover { opacity: 1; stroke: var(--color-text); }
 .mapa text { font-family: var(--font-heading); font-weight: 600; font-size: 18px; fill: var(--color-text);
   text-anchor: middle; pointer-events: none; paint-order: stroke; stroke: var(--color-bg); stroke-width: 3px; }
-.gradiente { flex: 0 0 140px; height: 10px;
-  background: linear-gradient(90deg, color-mix(in srgb, var(--color-accent-600) 10%, transparent), var(--color-accent-600)); }
+/* Divisas das RAs em duas camadas: traço escuro largo e fio claro por cima.
+   Separa duas RAs claras e duas escuras; no tema escuro as cores se invertem
+   sozinhas, porque saem dos mesmos tokens. */
+.mapa-ras path.ra { stroke: none; }
+.mapa-ras path.ra:hover { opacity: .78; stroke: none; }
+.mapa path.divisa, .mapa path.divisa-fio { fill: none; pointer-events: none; vector-effect: non-scaling-stroke;
+  stroke-linejoin: round; transition: none; }
+.mapa path.divisa { stroke: var(--color-text); stroke-opacity: .62; stroke-width: 2.4; }
+.mapa path.divisa-fio { stroke: var(--color-bg); stroke-width: .8; }
+/* Nomes das RAs: halo da cor do fundo, legível sobre qualquer faixa. */
+.mapa text.rot-ra { font-size: 17px; stroke-width: 3.5px; }
+.mapa text.rot-ra.grande { font-size: 27px; stroke-width: 4.5px; }
+/* Quadras: milhares de polígonos pequenos, sem borda (ela dominaria a cor) e
+   sem o realce do cursor; o contorno das RAs vai por cima, só para orientar. */
+.mapa-quadra path { cursor: default; transition: none; }
+.mapa-quadra path:hover { opacity: 1; stroke: none; }
+.mapa-quadra path.contorno { fill: none; stroke: var(--color-text); stroke-opacity: .45; stroke-width: .7;
+  vector-effect: non-scaling-stroke; pointer-events: none; }
+/* Mapa das RAs largo, mas a tabela ao lado nunca abaixo do que os números pedem. */
+.duas-uma.mapa-e-tabela { grid-template-columns: minmax(0, 1.7fr) minmax(340px, 1fr); }
+/* Tabela das RAs ao lado do mapa: cabeçalhos longos quebram, para os números
+   caberem na coluna estreita. */
+.tabela-ras th { white-space: normal; letter-spacing: 0.04em; }
+.tabela-ras td.dir { white-space: nowrap; }
+.tabela-ras th, .tabela-ras td { padding-inline: 6px; }
+.tend { font-variant-numeric: lining-nums tabular-nums; white-space: nowrap; font-weight: 600; }
+/* Município escolhido: o seletor fica na linha do rótulo da seção, à vista. */
+.topo-mun { display: flex; flex-wrap: wrap; gap: 10px 20px; justify-content: space-between; align-items: center; }
+.seletor-mun { display: flex; gap: 8px; align-items: center; }
+.seletor-mun .select { min-width: 220px; }
+.link-mun { color: inherit; text-decoration: none; }
+.link-mun:hover { color: var(--color-accent); text-decoration: underline; }
+.table.relatorio td:first-child { font-size: 13px; }
+.table.relatorio td.dir { font-family: var(--font-heading); font-size: 20px; }
+.table.relatorio .tag { font-family: var(--font-body); vertical-align: middle; margin-left: 6px; }
 
 .ficha-nome { font-family: var(--font-heading); font-weight: 400; font-size: 32px; line-height: 1.05; margin-bottom: 8px; }
 .indices { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 16px; }
@@ -280,11 +314,6 @@ a:hover { color: var(--color-accent-600); }
 .regra-corpo { display: flex; flex-direction: column; gap: 3px; }
 .regra-corpo strong { font-family: var(--font-heading); font-weight: 600; font-size: 18px; }
 .regra-corpo span { font-size: 13px; line-height: 1.5; }
-.chuva { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 340px), 1fr)); gap: 0 40px; }
-.chuva > div { display: grid; grid-template-columns: minmax(0, 1fr) 110px 64px; gap: 12px; align-items: center;
-  padding: 7px 4px; border-bottom: 1px solid var(--color-divider); font-size: 13px; }
-.chuva > div > span:first-child { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.chuva .barra-prob { height: 6px; }
 
 .glossario { columns: 2; column-gap: 40px; }
 .glossario section { break-inside: avoid; margin-bottom: 22px; }
@@ -303,6 +332,7 @@ a:hover { color: var(--color-accent-600); }
 /* ------------------------------------------------------------- celular */
 @media (max-width: 980px) {
   .duas-uma, .metade { grid-template-columns: minmax(0, 1fr); gap: 32px; }
+  .duas-uma.mapa-e-tabela { grid-template-columns: minmax(0, 1fr); }
   .kpis, .indices { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .glossario { columns: 1; }
 }
@@ -326,7 +356,6 @@ a:hover { color: var(--color-accent-600); }
   .kpi-valor.texto-risco { font-size: 30px; }
   .indices, .contagem { grid-template-columns: minmax(0, 1fr); }
   .contagem { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-  .chuva > div { grid-template-columns: minmax(0, 1fr) 80px 56px; }
   .regra { grid-template-columns: 32px minmax(0, 1fr); }
   .regra .tag { grid-column: 2; justify-self: start; }
   .g-rot { font-size: 10px; }

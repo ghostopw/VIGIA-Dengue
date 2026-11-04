@@ -51,7 +51,8 @@ def test_estrutura_que_o_site_le(dados):
     chaves = {"semana", "semanaRotulo", "dataInicio", "horizonte", "limiar",
               "totalMunicipios", "foco", "entorno", "serie", "comparacao",
               "municipios", "desempenho", "alarmes", "clima", "ras", "malha",
-              "malhaRas", "dicionario", "geradoEm", "semanaMaisRecente"}
+              "malhaRas", "dicionario", "geradoEm", "semanaMaisRecente",
+              "verificadoEm"}
     assert chaves <= set(dados)
     assert dados["foco"]["cod"] == exportar_site.COD_FOCO
     assert dados["foco"]["nome"] == "Brasília"
@@ -72,6 +73,83 @@ def test_semana_do_panorama_cobre_o_territorio(dados):
     """A semana mostrada e a ultima com todos os municipios, nunca uma parcial."""
     assert all(len(m["semanas"]) >= 1 and m["semanas"][-1]["d"] == dados["dataInicio"]
                for m in dados["municipios"])
+
+
+def test_serie_de_brasilia_e_a_historia_inteira(dados):
+    """O site mostra de 1 ano a "tudo" e baixa a serie completa em CSV: a
+    serie nao pode voltar a ser cortada em poucos anos sem ninguem notar."""
+    painel = pd.read_csv(RAIZ / "dados/processado/painel.csv",
+                         usecols=["cod_ibge", "se_codigo"])
+    semanas = painel[(painel["cod_ibge"] == exportar_site.COD_FOCO)
+                     & (painel["se_codigo"] <= dados["semana"])]["se_codigo"]
+    assert [p["se"] for p in dados["serie"]] == sorted(semanas)
+    assert len(dados["comparacao"]["Brasilia"]) == len(dados["serie"])
+    campos = {"d", "se", "n", "e", "lo", "hi", "inc", "q3", "r", "p", "f", "pv", "c"}
+    assert all(campos <= set(p) for p in dados["serie"])
+
+
+def test_probabilidade_sem_arredondamento_duplo(dados):
+    """A pagina arredonda para porcentagem inteira. Se o JSON ja vier
+    arredondado a 3 casas, 0,1549 vira 0,155 e depois 16%, e o certo e 15%."""
+    painel = pd.read_csv(RAIZ / "dados/processado/painel.csv",
+                         usecols=["cod_ibge", "se_codigo", "probabilidade_alerta"])
+    semana = painel[painel["se_codigo"] == dados["semana"]].set_index("cod_ibge")
+    for m in dados["municipios"]:
+        bruto = semana.loc[m["cod"], "probabilidade_alerta"]
+        if pd.notna(bruto):
+            assert round(m["prob"] * 100) == round(bruto * 100), m["nome"]
+
+
+def test_dados_que_o_painel_antigo_mostrava_continuam_no_site(dados):
+    """Itens que o redesign tinha deixado de fora e voltaram: tendencia
+    recente, AUPRC, lift por municipio da regra aprovada e o detalhe de cada
+    regra."""
+    assert all("tend" in m for m in dados["municipios"])
+    assert all(r.get("auprc") is not None for r in dados["desempenho"]["resumo"])
+    aprovadas = {r["id"] for r in dados["alarmes"]["regras"] if r["aprovada"]}
+    assert set(dados["alarmes"]["porMunicipio"]) == aprovadas
+    assert all(i["n"] >= 8 for lista in dados["alarmes"]["porMunicipio"].values()
+               for i in lista)
+    assert all(r["condicao"] and r["acimaDoNormal"] is not None
+               for r in dados["alarmes"]["regras"])
+
+
+def test_cada_municipio_tem_serie_completa_e_endereco(tmp_path):
+    """O panorama de Planaltina (GO) ou de qualquer outro municipio le a
+    serie de dados/municipios/<codigo>.json, e o link #panorama/<apelido>
+    precisa apontar para um municipio so."""
+    exportar_site.salvar(tmp_path)
+    painel = json.loads((tmp_path / "painel.json").read_text(encoding="utf-8"))
+    apelidos = [m["slug"] for m in painel["municipios"]]
+    assert len(set(apelidos)) == len(apelidos), "dois municipios com o mesmo link"
+    assert all(re.fullmatch(r"[a-z0-9]+(-[a-z0-9]+)*", a) for a in apelidos)
+    for m in painel["municipios"]:
+        arquivo = tmp_path / "municipios" / f"{m['cod']}.json"
+        assert arquivo.exists(), m["nome"]
+        serie = json.loads(arquivo.read_text(encoding="utf-8"))["serie"]
+        # A serie termina na semana do boletim, a mesma da ficha do municipio.
+        assert serie[-1]["d"] == painel["dataInicio"], m["nome"]
+        assert serie[-1]["e"] == m["est"], m["nome"]
+    brasilia = json.loads((tmp_path / "municipios" / f"{exportar_site.COD_FOCO}.json")
+                          .read_text(encoding="utf-8"))["serie"]
+    assert brasilia == painel["serie"]
+
+
+def test_quadras_vao_em_arquivo_proprio(tmp_path):
+    exportar_site.salvar(tmp_path)
+    setores = json.loads((tmp_path / "setores.json").read_text(encoding="utf-8"))
+    bruto = json.loads((RAIZ / "dados/externo/setores_df.geojson")
+                       .read_text(encoding="utf-8"))
+    urbanos = [f for f in bruto["features"]
+               if f["properties"].get("SITUACAO") == "Urbana"
+               and f["properties"].get("indice_criadouro") is not None]
+    assert len(setores["features"]) == len(urbanos) > 0
+    props = {"cod", "ra", "dom", "indice", "esgoto", "agua", "lixo", "bueiro",
+             "pavimento"}
+    assert all(set(f["properties"]) == props for f in setores["features"])
+    assert "setores" not in json.loads(
+        (tmp_path / "painel.json").read_text(encoding="utf-8")), (
+        "as quadras sao pesadas; so devem baixar quando alguem abre a escala")
 
 
 def test_limiar_e_o_mesmo_do_alerta_do_pipeline(dados):

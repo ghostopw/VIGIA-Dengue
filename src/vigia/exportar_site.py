@@ -10,6 +10,11 @@ dicionario de dados. Roda no build da imagem (Dockerfile) e no servidor local
 Regra da casa: todo numero que o site escreve sai daqui, medido nos dados da
 semana. A pagina nao traz numero fixo no texto.
 
+Dois conjuntos vao em arquivos a parte, que o navegador so baixa quando
+alguem pede: o mapa por quadra (`dados/setores.json`) e a serie completa de
+cada municipio (`dados/municipios/<codigo>.json`), que alimenta o panorama,
+as series e o relatorio de quem escolhe um municipio que nao e Brasilia.
+
 Uso:  python src/vigia/exportar_site.py              (grava em site/dados/)
       python src/vigia/exportar_site.py --destino X
 """
@@ -22,6 +27,7 @@ import json
 import math
 import re
 import shutil
+import unicodedata
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
@@ -47,7 +53,13 @@ VPP_BRASILIA = 0.902
 PESO_BOOSTING = 0.8
 
 SEMANAS_FICHA = 12      # o "semana a semana" de cada municipio
-SEMANAS_SERIE = 156     # tres anos para os graficos de serie
+# Probabilidades e completude vao com 6 casas, e nao 3: a pagina arredonda
+# para porcentagem inteira, e arredondar duas vezes erra a meia unidade
+# (0,1549 viraria 0,155 e depois 16%, quando o certo e 15%).
+CASAS_PROB = 6
+# Casas das coordenadas das quadras: 5 casas sao ~1 m no chao, mais que o
+# bastante para desenhar quadra, e cortam o arquivo pela metade.
+CASAS_COORD = 5
 
 # Brasilia nao tem horario de verao desde 2019: o deslocamento e fixo.
 FUSO_BRASILIA = timezone(timedelta(hours=-3))
@@ -141,6 +153,14 @@ def grafia(nome: str) -> str:
     return GRAFIA.get(nome, nome)
 
 
+def apelido(nome: str) -> str:
+    """Nome curto para o endereco: "Planaltina" -> "planaltina",
+    "Sao Joao d'Alianca" -> "sao-joao-d-alianca". Vai no link
+    vigia.guimm.site/#panorama/planaltina."""
+    ascii_ = unicodedata.normalize("NFD", nome).encode("ascii", "ignore").decode()
+    return re.sub(r"[^a-z0-9]+", "-", ascii_.lower()).strip("-")
+
+
 def numero(valor, casas: int | None = None):
     """float limpo para o JSON: NaN e infinito viram None."""
     if valor is None:
@@ -196,28 +216,34 @@ def _municipios(painel: pd.DataFrame, semana: int, alarmes: dict) -> list[dict]:
         saida.append({
             "cod": int(cod),
             "nome": grafia(str(atual["municipio"])),
+            "slug": apelido(grafia(str(atual["municipio"]))),
             "uf": str(atual["uf"]),
             "casos": int(atual["casos"]),
             "est": numero(atual["casos_est"], 1),
             "inc": numero(atual["incidencia_100k"], 1),
             "canalQ3": numero(atual["canal_q3"], 1),
             "risco": str(atual["risco"]),
-            "prob": numero(atual["probabilidade_alerta"], 3),
+            "prob": numero(atual["probabilidade_alerta"], CASAS_PROB),
             "fatores": fatores(atual["fatores_alerta"]),
             "pop": int(atual["pop"]),
             "provisorio": int(atual["dado_provisorio"]),
-            "completude": numero(atual["completude"], 3),
+            "completude": numero(atual["completude"], CASAS_PROB),
+            # Media de casos das ultimas 3 semanas sobre a das ultimas 8: a
+            # "tendencia recente" do quadro. Nao e previsao.
+            "tend": numero(atual["razao_mm3_mm8"], 2),
             "rt": numero(atual["Rt"], 2),
-            "pRt1": numero(p_rt1.iloc[-1], 3) if len(p_rt1) else None,
-            "pRt1Anterior": numero(p_rt1.iloc[-2], 3) if len(p_rt1) > 1 else None,
+            "pRt1": numero(p_rt1.iloc[-1], CASAS_PROB) if len(p_rt1) else None,
+            "pRt1Anterior": (numero(p_rt1.iloc[-2], CASAS_PROB)
+                             if len(p_rt1) > 1 else None),
             # Lift historico da regra R3 so com historico suficiente; senao
             # o site usa o mediano do territorio.
             "liftR3": (numero(r3["lift"], 2) if r3 and r3.get("n", 0) >= 8
                        else None),
             "semanas": [{
                 "d": r["data_ini_se"].strftime("%Y-%m-%d"),
+                "se": int(r["se_codigo"]),
                 "e": numero(r["casos_est"], 1),
-                "p": numero(r["probabilidade_alerta"], 3),
+                "p": numero(r["probabilidade_alerta"], CASAS_PROB),
                 "t": numero(r["tempmed"], 1),
                 "u": numero(r["umidmed"], 1),
             } for _, r in recentes.iterrows()],
@@ -226,16 +252,30 @@ def _municipios(painel: pd.DataFrame, semana: int, alarmes: dict) -> list[dict]:
     return saida
 
 
-def _serie_foco(painel: pd.DataFrame, semana: int) -> list[dict]:
-    serie = (painel[(painel["cod_ibge"] == COD_FOCO)
+def _serie(painel: pd.DataFrame, semana: int, cod: int = COD_FOCO) -> list[dict]:
+    """A serie inteira de um municipio, desde a primeira semana da base.
+
+    Alimenta os graficos de serie (de 1 ano a "tudo"), o canal endemico, o
+    relatorio de qualquer semana e o CSV da serie completa. A de Brasilia vai
+    no painel.json; as demais, cada uma no seu arquivo (ver `salvar`).
+    """
+    serie = (painel[(painel["cod_ibge"] == cod)
                     & (painel["se_codigo"] <= semana)]
-             .sort_values("data_ini_se").tail(SEMANAS_SERIE))
+             .sort_values("data_ini_se"))
     return [{
         "d": r["data_ini_se"].strftime("%Y-%m-%d"),
+        "se": int(r["se_codigo"]),
         "n": int(r["casos"]),
         "e": numero(r["casos_est"], 1),
         "lo": numero(r["casos_est_min"], 1),
         "hi": numero(r["casos_est_max"], 1),
+        "inc": numero(r["incidencia_100k"], 2),
+        "q3": numero(r["canal_q3"], 2),
+        "r": str(r["risco"]) if isinstance(r["risco"], str) else None,
+        "p": numero(r["probabilidade_alerta"], CASAS_PROB),
+        "f": fatores(r["fatores_alerta"]),
+        "pv": int(r["dado_provisorio"]) if pd.notna(r["dado_provisorio"]) else 0,
+        "c": numero(r["completude"], CASAS_PROB),
     } for _, r in serie.iterrows()]
 
 
@@ -263,6 +303,7 @@ def _desempenho(caminho: Path) -> dict:
                "sens": numero(s["sensibilidade"].mean(), 3),
                "espec": numero(s["especificidade"].mean(), 3),
                "vpp": numero(s["vpp"].mean(), 3),
+               "auprc": numero(s["auprc"].mean(), 3),
                "brier": numero(s["brier"].mean(), 3)}
               for m, s in tabela.groupby("modelo")]
     return {"porAno": por_ano, "resumo": resumo,
@@ -280,15 +321,29 @@ def _alarmes(alarmes: dict) -> dict:
             "episodios": int(r["n_episodios"]),
             "acimaDoNormal": numero(r.get("frac_lift_acima_1"), 3),
             "aprovada": bool(r["aprovada"]),
+            # A condicao como o codigo a testa, para quem quiser conferir.
+            "condicao": r["condicao"],
         })
     ativos = [{
         "id": a["id"], "nome": REGRAS_TEXTO.get(a["id"], (a["id"],))[0],
         "cod": int(a["cod_ibge"]), "municipio": grafia(a["municipio"]),
         "valor": numero(a["valor_gatilho"], 3), "lag": int(a["lag_semanas"]),
         "lift": numero(a["lift_historico"], 2),
+        "semana": int(a["semana"]) if a.get("semana") else None,
     } for a in alarmes["alarmes"]]
     base = alarmes["regras"].get("base", "")
     periodo = re.search(r"(\d{4})-(\d{4})", base)
+    tamanho = re.search(r"\((\d+) municipios, (\d+) semanas cada", base)
+    # Lift de cada municipio nas regras aprovadas: onde a regra mais se
+    # confirmou. So quem tem episodios bastantes para a mediana significar algo.
+    aprovadas = {r["id"] for r in alarmes["regras"]["regras"] if r["aprovada"]}
+    por_municipio = {
+        rid: sorted(({"cod": int(i["cod_ibge"]), "nome": grafia(i["municipio"]),
+                      "n": int(i["n"]), "lift": numero(i["lift"], 2)}
+                     for i in itens if i.get("n", 0) >= 8),
+                    key=lambda i: -(i["lift"] or 0))
+        for rid, itens in alarmes["regras"].get("por_municipio", {}).items()
+        if rid in aprovadas}
     # O criterio de aprovacao vem escrito no metodo do proprio alarmes.json;
     # sem ele, o site simplesmente omite a frase.
     criterio = re.search(r"lift mediano >= ([\d.]+) e n >= (\d+)",
@@ -297,6 +352,10 @@ def _alarmes(alarmes: dict) -> dict:
         "semana": int(alarmes["gerado_da_semana"]), "regras": regras,
         "ativos": ativos,
         "periodo": [int(periodo[1]), int(periodo[2])] if periodo else None,
+        "base": ({"municipios": int(tamanho[1]), "semanas": int(tamanho[2])}
+                 if tamanho else None),
+        "medidoEm": alarmes["regras"].get("gerado_em"),
+        "porMunicipio": por_municipio,
         "criterio": ({"lift": float(criterio[1]), "episodios": int(criterio[2])}
                      if criterio else None),
     }
@@ -349,8 +408,56 @@ def _malha_ras(caminho: Path) -> dict:
         f["properties"] = {
             "cod": str(p["cod_subdistrito"]), "nome": grafia(p["ra_nome"]),
             "pop": p.get("populacao"), "dens": p.get("densidade_hab_km2"),
+            "area": p.get("area_km2"),
         }
     return malha
+
+
+def _setores(caminho: Path) -> dict:
+    """Setores censitarios urbanos do DF: o mapa na escala da quadra.
+
+    So os urbanos e com dado: os rurais sao poucos, enormes e sem face de rua
+    levantada, e pintados no mapa esconderiam a malha urbana. As coordenadas
+    perdem casas (ver CASAS_COORD) e os atributos ficam so os que a tela mostra.
+    """
+    def encurtar(c):
+        if c and isinstance(c[0], (int, float)):
+            return [round(c[0], CASAS_COORD), round(c[1], CASAS_COORD)]
+        return [encurtar(x) for x in c]
+
+    bruto = ler_json(caminho)
+    feicoes = []
+    for f in bruto["features"]:
+        p = f["properties"]
+        if p.get("SITUACAO") != "Urbana" or p.get("indice_criadouro") is None:
+            continue
+        feicoes.append({
+            "type": "Feature",
+            "properties": {
+                "cod": str(p["CD_SETOR"]), "ra": grafia(str(p["NM_SUBDIST"])),
+                "dom": numero(p.get("domicilios"), 0),
+                "indice": numero(p.get("indice_criadouro"), 1),
+                "esgoto": numero(p.get("esgoto_inadequado_pct"), 1),
+                "agua": numero(p.get("sem_agua_rede_pct"), 1),
+                "lixo": numero(p.get("lixo_sem_coleta_pct"), 1),
+                "bueiro": numero(p.get("sem_bueiro_pct"), 1),
+                "pavimento": numero(p.get("sem_pavimento_pct"), 1),
+            },
+            "geometry": {"type": f["geometry"]["type"],
+                         "coordinates": encurtar(f["geometry"]["coordinates"])},
+        })
+    return {"type": "FeatureCollection", "features": feicoes}
+
+
+def _verificado_em(caminho: Path) -> str | None:
+    """Quando o ciclo diario conferiu a fonte pela ultima vez (ISO, com fuso).
+
+    E o que separa "esta calmo" de "ninguem atualizou": a pagina mostra ha
+    quanto tempo a fonte foi verificada e avisa quando passa de tres dias.
+    """
+    if not caminho.exists():
+        return None
+    return ler_json(caminho).get("estado", {}).get("verificado_em")
 
 
 def _malha_ride(caminho: Path) -> dict:
@@ -370,7 +477,7 @@ def gerar(raiz: Path = RAIZ) -> dict:
     horizonte = int(painel["horizonte_semanas"].iloc[0])
     municipios = _municipios(painel, semana, alarmes)
     foco = next(m for m in municipios if m["cod"] == COD_FOCO)
-    serie = _serie_foco(painel, semana)
+    serie = _serie(painel, semana)
     entorno = [m for m in municipios if m["cod"] != COD_FOCO]
 
     variacao = None
@@ -380,6 +487,7 @@ def gerar(raiz: Path = RAIZ) -> dict:
     gerado = datetime.now(FUSO_BRASILIA)
     return {
         "geradoEm": gerado.strftime("%Y-%m-%dT%H:%M"),
+        "verificadoEm": _verificado_em(raiz / "saidas" / "alerta.json"),
         "semana": semana,
         "semanaRotulo": f"{semana % 100:02d}/{semana // 100}",
         "dataInicio": serie[-1]["d"],
@@ -416,6 +524,25 @@ def salvar(destino: Path = DESTINO, raiz: Path = RAIZ) -> Path:
     # vez de publicar um JSON que o navegador recusa.
     caminho.write_text(json.dumps(dados, ensure_ascii=False, allow_nan=False,
                                   separators=(",", ":")), encoding="utf-8")
+    # A serie completa de cada municipio, num arquivo por municipio: juntas
+    # pesariam mais que o resto do painel, e quem abre o site quase sempre so
+    # olha Brasilia.
+    painel = pd.read_csv(raiz / "dados" / "processado" / "painel.csv",
+                         parse_dates=["data_ini_se"], low_memory=False)
+    pasta = destino / "municipios"
+    pasta.mkdir(exist_ok=True)
+    for m in dados["municipios"]:
+        (pasta / f"{m['cod']}.json").write_text(
+            json.dumps({"cod": m["cod"], "nome": m["nome"],
+                        "serie": _serie(painel, dados["semana"], m["cod"])},
+                       ensure_ascii=False, allow_nan=False, separators=(",", ":")),
+            encoding="utf-8")
+    # As quadras ficam fora do painel.json: sao a maior parte do peso e so
+    # quem abre a escala da quadra precisa delas.
+    setores = _setores(raiz / "dados" / "externo" / "setores_df.geojson")
+    (destino / "setores.json").write_text(
+        json.dumps(setores, ensure_ascii=False, allow_nan=False,
+                   separators=(",", ":")), encoding="utf-8")
     for nome, origem in ARQUIVOS_PARA_BAIXAR.items():
         if origem.exists():
             shutil.copyfile(origem, destino / nome)

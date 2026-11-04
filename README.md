@@ -103,15 +103,21 @@ A semana mostrada é a última com todos os municípios do território (a mais r
 costuma chegar parcial). O limiar do alerta é **80%**, o mesmo do ciclo diário; um teste
 garante que os dois não divergem.
 
+Os 34 municípios têm panorama próprio, com endereço para guardar e compartilhar
+(`vigia.guimm.site/#panorama/planaltina`); a série de cada um vai em
+`dados/municipios/<código>.json`. O mapa por quadra vai num arquivo à parte, `dados/setores.json`.
+Os dois só são baixados quando alguém pede. O rodapé diz há quanto tempo a fonte foi verificada, e o
+Panorama avisa quando passa de três dias.
+
 | Seção | O que mostra |
 |---|---|
-| I · Panorama | Brasília na semana: casos estimados, incidência, nível de risco, chance de alerta em 4 semanas, o que mais pesou na previsão e a série de 52 semanas ou 3 anos |
+| I · Panorama | O município escolhido na semana (Brasília, se ninguém escolher): casos estimados, incidência, nível de risco, chance de alerta em 4 semanas, o que mais pesou na previsão e a série de 52 semanas ou 3 anos |
 | II · Mapa e municípios | Os 34 municípios por nível de risco. Clicar abre a ficha do município, os **índices da semana** (previsão, transmissão, clima para o *Aedes* e qualidade do dado) e o gráfico **semana a semana** (casos, risco à frente, temperatura, umidade) |
-| III · Séries temporais | Brasília × Entorno por 100 mil habitantes, e notificado × estimado nas últimas 16 semanas |
-| IV · Ranking | Os 34 municípios ordenados por chance de alerta, incidência ou casos, com busca e download em CSV |
-| V · Desempenho | AUC ano a ano dos quatro modelos e as médias da validação temporal |
-| VI · Por RA | As 31 Regiões Administrativas por vulnerabilidade, população ou densidade |
-| VII · Alarmes e clima | As regras de alarme testadas no histórico e a previsão de chuva de 14 dias |
+| III · Séries temporais | A série do município escolhido desde 2015 (1, 2 ou 5 anos, ou tudo) com a margem do *nowcasting*, o canal endêmico (incidência × limite esperado da época), Brasília × Entorno (ou o município × Brasília) por 100 mil habitantes, e notificado × estimado nas últimas 16 semanas |
+| IV · Ranking e relatório | Os 34 municípios ordenados por chance de alerta, incidência ou casos, com a tendência recente (média de 3 semanas sobre a de 8), busca e download em CSV; o **relatório do município** em qualquer semana da série e o download da série completa |
+| V · Desempenho | AUC ano a ano dos quatro modelos e as médias da validação temporal (AUC, AUPRC, sensibilidade, especificidade, VPP, Brier) |
+| VI · Por RA | As 31 Regiões Administrativas e, na escala da quadra, os setores censitários urbanos, por vulnerabilidade, população, densidade e cinco condições do Censo 2022 (esgoto, água, lixo, bueiro, pavimento), em faixas por quantil |
+| VII · Alarmes e clima | As regras de alarme testadas no histórico (efeito, episódios, condição testada), onde a regra aprovada mais se confirmou, e a previsão de 14 dias por município (chuva de 7 e 14 dias, dias com chuva, temperatura) |
 | VIII · Dicionário | Todas as colunas da base, com busca e filtros, e o glossário dos termos |
 
 Sobre as RAs: não há *casos* por RA — o InfoDengue opera no nível municipal e o DF é um

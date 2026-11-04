@@ -25,6 +25,7 @@ COPY dados/processado/painel.csv             dados/processado/
 COPY dados/externo/malha_ride_df.geojson     dados/externo/
 COPY dados/externo/malha_ras_df.geojson      dados/externo/
 COPY dados/externo/vulnerabilidade_ras.csv   dados/externo/
+COPY dados/externo/setores_df.geojson        dados/externo/
 COPY saidas/desempenho_modelos.csv           saidas/
 COPY saidas/alarmes.json                     saidas/
 COPY saidas/clima_futuro.json                saidas/

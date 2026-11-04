@@ -27,6 +27,7 @@ site
 !dados/externo/malha_ride_df.geojson
 !dados/externo/malha_ras_df.geojson
 !dados/externo/vulnerabilidade_ras.csv
+!dados/externo/setores_df.geojson
 !saidas/desempenho_modelos.csv
 !saidas/alarmes.json
 !saidas/clima_futuro.json
