@@ -1,23 +1,25 @@
 {
   "primeira_vez": false,
-  "eventos": [],
+  "eventos": [
+    "Semana nova publicada: SE 44/2026 (iniciada em 2026-11-01)."
+  ],
   "estado": {
-    "semana": 202643,
-    "data_ini_se": "2026-10-25",
-    "casos": 161,
-    "casos_est": 265.0,
-    "incidencia_100k": 9.06,
+    "semana": 202644,
+    "data_ini_se": "2026-11-01",
+    "casos": 171,
+    "casos_est": 282.0,
+    "incidencia_100k": 9.65,
     "risco": "moderado",
-    "probabilidade_alerta": 0.3739,
-    "canal_q3": 11.9,
+    "probabilidade_alerta": 0.35,
+    "canal_q3": 12.08,
     "fatores": "casos_est_mm3, semana, incidencia_mm3",
     "dado_provisorio": true,
-    "completude": 0.608,
-    "verificado_em": "2026-11-09T21:22:27+00:00"
+    "completude": 0.606,
+    "verificado_em": "2026-11-10T18:35:59+00:00"
   },
-  "mensagem": "",
+  "mensagem": "VIGIA-Dengue -- Brasilia, SE 44/2026\n\n- Semana nova publicada: SE 44/2026 (iniciada em 2026-11-01).\n\nCasos estimados: 282\nIncidencia: 9.7 por 100 mil\nRisco: moderado | probabilidade de alerta: 35%\nFatores: casos_est_mm3, semana, incidencia_mm3\nAtencao: notificacao ainda incompleta (61% digitado). Os numeros tendem a subir.",
   "em_alerta": false,
   "limiar": 0.8,
   "semana_anterior": 202643,
-  "semana_nova": false
+  "semana_nova": true
 }
